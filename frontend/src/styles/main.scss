@@ -1,0 +1,20 @@
+// Archivo: frontend/src/styles/main.scss (Orden Corregido)
+
+// --- IMPORTACIONES MODERNIZADAS (DEBEN IR PRIMERO) ---
+@use 'header';
+@use 'footer';
+@use 'homepage';
+@use 'collections-showcase';
+@use 'atelierpage';
+@use 'configuratorpage';
+
+// --- RESET Y ESTILOS GLOBALES ---
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { 
+    width: 100%; 
+    overflow-x: hidden; 
+    background-color: #000000;
+    font-family: 'Cinzel', serif;
+}
+#root, .App { width: 100%; }
+// ---------------------------------

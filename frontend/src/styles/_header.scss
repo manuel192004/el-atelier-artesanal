@@ -1,0 +1,132 @@
+// Archivo: frontend/src/styles/_header.scss (Versión Final)
+
+.header {
+  width: 100%;
+  background-color: #000000;
+  border-bottom: 1px solid #333;
+  padding: 15px 40px;
+  position: sticky;
+  top: 0;
+  z-index: 999;
+}
+
+.header-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-logo img {
+  height: 60px;
+  transition: transform 0.3s ease;
+  &:hover {
+    transform: scale(1.05);
+  }
+}
+
+.header-nav ul {
+  list-style: none;
+  display: flex;
+  gap: 30px;
+}
+
+.nav-link {
+  color: #fff;
+  text-decoration: none;
+  font-size: 1.1rem;
+  position: relative;
+  padding-bottom: 5px;
+
+  &::after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 1px;
+    bottom: 0;
+    left: 0;
+    background-color: #C1A97E;
+    transition: width 0.3s ease;
+  }
+
+  &:hover::after {
+    width: 100%;
+  }
+}
+
+.header-cta {
+  background-color: #C1A97E;
+  color: #000;
+  padding: 10px 20px;
+  text-decoration: none;
+  font-weight: 700;
+  border-radius: 5px;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background-color: #d4c1a2;
+    transform: translateY(-2px);
+  }
+}
+
+
+// --- LÓGICA PARA MÓVIL ---
+.hamburger-button {
+  display: none; // Oculto en escritorio
+  background: none;
+  border: none;
+  color: #C1A97E;
+  font-size: 2.5rem;
+  cursor: pointer;
+  z-index: 1001;
+  line-height: 1;
+}
+
+.mobile-menu {
+  display: none; // Oculto en escritorio
+}
+
+
+@media (max-width: 768px) {
+  .header {
+    padding: 15px 20px;
+  }
+  
+  .desktop-nav {
+    display: none; // Oculta el menú de escritorio y el botón CTA en móvil
+  }
+
+  .hamburger-button {
+    display: block; // Muestra el botón de hamburguesa en móvil
+  }
+  
+  .mobile-menu {
+    display: block;
+    position: fixed;
+    top: 91px; // Justo debajo del header
+    left: 0;
+    width: 100%;
+    height: calc(100vh - 91px);
+    background-color: rgba(0, 0, 0, 0.98);
+    backdrop-filter: blur(5px);
+  }
+  
+  .mobile-nav-links {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 40px;
+
+    .nav-link {
+      font-size: 1.8rem;
+    }
+
+    .special-link {
+      color: #C1A97E;
+      font-weight: 700;
+    }
+  }
+}

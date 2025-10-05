@@ -1,0 +1,94 @@
+// Archivo: frontend/src/styles/_footer.scss (Versión Corregida)
+
+.footer {
+  background-color: #000000;
+  color: #a0a0a0;
+  padding: 60px 40px 20px 40px;
+  border-top: 1px solid #333;
+}
+
+.footer-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 40px;
+  padding-bottom: 40px;
+}
+
+.footer-section {
+  flex: 1;
+  min-width: 250px;
+}
+
+.footer-title {
+  color: #ffffff;
+  font-size: 1.25rem; // Un poco más grande para la nueva fuente
+  margin-bottom: 20px;
+  font-weight: 700; // Negrita para destacar con 'Cinzel'
+}
+
+.footer-brand p {
+  line-height: 1.6;
+  max-width: 300px;
+}
+
+// --- SECCIÓN CORREGIDA Y MEJORADA PARA ICONOS ---
+
+.footer-socials {
+  margin-top: 20px;
+  display: flex;
+  gap: 20px;
+}
+
+// Estilos específicos para los enlaces de los íconos
+.footer-socials a {
+  color: #a0a0a0; // Color grisáceo por defecto
+  transition: color 0.3s ease, transform 0.3s ease;
+
+  svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  &:hover {
+    color: #C1A97E; // Color dorado al pasar el ratón
+    transform: scale(1.1); // Un leve zoom al ícono
+  }
+}
+
+// Estilos para los enlaces de texto de navegación
+.footer-links a {
+  color: #a0a0a0;
+  text-decoration: none;
+  transition: color 0.3s ease;
+  
+  &:hover {
+    color: #C1A97E;
+  }
+}
+
+// ---------------------------------------------------
+
+.footer-links ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.footer-links li {
+  margin-bottom: 10px;
+}
+
+.footer-contact p {
+  margin: 5px 0;
+}
+
+.footer-bottom {
+  text-align: center;
+  padding-top: 30px;
+  border-top: 1px solid #333;
+  font-size: 14px;
+  color: #666;
+}
