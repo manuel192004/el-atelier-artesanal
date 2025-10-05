@@ -19,7 +19,7 @@ const PromptDesigner = () => {
     setGeneratedImage(null);
     setError(null);
     try {
-      const response = await fetch('http://localhost:3001/api/generate-jewelry', {
+      const response = await fetch('https://el-atelier-backend.onrender.com/api/generate-jewelry', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt: prompt }),
