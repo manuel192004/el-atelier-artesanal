@@ -3,10 +3,12 @@
 // --- IMPORTACIONES MODERNIZADAS (DEBEN IR PRIMERO) ---
 @use 'header';
 @use 'footer';
-@use 'homepage';
 @use 'collections-showcase';
 @use 'atelierpage';
 @use 'configuratorpage';
+@use 'coleccionespage';
+@use 'hero-section';
+
 
 // --- RESET Y ESTILOS GLOBALES ---
 * { margin: 0; padding: 0; box-sizing: border-box; }

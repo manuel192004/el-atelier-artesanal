@@ -1,60 +1,169 @@
 // Archivo: frontend/src/styles/_atelierpage.scss
 
+@use 'sass:color'; // Importación para la función color.adjust()
+
+// --- ESTILOS PRINCIPALES DE LA PÁGINA ---
 .atelier-page {
-  color: #ffffff;
+  padding: 60px 20px;
+  background-color: #000;
+  color: #fff;
 }
 
-.atelier-hero {
-  background-color: #050505;
-  padding: 100px 40px;
-  text-align: center;
-  border-bottom: 1px solid #333;
+.atelier-container {
+  max-width: 1100px;
+  margin: 0 auto;
+}
 
-  .atelier-title {
-    font-size: 3.5rem;
-    margin-bottom: 20px;
+.atelier-title {
+  font-size: 3rem;
+  text-align: center;
+  margin-bottom: 50px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #C1A97E;
+  font-weight: 400;
+
+  @media (max-width: 768px) {
+    font-size: 2.2rem;
+  }
+}
+
+.atelier-content {
+  display: flex;
+  gap: 50px;
+  align-items: flex-start;
+  margin-bottom: 80px;
+
+  @media (max-width: 768px) {
+    flex-direction: column-reverse;
+    margin-bottom: 50px;
+  }
+}
+
+.atelier-text {
+  flex: 2;
+  h2 {
+    color: #C1A97E;
+    margin-bottom: 15px;
+    font-size: 1.8rem;
     font-weight: 500;
   }
-
-  .atelier-subtitle {
-    font-size: 1.2rem;
-    max-width: 800px;
-    margin: 0 auto;
-    line-height: 1.7;
-    color: #a0a0a0;
-  }
-}
-
-.atelier-process {
-  padding: 80px 40px;
-  background-color: #000000;
-
-  .section-title {
-    text-align: center;
-    font-size: 2.5rem;
-    margin-bottom: 60px;
-  }
-}
-
-.process-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 40px;
-}
-
-.process-step {
-  border: 1px solid #333;
-  padding: 30px;
-  background-color: #0a0a0a;
-
-  h3 {
-    color: #C1A97E;
-    font-size: 1.5rem;
-    margin-bottom: 15px;
-  }
-
   p {
-    line-height: 1.6;
-    color: #a0a0a0;
+    font-family: 'Lato', sans-serif;
+    font-size: 1.1rem;
+    line-height: 1.8;
+    margin-bottom: 35px;
+    color: #d1d1d1;
+  }
+}
+
+.atelier-image {
+  flex: 1;
+  position: sticky;
+  top: 120px;
+
+  img {
+    width: 100%;
+    border-radius: 5px;
+  }
+
+  @media (max-width: 768px) {
+    position: static;
+    width: 100%;
+    margin-bottom: 20px;
+  }
+}
+
+// --- ESTILOS PARA LA SECCIÓN DE VALORES ---
+.atelier-values {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 30px;
+  text-align: center;
+  border-top: 1px solid #333;
+  padding-top: 50px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.value-card {
+  opacity: 0;
+  transform: translateY(20px);
+  animation: fadeIn 0.8s ease-out forwards;
+
+  &:nth-child(2) {
+    animation-delay: 0.2s;
+  }
+  &:nth-child(3) {
+    animation-delay: 0.4s;
+  }
+}
+
+.value-icon {
+  margin-bottom: 20px;
+  svg {
+    width: 48px;
+    height: 48px;
+    color: #C1A97E;
+  }
+}
+
+// Estilos generales para los h3 de las tarjetas de valores
+.value-card h3 {
+  font-size: 1.4rem;
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+
+// --- ESTILOS PARA LA SECCIÓN DE LLAMADA A LA ACCIÓN (CTA) ---
+.cta-section {
+  text-align: center;
+  padding-top: 60px;
+  margin-top: 60px;
+  border-top: 1px solid #333;
+}
+
+.cta-title {
+  font-size: 2.8rem;
+  margin-bottom: 20px;
+  font-weight: 500;
+
+  @media (max-width: 768px) {
+    font-size: 2rem;
+  }
+}
+
+.cta-subtitle {
+  font-family: 'Lato', sans-serif;
+  font-size: 1.1rem;
+  max-width: 500px;
+  margin: 0 auto 35px auto;
+  color: #d1d1d1;
+  line-height: 1.7;
+}
+
+.cta-button {
+  background-color: #C1A97E;
+  color: #000;
+  padding: 15px 35px;
+  text-decoration: none;
+  font-weight: bold;
+  font-size: 1.1rem;
+  transition: all 0.3s ease;
+  border-radius: 5px;
+  display: inline-block;
+
+  &:hover {
+    background-color: color.adjust(#C1A97E, $lightness: -10%);
+    transform: translateY(-2px);
+  }
+}
+
+// --- ANIMACIÓN ---
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

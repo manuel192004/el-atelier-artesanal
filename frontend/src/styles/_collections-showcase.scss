@@ -1,0 +1,77 @@
+// Archivo: frontend/src/styles/_collections-showcase.scss
+
+.collections-showcase {
+  padding: 80px 40px;
+  background-color: #000;
+  text-align: center;
+}
+
+.section-title {
+  font-size: 2.5rem;
+  color: #C1A97E;
+  margin-bottom: 15px;
+}
+
+.section-subtitle {
+  font-size: 1.1rem;
+  color: #a0a0a0;
+  max-width: 600px;
+  margin: 0 auto 50px auto;
+  font-family: 'Lato', sans-serif;
+}
+
+.collections-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 25px;
+  max-width: 1200px;
+  margin: 0 auto;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.collection-card {
+  position: relative;
+  height: 350px;
+  overflow: hidden;
+  text-decoration: none;
+  display: block;
+
+  .collection-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+  }
+
+  .collection-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 50%);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 20px;
+    
+    h3 {
+      color: #fff;
+      font-size: 1.5rem;
+      transition: transform 0.4s ease;
+    }
+  }
+
+  &:hover {
+    .collection-image {
+      transform: scale(1.05);
+    }
+    .collection-overlay h3 {
+      transform: translateY(-10px);
+      color: #C1A97E;
+    }
+  }
+}

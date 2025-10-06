@@ -1,0 +1,66 @@
+// Archivo: frontend/src/styles/_hero-section.scss
+
+@use 'sass:color';
+
+.hero-section {
+  height: calc(100vh - 91px);
+  width: 100%;
+  display: flex;
+  align-items: flex-end; // Alinea el contenido abajo
+  justify-content: center;
+  position: relative;
+  text-align: center;
+  color: #fff;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.4);
+    z-index: 1;
+  }
+}
+
+.hero-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  padding: 20px;
+  margin-bottom: 10vh; // Empuja el botón hacia arriba desde el borde inferior
+
+  // Ocultamos el título y la descripción para que no se vean
+  .hero-title, .hero-description {
+    display: none;
+  }
+}
+
+.hero-button {
+  background-color: #C1A97E;
+  color: #000;
+  padding: 15px 35px; // Hacemos el botón un poco más grande
+  border-radius: 5px;
+  text-decoration: none;
+  font-size: 1.2rem; // Aumentamos el tamaño de la fuente
+  font-weight: bold;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+
+  &:hover {
+    background-color: color.adjust(#C1A97E, $lightness: -10%);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+  }
+}

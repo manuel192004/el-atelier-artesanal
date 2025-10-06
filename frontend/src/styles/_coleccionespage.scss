@@ -1,0 +1,211 @@
+// Archivo: frontend/src/styles/_coleccionespage.scss
+
+@use 'sass:color';
+
+.colecciones-page {
+  background-color: #000;
+  color: #fff;
+  min-height: calc(100vh - 91px); // Para que ocupe al menos la altura de la pantalla
+}
+
+// --- Collections Hero (Banner de Lujo) ---
+.collections-hero {
+  height: 450px; // Altura fija para el banner
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 20px;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); // Overlay oscuro para legibilidad
+    z-index: 1;
+  }
+}
+
+.collections-hero-content {
+  position: relative;
+  z-index: 2;
+  max-width: 800px;
+}
+
+.collections-hero-title {
+  font-family: 'Cinzel', serif;
+  font-size: 3.8rem;
+  color: #fff;
+  margin-bottom: 15px;
+  font-weight: 600;
+
+  @media (max-width: 768px) {
+    font-size: 2.5rem;
+  }
+  @media (max-width: 480px) {
+    font-size: 1.8rem;
+  }
+}
+
+.collections-hero-subtitle {
+  font-family: 'Lato', sans-serif;
+  font-size: 1.2rem;
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.6;
+
+  @media (max-width: 768px) {
+    font-size: 1rem;
+  }
+}
+
+// --- Collections Description ---
+.collections-description {
+  max-width: 800px;
+  margin: 60px auto; // Margen superior e inferior para separarlo del hero y filtros
+  padding: 0 20px;
+  text-align: center;
+
+  p {
+    font-family: 'Lato', sans-serif;
+    font-size: 1.1rem;
+    line-height: 1.8;
+    color: #d1d1d1;
+  }
+}
+
+// --- Main Content (Contiene filtros y cuadrícula) ---
+.collections-main-content {
+  max-width: 1200px;
+  margin: 0 auto 80px auto; // Margen inferior para separarlo del footer
+  padding: 0 20px;
+}
+
+// --- Collections Filters ---
+.collections-filters {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 15px;
+  margin-bottom: 50px;
+  padding: 20px 0;
+  border-bottom: 1px solid #333; // Línea divisoria sutil
+}
+
+.filter-button {
+  background-color: transparent;
+  color: #C1A97E;
+  border: 1px solid #C1A97E;
+  padding: 10px 20px;
+  border-radius: 25px;
+  font-family: 'Lato', sans-serif;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background-color: rgba(193, 169, 126, 0.1);
+    color: #d4c1a2;
+  }
+
+  &.active {
+    background-color: #C1A97E;
+    color: #000;
+    border-color: #C1A97E;
+    font-weight: bold;
+  }
+}
+
+// --- Collections Grid (Galería de Artículos) ---
+.collections-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); // Columnas adaptables
+  gap: 30px;
+  margin-top: 40px;
+}
+
+.collection-item {
+  position: relative;
+  overflow: hidden;
+  border-radius: 5px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+
+  .item-image {
+    width: 100%;
+    height: 300px; // Altura fija para las imágenes
+    object-fit: cover;
+    display: block;
+    transition: transform 0.4s ease-out;
+  }
+
+  .item-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6); // Oscurecido por defecto
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0; // Invisible por defecto, se muestra al hover
+    transition: opacity 0.4s ease-out;
+    text-align: center;
+    padding: 20px;
+  }
+
+  .item-name {
+    font-family: 'Cinzel', serif;
+    font-size: 1.5rem;
+    color: #C1A97E; // Color dorado
+    font-weight: 600;
+  }
+
+  &:hover {
+    .item-image {
+      transform: scale(1.05); // Zoom sutil en la imagen
+    }
+    .item-overlay {
+      opacity: 1; // El overlay se vuelve visible
+      background-color: rgba(0, 0, 0, 0.75); // Se oscurece más al pasar el ratón
+    }
+    .item-name {
+      color: #fff; // El texto cambia a blanco
+    }
+  }
+}
+
+// --- Media Queries para responsividad ---
+@media (max-width: 768px) {
+  .collections-hero {
+    height: 350px;
+  }
+  .collections-description {
+    margin: 40px auto;
+  }
+  .collections-grid {
+    grid-template-columns: 1fr; // Una columna en móvil
+  }
+  .collection-item .item-image {
+    height: 250px;
+  }
+}
+
+@media (max-width: 480px) {
+  .collections-hero {
+    height: 250px;
+  }
+  .filter-button {
+    font-size: 0.9rem;
+    padding: 8px 15px;
+  }
+  .collections-grid {
+    gap: 20px;
+  }
+}
