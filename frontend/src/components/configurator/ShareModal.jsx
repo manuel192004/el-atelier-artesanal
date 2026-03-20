@@ -1,49 +1,184 @@
-// Archivo: frontend/src/components/configurator/ShareModal.jsx (Versión Simplificada)
-import React from 'react';
+import React, { useState } from 'react';
 
-const ShareModal = ({ onClose }) => {
-  // Mensaje genérico para iniciar la conversación
-  const message = encodeURIComponent(`¡Hola! Quisiera cotizar un diseño que creé con la IA de su página.`);
+const ShareModal = ({
+  onClose,
+  apiBaseUrl,
+  briefSummary,
+  promptUsed,
+  category,
+  metal,
+  gemstone,
+  style,
+  occasion,
+  reference,
+  designName,
+  hasGeneratedPreview,
+  registrant,
+}) => {
+  const [form, setForm] = useState({
+    clientName: registrant?.fullName || '',
+    email: registrant?.email || '',
+    whatsapp: registrant?.whatsapp || '',
+    preferredContact: 'whatsapp',
+    budget: '',
+    timeline: '',
+    notes: '',
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(null);
 
-  // --- CONFIGURA TUS DATOS AQUÍ ---
-  const whatsappNumber = "573001234567"; // Reemplaza con tu número de WhatsApp
-  const instagramUser = "elatelierartesanal"; // Reemplaza con tu usuario de Instagram
-  const facebookPageName = "elatelierartesanal"; // Reemplaza con tu nombre de usuario/página de Facebook
-  // ---------------------------------
+  const handleChange = (field) => (event) => {
+    setForm((current) => ({
+      ...current,
+      [field]: event.target.value,
+    }));
+  };
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(promptUsed);
+      setIsCopied(true);
+    } catch (copyError) {
+      console.error(copyError);
+    }
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setIsSubmitting(true);
+    setError('');
+
+    try {
+      const response = await fetch(`${apiBaseUrl}/api/quote-request`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...form,
+          registrantId: registrant?.registrantId || '',
+          prompt: promptUsed,
+          category,
+          designName,
+          preferredMetal: metal,
+          preferredStone: gemstone,
+          style,
+          occasion,
+          reference,
+          hasGeneratedPreview,
+        }),
+      });
+
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(data?.error || 'No se pudo registrar la cotizacion.');
+      }
+
+      setSuccess(data);
+    } catch (submitError) {
+      console.error(submitError);
+      setError(submitError.message || 'No se pudo registrar la cotizacion.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <h2>Contactar para Cotizar</h2>
-        <p className="modal-subtitle">Elige tu plataforma preferida.<br/>Puedes enviarnos una captura de pantalla del diseño.</p>
-        
-        <div className="modal-options">
-          {/* WhatsApp */}
-          <a href={`https://wa.me/${whatsappNumber}?text=${message}`} target="_blank" rel="noopener noreferrer" title="WhatsApp" className="modal-option">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
-            </svg>
-            <span>WhatsApp</span>
-          </a>
+      <div className="modal-content modal-content-large" onClick={(event) => event.stopPropagation()}>
+        <h2>Solicitar Cotizacion</h2>
+        <p className="modal-subtitle">
+          Esta solicitud guardara el brief creativo y tus datos para continuar la conversacion por el canal que prefieras.
+        </p>
 
-          {/* Instagram */}
-          <a href={`https://www.instagram.com/${instagramUser}`} target="_blank" rel="noopener noreferrer" title="Instagram" className="modal-option">
-             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-               <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
-               <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
-               <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
-             </svg>
-            <span>Instagram</span>
-          </a>
+        {!success ? (
+          <>
+            <div className="quote-brief-card">
+              <h3>Resumen del diseno</h3>
+              <p>{briefSummary}</p>
 
-          {/* Facebook */}
-          <a href={`http://m.me/${facebookPageName}`} target="_blank" rel="noopener noreferrer" title="Facebook" className="modal-option">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M14 13.5h2.5l1-4H14v-2c0-1.03 0.01-1.5 1.5-1.5H18V2h-3.5C10.04 2 9 4.03 9 6.5V9.5H6v4h3v8h5v-8z"></path></svg>
-            <span>Facebook Messenger</span>
-          </a>
-        </div>
+              <div className="quote-brief-tags">
+                <span>{category}</span>
+                <span>{metal}</span>
+                <span>{gemstone}</span>
+                <span>{style}</span>
+                <span>{occasion}</span>
+                {reference ? <span>{reference}</span> : null}
+              </div>
 
-        <button className="modal-close-button" onClick={onClose}>Cancelar</button>
+              <button type="button" className={`quote-inline-button ${isCopied ? 'is-success' : ''}`} onClick={handleCopy}>
+                {isCopied ? 'Brief copiado' : 'Copiar brief interno'}
+              </button>
+            </div>
+
+            <form className="quote-form" onSubmit={handleSubmit}>
+              <label className="prompt-field">
+                <span>Nombre</span>
+                <input type="text" value={form.clientName} onChange={handleChange('clientName')} autoComplete="name" required />
+              </label>
+
+              <label className="prompt-field">
+                <span>Email</span>
+                <input type="email" value={form.email} onChange={handleChange('email')} autoComplete="email" required />
+              </label>
+
+              <label className="prompt-field">
+                <span>WhatsApp</span>
+                <input type="text" value={form.whatsapp} onChange={handleChange('whatsapp')} autoComplete="tel" required />
+              </label>
+
+              <label className="prompt-field">
+                <span>Canal preferido</span>
+                <select value={form.preferredContact} onChange={handleChange('preferredContact')}>
+                  <option value="whatsapp">WhatsApp</option>
+                  <option value="email">Email</option>
+                </select>
+              </label>
+
+              <label className="prompt-field">
+                <span>Presupuesto estimado</span>
+                <input type="text" value={form.budget} onChange={handleChange('budget')} placeholder="Ej: entre 1 y 2 millones" />
+              </label>
+
+              <label className="prompt-field">
+                <span>Tiempo ideal</span>
+                <input type="text" value={form.timeline} onChange={handleChange('timeline')} placeholder="Ej: en 3 semanas" />
+              </label>
+
+              <label className="prompt-field prompt-field-wide">
+                <span>Notas adicionales</span>
+                <textarea
+                  className="prompt-textarea prompt-textarea-compact"
+                  value={form.notes}
+                  onChange={handleChange('notes')}
+                  placeholder="Medida, tipo de uso, si es un regalo, cambios de color, version mas delicada, etc."
+                />
+              </label>
+
+              {error && <p className="error-text modal-error">{error}</p>}
+
+              <div className="modal-actions">
+                <button type="submit" className="modal-option modal-submit" disabled={isSubmitting}>
+                  {isSubmitting ? 'Enviando...' : 'Enviar Solicitud'}
+                </button>
+
+                <button type="button" className="modal-close-button" onClick={onClose}>
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          </>
+        ) : (
+          <div className="quote-success">
+            <h3>Solicitud registrada</h3>
+            <p>{success.message}</p>
+            <p className="quote-success-reference">Referencia: {success.quoteId}</p>
+            <button type="button" className="modal-option modal-submit" onClick={onClose}>
+              Cerrar
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

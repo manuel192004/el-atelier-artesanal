@@ -1,169 +1,230 @@
-// Archivo: frontend/src/styles/_atelierpage.scss
-
-@use 'sass:color'; // Importación para la función color.adjust()
-
-// --- ESTILOS PRINCIPALES DE LA PÁGINA ---
 .atelier-page {
-  padding: 60px 20px;
-  background-color: #000;
+  padding: 60px 20px 90px;
+  background:
+    radial-gradient(circle at top left, rgba(193, 169, 126, 0.12), transparent 28%),
+    #000;
   color: #fff;
 }
 
 .atelier-container {
-  max-width: 1100px;
+  width: min(1180px, 100%);
   margin: 0 auto;
 }
 
 .atelier-title {
-  font-size: 3rem;
+  font-size: clamp(2.3rem, 5vw, 3.5rem);
   text-align: center;
-  margin-bottom: 50px;
+  margin-bottom: 46px;
   padding-bottom: 20px;
-  border-bottom: 1px solid #C1A97E;
+  border-bottom: 1px solid rgba(193, 169, 126, 0.65);
   font-weight: 400;
-
-  @media (max-width: 768px) {
-    font-size: 2.2rem;
-  }
+  line-height: 1.12;
 }
 
 .atelier-content {
-  display: flex;
-  gap: 50px;
-  align-items: flex-start;
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(300px, 0.8fr);
+  gap: 34px;
+  align-items: start;
   margin-bottom: 80px;
+}
 
-  @media (max-width: 768px) {
-    flex-direction: column-reverse;
-    margin-bottom: 50px;
-  }
+.atelier-text,
+.atelier-image,
+.value-card {
+  min-width: 0;
 }
 
 .atelier-text {
-  flex: 2;
-  h2 {
-    color: #C1A97E;
-    margin-bottom: 15px;
-    font-size: 1.8rem;
-    font-weight: 500;
-  }
-  p {
-    font-family: 'Lato', sans-serif;
-    font-size: 1.1rem;
-    line-height: 1.8;
-    margin-bottom: 35px;
-    color: #d1d1d1;
-  }
+  padding: 30px;
+  border: 1px solid rgba(193, 169, 126, 0.16);
+  border-radius: 20px;
+  background: linear-gradient(180deg, rgba(193, 169, 126, 0.08), rgba(255, 255, 255, 0.02));
+}
+
+.atelier-text h2 {
+  color: #d5be95;
+  margin-bottom: 15px;
+  font-size: 1.8rem;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.atelier-text p {
+  font-family: 'Lato', sans-serif;
+  font-size: 1.05rem;
+  line-height: 1.9;
+  margin-bottom: 34px;
+  color: #ded5c7;
+}
+
+.atelier-text p:last-child {
+  margin-bottom: 0;
 }
 
 .atelier-image {
-  flex: 1;
   position: sticky;
-  top: 120px;
-
-  img {
-    width: 100%;
-    border-radius: 5px;
-  }
-
-  @media (max-width: 768px) {
-    position: static;
-    width: 100%;
-    margin-bottom: 20px;
-  }
+  top: 118px;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid rgba(193, 169, 126, 0.14);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.24);
 }
 
-// --- ESTILOS PARA LA SECCIÓN DE VALORES ---
+.atelier-image img {
+  width: 100%;
+  display: block;
+  border-radius: 20px;
+}
+
 .atelier-values {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 30px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 22px;
   text-align: center;
-  border-top: 1px solid #333;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
   padding-top: 50px;
-
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-  }
 }
 
 .value-card {
   opacity: 0;
   transform: translateY(20px);
   animation: fadeIn 0.8s ease-out forwards;
+  border: 1px solid rgba(193, 169, 126, 0.16);
+  border-radius: 18px;
+  padding: 28px 24px;
+  background: linear-gradient(180deg, rgba(193, 169, 126, 0.08), rgba(255, 255, 255, 0.02));
+}
 
-  &:nth-child(2) {
-    animation-delay: 0.2s;
-  }
-  &:nth-child(3) {
-    animation-delay: 0.4s;
-  }
+.value-card:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.value-card:nth-child(3) {
+  animation-delay: 0.4s;
 }
 
 .value-icon {
   margin-bottom: 20px;
-  svg {
-    width: 48px;
-    height: 48px;
-    color: #C1A97E;
-  }
 }
 
-// Estilos generales para los h3 de las tarjetas de valores
+.value-icon svg {
+  width: 48px;
+  height: 48px;
+  color: #c1a97e;
+}
+
 .value-card h3 {
   font-size: 1.4rem;
   margin-bottom: 10px;
   font-weight: 500;
+  line-height: 1.2;
 }
 
-// --- ESTILOS PARA LA SECCIÓN DE LLAMADA A LA ACCIÓN (CTA) ---
+.value-card p {
+  font-family: 'Lato', sans-serif;
+  color: #ddd4c5;
+  line-height: 1.7;
+}
+
 .cta-section {
   text-align: center;
   padding-top: 60px;
   margin-top: 60px;
-  border-top: 1px solid #333;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .cta-title {
-  font-size: 2.8rem;
+  font-size: clamp(2.2rem, 4vw, 3rem);
   margin-bottom: 20px;
   font-weight: 500;
-
-  @media (max-width: 768px) {
-    font-size: 2rem;
-  }
+  line-height: 1.12;
 }
 
 .cta-subtitle {
   font-family: 'Lato', sans-serif;
-  font-size: 1.1rem;
-  max-width: 500px;
-  margin: 0 auto 35px auto;
-  color: #d1d1d1;
-  line-height: 1.7;
+  font-size: 1.08rem;
+  max-width: 560px;
+  margin: 0 auto 35px;
+  color: #d5ccbe;
+  line-height: 1.75;
 }
 
 .cta-button {
-  background-color: #C1A97E;
+  background-color: #c1a97e;
   color: #000;
   padding: 15px 35px;
   text-decoration: none;
-  font-weight: bold;
-  font-size: 1.1rem;
+  font-weight: 700;
+  font-size: 1.05rem;
   transition: all 0.3s ease;
-  border-radius: 5px;
+  border-radius: 999px;
   display: inline-block;
-
-  &:hover {
-    background-color: color.adjust(#C1A97E, $lightness: -10%);
-    transform: translateY(-2px);
-  }
 }
 
-// --- ANIMACIÓN ---
+.cta-button-row {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.cta-button-secondary {
+  background: transparent;
+  color: #f0e6d7;
+  border: 1px solid rgba(193, 169, 126, 0.42);
+}
+
+.cta-button:hover {
+  background-color: #ad9368;
+  transform: translateY(-2px);
+}
+
+.cta-button-secondary:hover {
+  background: rgba(193, 169, 126, 0.14);
+}
+
+.atelier-conversion-section {
+  padding-top: 28px;
+}
+
 @keyframes fadeIn {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@media (max-width: 900px) {
+  .atelier-content {
+    grid-template-columns: 1fr;
+    margin-bottom: 50px;
+  }
+
+  .atelier-image {
+    position: static;
+  }
+
+  .atelier-values {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .atelier-page {
+    padding: 34px 14px 70px;
+  }
+
+  .atelier-text,
+  .value-card {
+    padding: 22px 18px;
+  }
+
+  .cta-button {
+    width: 100%;
+  }
+
+  .cta-button-row {
+    flex-direction: column;
   }
 }

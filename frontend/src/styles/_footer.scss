@@ -1,10 +1,8 @@
-// Archivo: frontend/src/styles/_footer.scss (Versión Corregida)
-
 .footer {
   background-color: #000000;
-  color: #a0a0a0;
-  padding: 60px 40px 20px 40px;
-  border-top: 1px solid #333;
+  color: #cbc2b2;
+  padding: 60px 40px 20px;
+  border-top: 1px solid rgba(193, 169, 126, 0.18);
 }
 
 .footer-container {
@@ -23,18 +21,17 @@
 }
 
 .footer-title {
-  color: #ffffff;
-  font-size: 1.25rem; // Un poco más grande para la nueva fuente
+  color: #f8f2e7;
+  font-size: 1.25rem;
   margin-bottom: 20px;
-  font-weight: 700; // Negrita para destacar con 'Cinzel'
+  font-weight: 700;
 }
 
 .footer-brand p {
   line-height: 1.6;
   max-width: 300px;
+  font-family: 'Lato', sans-serif;
 }
-
-// --- SECCIÓN CORREGIDA Y MEJORADA PARA ICONOS ---
 
 .footer-socials {
   margin-top: 20px;
@@ -42,34 +39,32 @@
   gap: 20px;
 }
 
-// Estilos específicos para los enlaces de los íconos
 .footer-socials a {
-  color: #a0a0a0; // Color grisáceo por defecto
+  color: #c7bcaa;
   transition: color 0.3s ease, transform 0.3s ease;
-
-  svg {
-    width: 24px;
-    height: 24px;
-  }
-
-  &:hover {
-    color: #C1A97E; // Color dorado al pasar el ratón
-    transform: scale(1.1); // Un leve zoom al ícono
-  }
 }
 
-// Estilos para los enlaces de texto de navegación
+.footer-socials a svg {
+  width: 24px;
+  height: 24px;
+}
+
+.footer-socials a:hover {
+  color: #c1a97e;
+  transform: scale(1.1);
+}
+
 .footer-links a {
-  color: #a0a0a0;
+  color: #d9cfbe;
   text-decoration: none;
   transition: color 0.3s ease;
-  
-  &:hover {
-    color: #C1A97E;
-  }
+  font-family: 'Lato', sans-serif;
+  line-height: 1.7;
 }
 
-// ---------------------------------------------------
+.footer-links a:hover {
+  color: #c1a97e;
+}
 
 .footer-links ul {
   list-style: none;
@@ -83,6 +78,45 @@
 
 .footer-contact p {
   margin: 5px 0;
+  font-family: 'Lato', sans-serif;
+  line-height: 1.7;
+}
+
+.footer-cta-group {
+  margin-top: 18px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.footer-cta-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 11px 16px;
+  border-radius: 999px;
+  text-decoration: none;
+  font-family: 'Lato', sans-serif;
+  font-weight: 700;
+  color: #080603;
+  background: #c1a97e;
+  border: 1px solid #c1a97e;
+  transition: transform 0.25s ease, background-color 0.25s ease;
+}
+
+.footer-cta-link-secondary {
+  background: transparent;
+  color: #f0e6d7;
+  border-color: rgba(193, 169, 126, 0.42);
+}
+
+.footer-cta-link:hover {
+  transform: translateY(-1px);
+}
+
+.footer-cta-link-secondary:hover {
+  background: rgba(193, 169, 126, 0.14);
 }
 
 .footer-bottom {
@@ -90,5 +124,26 @@
   padding-top: 30px;
   border-top: 1px solid #333;
   font-size: 14px;
-  color: #666;
+  color: #93897b;
+  font-family: 'Lato', sans-serif;
+}
+
+@media (max-width: 640px) {
+  .footer {
+    padding: 48px 16px 20px;
+  }
+
+  .footer-container {
+    gap: 28px;
+    padding-bottom: 28px;
+  }
+
+  .footer-cta-group {
+    flex-direction: column;
+  }
+
+  .footer-cta-link {
+    width: 100%;
+    text-align: center;
+  }
 }

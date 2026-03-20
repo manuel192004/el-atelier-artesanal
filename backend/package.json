@@ -1,19 +1,23 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "API para renders conceptuales y solicitudes de cotizacion de El Atelier Artesanal",
+  "main": "src/server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "check": "node --check src/server.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@google-cloud/aiplatform": "^5.7.0",
+    "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
-    "google-auth-library": "^10.4.0"
+    "google-auth-library": "^10.6.2",
+    "jsonwebtoken": "^9.0.3",
+    "pg": "^8.20.0"
   }
 }

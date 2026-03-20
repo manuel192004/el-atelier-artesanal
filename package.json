@@ -1,0 +1,32 @@
+{
+  "name": "el_atelier_artesanal",
+  "version": "1.0.0",
+  "description": "Experiencia web para El Atelier Artesanal con frontend React, backend Express, PostgreSQL y Docker.",
+  "private": true,
+  "scripts": {
+    "dev": "docker compose up --build",
+    "dev:detach": "docker compose up --build -d",
+    "down": "docker compose down",
+    "logs": "docker compose logs -f",
+    "frontend:build": "npm --prefix frontend run build",
+    "backend:check": "npm --prefix backend run check"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/manuel192004/el-atelier-artesanal.git"
+  },
+  "keywords": [
+    "jewelry",
+    "react",
+    "express",
+    "postgresql",
+    "docker",
+    "ai-assistant"
+  ],
+  "author": "El Atelier Artesanal",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/manuel192004/el-atelier-artesanal/issues"
+  },
+  "homepage": "https://github.com/manuel192004/el-atelier-artesanal#readme"
+}

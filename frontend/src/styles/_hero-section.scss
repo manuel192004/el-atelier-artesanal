@@ -1,34 +1,29 @@
-// Archivo: frontend/src/styles/_hero-section.scss
-
-@use 'sass:color';
-
 .hero-section {
-  height: calc(100vh - 91px);
+  min-height: calc(100vh - 91px);
   width: 100%;
   display: flex;
-  align-items: flex-end; // Alinea el contenido abajo
+  align-items: center;
   justify-content: center;
   position: relative;
   text-align: center;
   color: #fff;
   overflow: hidden;
+  padding: 36px 20px;
+}
 
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.4);
-    z-index: 1;
-  }
+.hero-section::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.42), rgba(0, 0, 0, 0.7)),
+    radial-gradient(circle at center, transparent 0%, rgba(0, 0, 0, 0.28) 100%);
+  z-index: 1;
 }
 
 .hero-background {
   position: absolute;
-  top: 0;
-  left: 0;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -38,29 +33,143 @@
 .hero-content {
   position: relative;
   z-index: 2;
-  padding: 20px;
-  margin-bottom: 10vh; // Empuja el botón hacia arriba desde el borde inferior
+  padding: 30px 28px;
+  width: min(760px, 100%);
+  border: 1px solid rgba(193, 169, 126, 0.18);
+  border-radius: 24px;
+  background: linear-gradient(180deg, rgba(5, 5, 5, 0.36), rgba(5, 5, 5, 0.14));
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(7px);
+  animation: heroReveal 0.75s cubic-bezier(0.22, 1, 0.36, 1);
+}
 
-  // Ocultamos el título y la descripción para que no se vean
-  .hero-title, .hero-description {
-    display: none;
-  }
+.hero-kicker {
+  display: inline-block;
+  margin-bottom: 14px;
+  color: #e0cca5;
+  font-family: 'Lato', sans-serif;
+  font-size: 0.82rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.hero-content h1 {
+  font-size: clamp(2.4rem, 5vw, 4.5rem);
+  line-height: 1.08;
+  margin-bottom: 16px;
+  color: #fffaf1;
+}
+
+.hero-content p {
+  margin: 0 auto 28px;
+  max-width: 580px;
+  color: #f0e7d8;
+  font-family: 'Lato', sans-serif;
+  font-size: 1.08rem;
+  line-height: 1.75;
 }
 
 .hero-button {
-  background-color: #C1A97E;
+  background-color: #c1a97e;
   color: #000;
-  padding: 15px 35px; // Hacemos el botón un poco más grande
-  border-radius: 5px;
+  padding: 15px 30px;
+  border-radius: 999px;
   text-decoration: none;
-  font-size: 1.2rem; // Aumentamos el tamaño de la fuente
-  font-weight: bold;
+  font-size: 1.05rem;
+  font-weight: 700;
   transition: all 0.3s ease;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+}
 
-  &:hover {
-    background-color: color.adjust(#C1A97E, $lightness: -10%);
-    transform: translateY(-3px);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+
+.hero-button-secondary {
+  background: transparent;
+  color: #f7eedf;
+  border: 1px solid rgba(193, 169, 126, 0.45);
+}
+
+.hero-button:hover {
+  background-color: #ad9368;
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+}
+
+.hero-button-secondary:hover {
+  background: rgba(193, 169, 126, 0.14);
+  color: #fff;
+}
+
+.hero-highlights {
+  margin-top: 22px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
+.hero-highlights span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(193, 169, 126, 0.22);
+  background: rgba(255, 255, 255, 0.04);
+  color: #eadfc8;
+  font-family: 'Lato', sans-serif;
+  font-size: 0.92rem;
+}
+
+@keyframes heroReveal {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.985);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 640px) {
+  .hero-section {
+    padding: 20px 14px;
+  }
+
+  .hero-content {
+    padding: 24px 18px;
+  }
+
+  .hero-content h1 {
+    font-size: clamp(2rem, 9vw, 2.8rem);
+  }
+
+  .hero-content p {
+    font-size: 1rem;
+    margin-bottom: 22px;
+  }
+
+  .hero-actions {
+    flex-direction: column;
+  }
+
+  .hero-button {
+    width: 100%;
+  }
+
+  .hero-highlights {
+    justify-content: flex-start;
   }
 }

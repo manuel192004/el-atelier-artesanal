@@ -1,35 +1,36 @@
-// Archivo: frontend/src/styles/_collections-showcase.scss
-
 .collections-showcase {
-  padding: 80px 40px;
+  padding: 88px 24px;
   background-color: #000;
   text-align: center;
 }
 
+.collections-showcase .container {
+  width: min(1240px, 100%);
+  margin: 0 auto;
+}
+
 .section-title {
   font-size: 2.5rem;
-  color: #C1A97E;
+  color: #c1a97e;
   margin-bottom: 15px;
+  line-height: 1.15;
 }
 
 .section-subtitle {
-  font-size: 1.1rem;
-  color: #a0a0a0;
-  max-width: 600px;
-  margin: 0 auto 50px auto;
+  font-size: 1.08rem;
+  color: #c6bcad;
+  max-width: 720px;
+  margin: 0 auto 50px;
   font-family: 'Lato', sans-serif;
+  line-height: 1.75;
 }
 
 .collections-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 25px;
   max-width: 1200px;
   margin: 0 auto;
-
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-  }
 }
 
 .collection-card {
@@ -38,40 +39,69 @@
   overflow: hidden;
   text-decoration: none;
   display: block;
+  border-radius: 18px;
+  border: 1px solid rgba(193, 169, 126, 0.15);
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.28);
+}
 
-  .collection-image {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.4s ease;
+.collection-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.collection-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.92) 2%, rgba(0, 0, 0, 0.08) 60%);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 24px;
+  text-align: left;
+}
+
+.collection-overlay h3 {
+  color: #fff;
+  font-size: 1.55rem;
+  transition: transform 0.4s ease, color 0.4s ease;
+  line-height: 1.2;
+}
+
+.collection-overlay p {
+  color: #ddd3c3;
+  font-family: 'Lato', sans-serif;
+  line-height: 1.6;
+  max-width: 260px;
+  transition: transform 0.4s ease, color 0.4s ease;
+}
+
+.collection-card:hover .collection-image {
+  transform: scale(1.05);
+}
+
+.collection-card:hover .collection-overlay h3,
+.collection-card:hover .collection-overlay p {
+  transform: translateY(-10px);
+}
+
+.collection-card:hover .collection-overlay h3 {
+  color: #c1a97e;
+}
+
+@media (max-width: 640px) {
+  .collections-showcase {
+    padding: 64px 14px;
   }
 
-  .collection-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 50%);
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-    padding: 20px;
-    
-    h3 {
-      color: #fff;
-      font-size: 1.5rem;
-      transition: transform 0.4s ease;
-    }
+  .section-title {
+    font-size: 2rem;
   }
 
-  &:hover {
-    .collection-image {
-      transform: scale(1.05);
-    }
-    .collection-overlay h3 {
-      transform: translateY(-10px);
-      color: #C1A97E;
-    }
+  .collection-card {
+    height: 300px;
   }
 }

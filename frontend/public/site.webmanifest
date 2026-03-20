@@ -1,0 +1,21 @@
+{
+  "name": "El Atelier Artesanal",
+  "short_name": "Atelier",
+  "description": "Alta joyeria artesanal, colecciones curadas y diseno personalizado con asesoria.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#080808",
+  "theme_color": "#080808",
+  "icons": [
+    {
+      "src": "/logo-atelier.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/logo-atelier.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

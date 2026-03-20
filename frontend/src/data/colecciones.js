@@ -1,18 +1,20 @@
-// Archivo: frontend/src/data/colecciones.js
-
 export const colecciones = {
   anillos: [
-    { id: 1, src: '/images/colecciones/anillos/anillo-oro-amarillo1.png', alt: 'Anillo de oro amarillo 1' },
-    { id: 2, src: '/images/colecciones/anillos/anillo-oro-amarillo2.png', alt: 'Anillo de oro amarillo 2' },
-    // ...añade todos tus anillos de oro amarillo aquí...
-    { id: 8, src: '/images/colecciones/anillos/anillo-oro-amarillo8.png', alt: 'Anillo de oro amarillo 8' },
-    { id: 9, src: '/images/colecciones/anillos/anillo-oro-blanco1.png', alt: 'Anillo de oro blanco 1' },
-    { id: 10, src: '/images/colecciones/anillos/anillo-oro-blanco2.png', alt: 'Anillo de oro blanco 2' },
-    // ...añade todos tus anillos de oro blanco aquí...
-    { id: 16, src: '/images/colecciones/anillos/anillo-oro-blanco8.png', alt: 'Anillo de oro blanco 8' },
+    { id: 1, src: '/anillo-oro-amarillo1.png', alt: 'Anillo de oro amarillo 1' },
+    { id: 2, src: '/anillo-oro-amarillo2.png', alt: 'Anillo de oro amarillo 2' },
+    { id: 3, src: '/anillo-oro-amarillo3.png', alt: 'Anillo de oro amarillo 3' },
+    { id: 4, src: '/anillo-oro-amarillo4.png', alt: 'Anillo de oro amarillo 4' },
+    { id: 5, src: '/anillo-oro-amarillo5.png', alt: 'Anillo de oro amarillo 5' },
+    { id: 6, src: '/anillo-oro-amarillo6.png', alt: 'Anillo de oro amarillo 6' },
+    { id: 7, src: '/anillo-oro-amarillo7.png', alt: 'Anillo de oro amarillo 7' },
+    { id: 8, src: '/anillo-oro-amarillo8.png', alt: 'Anillo de oro amarillo 8' },
+    { id: 9, src: '/anillo-oro-blanco 1.png', alt: 'Anillo de oro blanco 1' },
+    { id: 10, src: '/anillo-oro-blanco2.png', alt: 'Anillo de oro blanco 2' },
+    { id: 11, src: '/anillo-oro-blanco3.png', alt: 'Anillo de oro blanco 3' },
+    { id: 12, src: '/anillo-oro-blanco4.png', alt: 'Anillo de oro blanco 4' },
+    { id: 13, src: '/anillo-oro-blanco5.png', alt: 'Anillo de oro blanco 5' },
+    { id: 14, src: '/anillo-oro-blanco6.png', alt: 'Anillo de oro blanco 6' },
+    { id: 15, src: '/anillo-oro-blanco7.png', alt: 'Anillo de oro blanco 7' },
+    { id: 16, src: '/anillo-oro-blanco8.png', alt: 'Anillo de oro blanco 8' },
   ],
-  collares: [
-    // Aquí irían los collares en el futuro
-  ],
-  // ...otras categorías
 };

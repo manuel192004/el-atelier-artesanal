@@ -1,7 +1,5 @@
-// Archivo: frontend/src/components/common/Footer.jsx
-
 import React from 'react';
-import { Link } from 'react-router-dom'; // <-- 1. IMPORTAMOS Link para la navegación interna
+import { Link } from 'react-router-dom';
 import './../../styles/_footer.scss';
 
 const Footer = () => {
@@ -10,10 +8,9 @@ const Footer = () => {
       <div className="footer-container">
         <div className="footer-section footer-brand">
           <h3 className="footer-title">El Atelier Artesanal</h3>
-          <p>Alta joyería hecha a mano en el corazón de Sucre.</p>
-          
+          <p>Alta joyeria hecha a mano en el corazon de Sucre.</p>
+
           <div className="footer-socials">
-            {/* --- 2. ENLACES DE REDES SOCIALES CORREGIDOS --- */}
             <a href="https://www.instagram.com/elatelierartesanal?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==" target="_blank" rel="noopener noreferrer" title="Instagram">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
@@ -31,24 +28,32 @@ const Footer = () => {
             </a>
           </div>
         </div>
-        
+
         <div className="footer-section footer-links">
-          <h3 className="footer-title">Navegación</h3>
-          {/* --- 3. ENLACES DE NAVEGACIÓN CORREGIDOS CON <Link> --- */}
+          <h3 className="footer-title">Navegacion</h3>
           <ul>
             <li><Link to="/">Inicio</Link></li>
             <li><Link to="/atelier">El Taller</Link></li>
-            {/* El enlace a colecciones debe ser a una categoría, por ejemplo 'anillos' o puedes crear una página principal para todas las colecciones */}
-            <li><Link to="/colecciones/anillos">Colecciones</Link></li> 
-            <li><Link to="/configurador">Diseña tu Joya</Link></li>
+            <li><Link to="/colecciones">Colecciones</Link></li>
+            <li><Link to="/configurador">Disena tu Joya</Link></li>
+            <li><Link to="/cuenta">Mi Cuenta</Link></li>
           </ul>
         </div>
 
         <div className="footer-section footer-contact">
           <h3 className="footer-title">Contacto</h3>
-          <p>¿Listo para crear tu pieza única?</p>
-          <p><strong>Email:</strong> contacto@elatelier.com</p>
-          <p><strong>Ubicación:</strong> Sincelejo, Sucre, Colombia</p>
+          <p>Listo para crear tu pieza unica?</p>
+          <p><strong>Email:</strong> sebassolorzano2004@gmail.com</p>
+          <p><strong>Ubicacion:</strong> Sincelejo, Sucre, Colombia</p>
+          <p><strong>Horario:</strong> Lunes a sabado, 9:00 a.m. a 6:00 p.m.</p>
+          <div className="footer-cta-group">
+            <a href="https://wa.me/573156347878?text=Hola,%20quiero%20una%20asesoria%20con%20El%20Atelier%20Artesanal." target="_blank" rel="noopener noreferrer" className="footer-cta-link">
+              Agendar por WhatsApp
+            </a>
+            <Link to="/configurador" className="footer-cta-link footer-cta-link-secondary">
+              Personalizar una joya
+            </Link>
+          </div>
         </div>
       </div>
       <div className="footer-bottom">
