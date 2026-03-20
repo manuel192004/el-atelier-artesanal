@@ -1110,6 +1110,13 @@ app.get('/', (request, response) => {
   });
 });
 
+app.get('/api/public-config', (request, response) => {
+  response.json({
+    googleClientId: GOOGLE_CLIENT_ID || '',
+    googleSignInEnabled: Boolean(GOOGLE_CLIENT_ID),
+  });
+});
+
 app.get('/api/health', (request, response) => {
   const databaseStatus = getDatabaseStatus();
   const userStoreStatus = getUserStoreStatus();

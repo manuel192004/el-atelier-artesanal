@@ -6,7 +6,7 @@ import '../styles/_accountpage.scss';
 import AtelierConversionSection from '../components/common/AtelierConversionSection';
 import PageMeta from '../components/common/PageMeta';
 
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+const GOOGLE_CLIENT_ID_BUILD = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 
 const createRegisterState = () => ({
   fullName: '',
@@ -190,6 +190,8 @@ const AccountPage = () => {
   const [actionMessage, setActionMessage] = useState('');
   const [actionError, setActionError] = useState('');
   const [actionLoadingKey, setActionLoadingKey] = useState('');
+  const [googleClientId, setGoogleClientId] = useState(GOOGLE_CLIENT_ID_BUILD);
+  const [googleAvailabilityMessage, setGoogleAvailabilityMessage] = useState('');
   const googleButtonRef = useRef(null);
 
   useEffect(() => {
@@ -226,7 +228,41 @@ const AccountPage = () => {
   }, [isAuthenticated, token]);
 
   useEffect(() => {
-    if (isAuthenticated || !GOOGLE_CLIENT_ID || !googleButtonRef.current) {
+    if (GOOGLE_CLIENT_ID_BUILD) {
+      return;
+    }
+
+    let cancelled = false;
+
+    apiFetch('/api/public-config')
+      .then((data) => {
+        if (cancelled) {
+          return;
+        }
+
+        const resolvedClientId = String(data?.googleClientId || '').trim();
+
+        if (resolvedClientId) {
+          setGoogleClientId(resolvedClientId);
+          setGoogleAvailabilityMessage('');
+          return;
+        }
+
+        setGoogleAvailabilityMessage('El acceso con Google no esta disponible temporalmente.');
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setGoogleAvailabilityMessage('El acceso con Google no esta disponible temporalmente.');
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isAuthenticated || !googleClientId || !googleButtonRef.current) {
       return;
     }
 
@@ -240,7 +276,7 @@ const AccountPage = () => {
 
       googleButtonRef.current.innerHTML = '';
       window.google.accounts.id.initialize({
-        client_id: GOOGLE_CLIENT_ID,
+        client_id: googleClientId,
         callback: async (response) => {
           if (!response.credential) {
             setAuthError('Google no devolvio una credencial valida.');
@@ -287,7 +323,7 @@ const AccountPage = () => {
       isMounted = false;
       window.clearInterval(intervalId);
     };
-  }, [isAuthenticated, loginWithGoogleCredential]);
+  }, [googleClientId, isAuthenticated, loginWithGoogleCredential]);
 
   const reloadOverview = async () => {
     if (!token) {
@@ -499,11 +535,11 @@ const AccountPage = () => {
                 <span>o entra con Google</span>
               </div>
 
-              {GOOGLE_CLIENT_ID ? (
+              {googleClientId ? (
                 <div className="account-google-button" ref={googleButtonRef}></div>
               ) : (
                 <p className="account-helper-copy">
-                  Falta pegar tu OAuth client id web de Google en <code>frontend/.env</code> como <code>VITE_GOOGLE_CLIENT_ID</code> y en <code>backend/.env</code> como <code>GOOGLE_CLIENT_ID</code>.
+                  {googleAvailabilityMessage || 'El acceso con Google no esta disponible temporalmente.'}
                 </p>
               )}
             </div>
