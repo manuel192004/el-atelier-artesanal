@@ -30,6 +30,7 @@ El repositorio queda preparado para trabajar mejor en equipo:
 - workflow de CI para validar `backend` y `frontend`
 - plantillas de issues para bugs y mejoras
 - plantilla de pull request para revisiones mas ordenadas
+- tag y release `v1.0.0` para el relanzamiento
 
 ## Arranque rapido
 
@@ -135,6 +136,47 @@ npm run logs
 npm run frontend:build
 npm run backend:check
 ```
+
+## Despliegue recomendado
+
+La opcion mas practica que deje preparada es:
+
+- `Netlify` para el frontend
+- `Render` para el backend y PostgreSQL
+
+Archivos incluidos para eso:
+
+- [`netlify.toml`](./netlify.toml)
+- [`render.yaml`](./render.yaml)
+
+### Netlify
+
+1. Crea un sitio conectado a este repositorio.
+2. Netlify tomara el build desde `netlify.toml`.
+3. Define en el panel:
+   - `VITE_API_BASE_URL`
+   - `VITE_GOOGLE_CLIENT_ID`
+
+### Render
+
+1. Crea un Blueprint desde este repositorio.
+2. Render leera `render.yaml` y te preparara:
+   - un servicio web para `backend`
+   - una base PostgreSQL gestionada
+3. Completa las variables sensibles en el dashboard:
+   - `FRONTEND_ORIGINS`
+   - `GOOGLE_CLIENT_ID`
+   - `AZURE_OPENAI_API_KEY` y compañia, o `OPENAI_API_KEY`
+   - `GOOGLE_SERVICE_ACCOUNT_JSON_BASE64` si quieres generacion visual en cloud
+
+### Nota de Google Cloud para produccion
+
+En despliegue cloud ya no dependes solo de un archivo local. El backend ahora acepta tambien:
+
+- `GOOGLE_SERVICE_ACCOUNT_JSON`
+- `GOOGLE_SERVICE_ACCOUNT_JSON_BASE64`
+
+Eso permite llevar Vertex AI a Render sin montar manualmente un archivo dentro del servidor.
 
 ## Estado del proyecto
 

@@ -47,12 +47,52 @@ const { createAssistantReply, isAssistantConfigured } = require('./assistant');
 const app = express();
 app.disable('x-powered-by');
 
+function sanitizeText(value, maxLength = 500) {
+  return String(value || '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, maxLength);
+}
+
+function resolveGoogleApplicationCredentials() {
+  const explicitPath = String(process.env.GOOGLE_APPLICATION_CREDENTIALS || '').trim();
+
+  if (explicitPath) {
+    return explicitPath;
+  }
+
+  const inlineJson = String(process.env.GOOGLE_SERVICE_ACCOUNT_JSON || '').trim();
+  const inlineBase64 = String(process.env.GOOGLE_SERVICE_ACCOUNT_JSON_BASE64 || '').trim();
+
+  if (!inlineJson && !inlineBase64) {
+    return '';
+  }
+
+  try {
+    const rawJson = inlineBase64
+      ? Buffer.from(inlineBase64, 'base64').toString('utf8')
+      : inlineJson;
+    const parsed = JSON.parse(rawJson);
+    const secretsDir = path.join(__dirname, '..', 'secrets');
+    const credentialsPath = path.join(secretsDir, 'gcp-service-account.runtime.json');
+
+    fs.mkdirSync(secretsDir, { recursive: true });
+    fs.writeFileSync(credentialsPath, `${JSON.stringify(parsed, null, 2)}\n`, 'utf8');
+    process.env.GOOGLE_APPLICATION_CREDENTIALS = credentialsPath;
+
+    return credentialsPath;
+  } catch (error) {
+    console.warn('No se pudo preparar la credencial inline de Google Cloud.');
+    return '';
+  }
+}
+
 const PORT = Number(process.env.PORT || 3001);
 const PROJECT_ID = sanitizeText(process.env.GOOGLE_CLOUD_PROJECT_ID, 120) || 'atelier-personal-ia';
 const LOCATION = sanitizeText(process.env.GOOGLE_CLOUD_LOCATION, 80) || 'us-central1';
 const PUBLISHER = sanitizeText(process.env.GOOGLE_CLOUD_PUBLISHER, 40) || 'google';
 const MODEL = sanitizeText(process.env.GOOGLE_CLOUD_MODEL, 120) || 'imagen-3.0-generate-002';
-const GOOGLE_APPLICATION_CREDENTIALS = sanitizeText(process.env.GOOGLE_APPLICATION_CREDENTIALS, 400);
+const GOOGLE_APPLICATION_CREDENTIALS = sanitizeText(resolveGoogleApplicationCredentials(), 400);
 const AUTH_JWT_SECRET = sanitizeText(process.env.AUTH_JWT_SECRET, 200) || 'atelier-local-dev-secret';
 const GOOGLE_CLIENT_ID = sanitizeText(process.env.GOOGLE_CLIENT_ID, 200);
 const FRONTEND_ORIGINS = (process.env.FRONTEND_ORIGINS ||
@@ -69,18 +109,12 @@ const APPOINTMENTS_FILE = path.join(QUOTES_DIR, 'appointment-requests.ndjson');
 const allowedOrigins = new Set(FRONTEND_ORIGINS);
 const googleAuth = new GoogleAuth({
   scopes: ['https://www.googleapis.com/auth/cloud-platform'],
+  ...(GOOGLE_APPLICATION_CREDENTIALS ? { keyFilename: GOOGLE_APPLICATION_CREDENTIALS } : {}),
 });
 const googleOAuthClient = GOOGLE_CLIENT_ID ? new OAuth2Client(GOOGLE_CLIENT_ID) : null;
 
 function isLocalFrontendOrigin(origin) {
   return /^http:\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\])(?::\d+)?$/i.test(String(origin || '').trim());
-}
-
-function sanitizeText(value, maxLength = 500) {
-  return String(value || '')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .slice(0, maxLength);
 }
 
 function ensureQuoteStore() {
@@ -1432,7 +1466,8 @@ app.post('/api/generate-jewelry', createRateLimiter(10 * 60 * 1000, 10), async (
   try {
     if (!isImageGenerationConfigured()) {
       return response.status(503).json({
-        error: 'La generacion visual no esta configurada todavia. Falta GOOGLE_APPLICATION_CREDENTIALS en el servidor.',
+        error:
+          'La generacion visual no esta configurada todavia. Falta GOOGLE_APPLICATION_CREDENTIALS o una credencial inline de Google Cloud.',
       });
     }
 
