@@ -2,6 +2,8 @@
 
 Experiencia web para joyeria personalizada con catalogo editorial, configurador, area de cliente y asistente conversacional `Atel-IA`.
 
+![Vista principal](./frontend/public/aretes-hero.png)
+
 ## Lo que incluye
 
 - `Frontend` en React + Vite con experiencia optimizada para colecciones, configurador y cuenta.
@@ -20,6 +22,14 @@ Experiencia web para joyeria personalizada con catalogo editorial, configurador,
 - Docker / Docker Compose
 - Google Identity Services
 - Azure OpenAI / OpenAI API
+
+## GitHub
+
+El repositorio queda preparado para trabajar mejor en equipo:
+
+- workflow de CI para validar `backend` y `frontend`
+- plantillas de issues para bugs y mejoras
+- plantilla de pull request para revisiones mas ordenadas
 
 ## Arranque rapido
 
