@@ -117,6 +117,13 @@ function buildGuestFallbackReply(message) {
     .toLowerCase()
     .trim();
 
+  const isGiftIntent =
+    /(regalo|regalar|cumpleanos|aniversario|sorpresa|dia de la madre|dia de las madres|madre|mama|mamá)/.test(normalized);
+  const isRingIntent = /(anillo|compromiso|sortija|aro)/.test(normalized);
+  const isCustomIntent = /(personaliz|a medida|configurador|disen)/.test(normalized);
+  const isAppointmentIntent = /(cita|agendar|asesoria|whatsapp)/.test(normalized);
+  const isMothersDayIntent = /(dia de la madre|dia de las madres|madre|mama|mamá)/.test(normalized);
+
   if (/^(hola|buenas|buenos dias|buen dia|buenas tardes|buenas noches|hey|hello)\b/.test(normalized)) {
     return {
       assistantMessage:
@@ -132,7 +139,7 @@ function buildGuestFallbackReply(message) {
     };
   }
 
-  if (/(anillo|compromiso|sortija|aro)/.test(normalized)) {
+  if (isRingIntent) {
     return {
       assistantMessage:
         'Perfecto. Si buscas un anillo, la ruta mas clara es empezar por la coleccion de anillos y desde ahi afinar estilo, metal o personalizacion.',
@@ -152,23 +159,31 @@ function buildGuestFallbackReply(message) {
     };
   }
 
-  if (/(regalo|cumpleanos|aniversario|sorpresa)/.test(normalized)) {
+  if (isGiftIntent) {
     return {
       assistantMessage:
-        'Si es para regalo, normalmente conviene empezar por aretes o cadenas y luego bajar por estilo y presupuesto para no abrir demasiadas opciones a la vez.',
+        isMothersDayIntent
+          ? 'Si es para el Dia de las Madres, te conviene empezar por aretes o cadenas delicadas. Son regalos faciles de acertar, elegantes y muy bien recibidos para esa ocasion.'
+          : 'Si es para regalo, la ruta mas clara es empezar por aretes o cadenas y luego afinar estilo, presupuesto o nivel de protagonismo.',
       quickReplies: [
         { label: 'Ver aretes', message: 'Quiero ver aretes' },
         { label: 'Ver cadenas', message: 'Quiero ver cadenas' },
-        { label: 'Necesito asesoria', message: 'Necesito ayuda para elegir una joya' },
+        isMothersDayIntent
+          ? { label: 'Quiero algo para mama', message: 'Quiero algo delicado para mama' }
+          : { label: 'Quiero algo delicado', message: 'Quiero algo delicado para regalo' },
       ],
-      suggestedAction: null,
+      suggestedAction: {
+        type: 'open_collection',
+        label: 'Ver aretes',
+        collectionSlug: 'aretes',
+      },
       guidanceCard: null,
       diagnostics: emptyDiagnostics,
       memory: createMemory(),
     };
   }
 
-  if (/(personaliz|a medida|configurador|disen)/.test(normalized)) {
+  if (isCustomIntent) {
     return {
       assistantMessage:
         'Tu idea ya suena a personalizacion. Te conviene pasar al configurador para convertirla en un brief mas claro y luego decidir si necesitas cita.',
@@ -187,7 +202,7 @@ function buildGuestFallbackReply(message) {
     };
   }
 
-  if (/(cita|agendar|asesoria|whatsapp)/.test(normalized)) {
+  if (isAppointmentIntent) {
     return {
       assistantMessage:
         'Claro. Podemos seguir por cita o por WhatsApp. Si quieres, te llevo al siguiente paso.',
@@ -205,7 +220,7 @@ function buildGuestFallbackReply(message) {
 
   return {
     assistantMessage:
-      'Puedo ayudarte. Dime si buscas un anillo, un regalo, una pieza personalizada o una asesoria, y te llevo por la ruta mas clara.',
+      'Puedo ayudarte mejor si me dices una de estas cosas: si buscas un anillo, un regalo, una pieza personalizada o una asesoria. Con eso ya te llevo por una ruta mucho mas clara.',
     quickReplies: [
       { label: 'Ver colecciones', message: 'Quiero ver colecciones' },
       ...starterReplies,

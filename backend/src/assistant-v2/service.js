@@ -155,7 +155,7 @@ function sanitizeClientContext(clientContext) {
 function detectOccasion(text) {
   if (/(compromiso|pedida|matrimonio|promesa)/.test(text)) return 'compromiso';
   if (/(aniversario|meses|anos juntos)/.test(text)) return 'aniversario';
-  if (/(regalo|cumpleanos|sorpresa|mama|madre|novia|pareja|amiga|hija)/.test(text)) return 'regalo';
+  if (/(regalo|regalar|cumpleanos|sorpresa|dia de la madre|dia de las madres|mama|madre|novia|pareja|amiga|hija)/.test(text)) return 'regalo';
   if (/(diario|uso diario|oficina|trabajo)/.test(text)) return 'diario';
   if (/(evento|fiesta|boda|grado|graduacion|gala|cena)/.test(text)) return 'evento';
   return '';
@@ -570,6 +570,7 @@ function buildReplyFromSignals({ message, conversation, memory, clientContext, a
     extracted.occasion,
     safeClientContext.currentCollectionSlug || safeAccountContext.topCollectionSlug,
   );
+  const isMothersDayIntent = /(dia de la madre|dia de las madres|mama|madre)/.test(normalized);
   const referencedProduct = findReferencedProduct(message);
   const product = referencedProduct || recommendProduct(extracted, collectionSlug);
   const favoriteCollectionAction = buildFavoriteCollectionAction(safeAccountContext);
@@ -634,7 +635,10 @@ function buildReplyFromSignals({ message, conversation, memory, clientContext, a
     suggestedAction = favoriteCollectionAction;
   } else if (collectionSlug) {
     const collectionCopy = COLLECTION_COPY[collectionSlug];
-    assistantMessage = `La mejor familia para empezar es ${collectionCopy.title}: ${collectionCopy.shortReason}.`;
+    assistantMessage =
+      isMothersDayIntent && extracted.occasion === 'regalo'
+        ? `Para el Dia de las Madres, la mejor familia para empezar es ${collectionCopy.title}. Te ayuda a encontrar algo elegante, facil de regalar y con muy buena salida para esa ocasion.`
+        : `La mejor familia para empezar es ${collectionCopy.title}: ${collectionCopy.shortReason}.`;
     suggestedAction = buildAction('open_collection', {
       label: `Ver ${collectionCopy.title}`,
       collectionSlug,
