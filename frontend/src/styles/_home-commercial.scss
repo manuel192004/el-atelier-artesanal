@@ -291,7 +291,7 @@
 
 @media (max-width: 640px) {
   .home-section {
-    padding: 64px 14px;
+    padding: 58px 14px;
   }
 
   .home-route-grid,
@@ -321,14 +321,66 @@
     padding: 20px 18px;
   }
 
+  .home-section-heading,
+  .home-copy-panel {
+    margin-bottom: 28px;
+  }
+
+  .home-section-heading .section-title,
+  .home-copy-panel .section-title {
+    font-size: clamp(1.85rem, 8vw, 2.25rem);
+  }
+
+  .home-section-heading .section-subtitle,
+  .home-copy-panel .section-subtitle,
+  .home-route-card p,
+  .home-info-card p,
+  .home-moment-card p,
+  .home-story-card p {
+    font-size: 0.98rem;
+    line-height: 1.68;
+  }
+
+  .home-route-card h3,
+  .home-info-card h3,
+  .home-moment-card h3,
+  .home-story-card h3 {
+    font-size: 1.14rem;
+  }
+
   .home-contact-actions,
   .home-route-card .home-primary-cta {
     width: 100%;
+  }
+
+  .home-contact-card {
+    padding-top: 24px;
+    padding-bottom: 24px;
   }
 
   .home-primary-cta,
   .home-secondary-cta {
     width: 100%;
     text-align: center;
+  }
+}
+
+@media (max-width: 420px) {
+  .home-section {
+    padding: 52px 12px;
+  }
+
+  .home-route-card,
+  .home-info-card,
+  .home-moment-card,
+  .home-story-copy,
+  .home-contact-card,
+  .home-faq-item {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .home-inline-pills span {
+    font-size: 0.82rem;
   }
 }

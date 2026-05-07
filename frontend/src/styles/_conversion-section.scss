@@ -252,3 +252,16 @@
     text-align: center;
   }
 }
+
+@media (max-width: 420px) {
+  .conversion-copy-card,
+  .conversion-form-card {
+    padding: 20px 16px;
+  }
+
+  .conversion-copy,
+  .conversion-form-card p,
+  .conversion-signal-card strong {
+    line-height: 1.68;
+  }
+}

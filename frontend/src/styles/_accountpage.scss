@@ -581,3 +581,30 @@
     text-align: center;
   }
 }
+
+@media (max-width: 420px) {
+  .account-auth-copy,
+  .account-auth-card,
+  .account-section-card,
+  .account-hero {
+    padding: 18px 16px;
+  }
+
+  .account-auth-copy h1,
+  .account-hero h1 {
+    font-size: clamp(1.8rem, 8vw, 2.25rem);
+  }
+
+  .account-stat-card strong {
+    font-size: 1.7rem;
+  }
+
+  .account-piece-card img {
+    height: 220px;
+  }
+
+  .account-list-item,
+  .account-profile-grid div {
+    padding: 16px;
+  }
+}

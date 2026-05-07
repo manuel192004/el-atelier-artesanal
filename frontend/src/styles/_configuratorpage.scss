@@ -652,3 +652,50 @@
     width: 100%;
   }
 }
+
+@media (max-width: 420px) {
+  .configurator-page-ia {
+    padding: 16px 12px 76px;
+  }
+
+  .configurator-hero-card,
+  .registration-gate,
+  .prompt-prefill-note,
+  .prompt-brief-preview,
+  .quote-brief-card,
+  .modal-content,
+  .modal-content-large {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .configurator-title,
+  .prompt-designer h2 {
+    font-size: clamp(1.65rem, 7.4vw, 2rem);
+  }
+
+  .configurator-intro,
+  .prompt-subtitle,
+  .prompt-hints,
+  .result-text {
+    font-size: 0.96rem;
+    line-height: 1.62;
+  }
+
+  .generated-image-container {
+    min-height: 300px;
+    padding: 18px;
+  }
+
+  .generated-image-container img {
+    max-height: 320px;
+  }
+
+  .generate-button,
+  .quote-button,
+  .quote-inline-button,
+  .modal-option {
+    width: 100%;
+    justify-content: center;
+  }
+}

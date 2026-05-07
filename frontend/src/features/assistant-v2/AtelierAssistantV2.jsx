@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { apiFetch } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
+import { getCollectionCatalog, getCollectionInsights } from '../../lib/catalog';
 import '../../styles/_assistant-v2.scss';
 
 const slotOptions = [
@@ -108,6 +109,215 @@ function MemoryPills({ memory }) {
 
 function MessageBubble({ role, text }) {
   return <div className={`assistant-v2-message assistant-v2-message-${role}`}>{text}</div>;
+}
+
+function buildActionPreview(action) {
+  if (!action?.type) {
+    return null;
+  }
+
+  if (action.type === 'open_collection' && action.collectionSlug) {
+    const collection = getCollectionCatalog(action.collectionSlug);
+
+    if (!collection) {
+      return null;
+    }
+
+    const insights = getCollectionInsights(collection);
+
+    return {
+      image: collection.cardImage || collection.backgroundImage || '',
+      eyebrow: 'Coleccion curada',
+      title: collection.title,
+      summary: collection.subtitle,
+      meta: [
+        insights.topOccasions[0] || '',
+        insights.topStyles[0] || '',
+      ].filter(Boolean),
+    };
+  }
+
+  if (action.type === 'open_product' && action.collectionSlug && action.productReference) {
+    const collection = getCollectionCatalog(action.collectionSlug);
+    const product = collection?.items.find((item) => item.reference === action.productReference);
+
+    if (!collection || !product) {
+      return null;
+    }
+
+    return {
+      image: product.image || collection.cardImage || '',
+      eyebrow: 'Pieza sugerida',
+      title: product.name,
+      summary: `${product.reference} • ${product.type} • ${product.style}`,
+      meta: [
+        product.metal || '',
+        product.occasions?.[0] || '',
+      ].filter(Boolean),
+    };
+  }
+
+  if (action.type === 'open_configurator') {
+    return {
+      image: '/orviane-collections-hero.png',
+      eyebrow: 'Ruta creativa',
+      title: 'Configurador Orviane',
+      summary: 'Pasa de una intuicion a una propuesta visual con materiales, estilo y ocasion.',
+      meta: ['Brief visual', 'Variaciones guiadas'],
+    };
+  }
+
+  if (action.type === 'open_appointment') {
+    return {
+      image: '/orviane-story-atelier.png',
+      eyebrow: 'Asesoria guiada',
+      title: 'Cita corta',
+      summary: 'Aterriza materiales, tiempos y presupuesto con acompanamiento humano.',
+      meta: ['Contexto real', 'Siguiente paso claro'],
+    };
+  }
+
+  return null;
+}
+
+function ActionPreviewCard({ action }) {
+  const preview = buildActionPreview(action);
+
+  if (!preview) {
+    return null;
+  }
+
+  return (
+    <div className="assistant-v2-preview-card">
+      {preview.image ? (
+        <img
+          src={preview.image}
+          alt={preview.title}
+          className="assistant-v2-preview-image"
+          loading="lazy"
+          decoding="async"
+        />
+      ) : null}
+      <div className="assistant-v2-preview-copy">
+        <span className="assistant-v2-meta">{preview.eyebrow}</span>
+        <strong>{preview.title}</strong>
+        <p>{preview.summary}</p>
+        {preview.meta?.length ? (
+          <div className="assistant-v2-preview-meta">
+            {preview.meta.map((item) => (
+              <span key={item}>{item}</span>
+            ))}
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function GuidanceMessageCard({ guidanceCard }) {
+  if (!guidanceCard) {
+    return null;
+  }
+
+  return (
+    <div className="assistant-v2-sidecard">
+      <span className="assistant-v2-meta">{guidanceCard.eyebrow}</span>
+      <strong>{guidanceCard.title}</strong>
+      <p>{guidanceCard.summary}</p>
+      {Array.isArray(guidanceCard.bullets) && guidanceCard.bullets.length ? (
+        <div className="assistant-v2-preview-meta">
+          {guidanceCard.bullets.slice(0, 2).map((item) => (
+            <span key={item}>{item}</span>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function SuggestedActionMessage({ action, onOpen, onDismiss }) {
+  if (!action) {
+    return null;
+  }
+
+  return (
+    <div className="assistant-v2-sidecard assistant-v2-sidecard-highlight">
+      <span className="assistant-v2-meta">{getActionEyebrow(action)}</span>
+      <strong>{action.label || 'Siguiente paso sugerido'}</strong>
+      <p>{getActionCopy(action)}</p>
+      <ActionPreviewCard action={action} />
+      <div className="assistant-v2-cta-row">
+        <button
+          type="button"
+          className="assistant-v2-chip assistant-v2-chip-primary"
+          onClick={onOpen}
+        >
+          {getActionButtonLabel(action)}
+        </button>
+        <button type="button" className="assistant-v2-chip assistant-v2-chip-subtle" onClick={onDismiss}>
+          Ocultar
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function getActionEyebrow(action) {
+  if (!action?.type) {
+    return 'Siguiente paso';
+  }
+
+  if (action.type === 'open_collection') return 'Coleccion sugerida';
+  if (action.type === 'open_product') return 'Pieza sugerida';
+  if (action.type === 'open_configurator') return 'Ruta recomendada';
+  if (action.type === 'open_appointment') return 'Acompanamiento sugerido';
+  if (action.type === 'open_whatsapp') return 'Continuidad humana';
+  return 'Siguiente paso';
+}
+
+function getActionCopy(action) {
+  if (!action?.type) {
+    return 'Te llevo directo al siguiente paso util.';
+  }
+
+  if (action.reason) {
+    return action.reason;
+  }
+
+  if (action.type === 'open_collection') {
+    return 'Entra directo a la coleccion mas alineada con lo que acabas de pedir.';
+  }
+
+  if (action.type === 'open_product') {
+    return 'Abre una referencia concreta para que no tengas que filtrar desde cero.';
+  }
+
+  if (action.type === 'open_configurator') {
+    return 'Convierte tu idea en una propuesta visual mas clara desde el configurador.';
+  }
+
+  if (action.type === 'open_appointment') {
+    return 'Pasa a una cita corta para aterrizar materiales, tiempos y presupuesto.';
+  }
+
+  if (action.type === 'open_whatsapp') {
+    return 'Continua con una asesora humana sin perder el contexto de esta conversacion.';
+  }
+
+  return 'Te llevo directo al siguiente paso util.';
+}
+
+function getActionButtonLabel(action) {
+  if (!action?.type) {
+    return 'Continuar';
+  }
+
+  if (action.type === 'open_collection') return 'Abrir coleccion';
+  if (action.type === 'open_product') return 'Ver pieza';
+  if (action.type === 'open_configurator') return 'Abrir configurador';
+  if (action.type === 'open_appointment') return 'Ir a cita';
+  if (action.type === 'open_whatsapp') return 'Abrir WhatsApp';
+  return 'Continuar';
 }
 
 function buildGuestFallbackReply(message) {
@@ -566,193 +776,151 @@ const AtelierAssistantV2 = () => {
       ) : null}
 
       {isOpen ? (
-        <section className="assistant-v2-panel" aria-label="Orvia">
-          <header className="assistant-v2-header">
-            <div>
-              <span className="assistant-v2-kicker">Orvia</span>
-              <h2>Mucho mas clara, mucho menos fragil</h2>
-            </div>
-            <button type="button" className="assistant-v2-close" onClick={() => setIsOpen(false)} aria-label="Cerrar">
-              x
-            </button>
-          </header>
+        <div className="assistant-v2-layout">
+          {mode === 'chat' && (guidanceCard || pendingAction) ? (
+            <aside className="assistant-v2-sidecar" aria-label="Sugerencias de Orvia">
+              {guidanceCard ? <GuidanceMessageCard guidanceCard={guidanceCard} /> : null}
+              {pendingAction ? (
+                <SuggestedActionMessage
+                  action={pendingAction}
+                  onOpen={() => openAction(pendingAction, 'pending_action_continue')}
+                  onDismiss={() => setPendingAction(null)}
+                />
+              ) : null}
+            </aside>
+          ) : null}
 
-          <div className="assistant-v2-body">
-            {messages.map((message) => (
-              <MessageBubble key={message.id} role={message.role} text={message.text} />
-            ))}
-            {isThinking ? (
-              <div className="assistant-v2-message assistant-v2-message-assistant">
-                Estoy aterrizando la mejor ruta para ti...
+          <section className="assistant-v2-panel" aria-label="Orvia">
+            <header className="assistant-v2-header">
+              <div className="assistant-v2-header-copy">
+                <span className="assistant-v2-kicker">Orvia</span>
+                <h2>Elige sin enredos</h2>
               </div>
-            ) : null}
-          </div>
+              <button type="button" className="assistant-v2-close" onClick={() => setIsOpen(false)} aria-label="Cerrar">
+                x
+              </button>
+            </header>
 
-          <div className="assistant-v2-actions">
-            {mode === 'chat' ? (
-              <>
-                {diagnostics.knownDetails.length || diagnostics.missingDetails.length ? (
-                  <div className="assistant-v2-diagnostic-card">
-                    <span className="assistant-v2-meta">Brief en curso</span>
-                    {diagnostics.knownDetails.length ? (
-                      <div className="assistant-v2-pills">
-                        {diagnostics.knownDetails.map((item) => (
-                          <span key={item}>{item}</span>
-                        ))}
-                      </div>
-                    ) : null}
-                    {diagnostics.missingDetails.length ? (
-                      <p>
-                        Para afinar mejor: {diagnostics.missingDetails.join(', ')}.
-                      </p>
-                    ) : (
-                      <p>Ya tengo suficiente contexto para orientarte sin hacerte repetir informacion.</p>
-                    )}
-                  </div>
-                ) : null}
-
-                {guidanceCard ? (
-                  <div className="assistant-v2-result-card">
-                    <span className="assistant-v2-meta">{guidanceCard.eyebrow}</span>
-                    <strong>{guidanceCard.title}</strong>
-                    <p>{guidanceCard.summary}</p>
-                    {Array.isArray(guidanceCard.bullets) && guidanceCard.bullets.length ? (
-                      <ul className="assistant-v2-list">
-                        {guidanceCard.bullets.map((item) => (
-                          <li key={item}>{item}</li>
-                        ))}
-                      </ul>
-                    ) : null}
-                  </div>
-                ) : null}
-
-                {pendingAction ? (
-                  <div className="assistant-v2-result-card">
-                    <strong>{pendingAction.label || 'Siguiente paso sugerido'}</strong>
-                    <p>{pendingAction.reason || 'Te llevo directo al siguiente paso util.'}</p>
-                    <div className="assistant-v2-grid">
-                      <button
-                        type="button"
-                        className="assistant-v2-chip assistant-v2-chip-primary"
-                        onClick={() => openAction(pendingAction, 'pending_action_continue')}
-                      >
-                        Continuar
-                      </button>
-                      <button type="button" className="assistant-v2-chip" onClick={() => setPendingAction(null)}>
-                        Seguir hablando
-                      </button>
-                    </div>
-                  </div>
-                ) : null}
-
-                <form
-                  className="assistant-v2-composer"
-                  onSubmit={(event) => {
-                    event.preventDefault();
-                    submitPrompt(inputValue, { source: 'free_text' });
-                  }}
-                >
-                  <input
-                    ref={inputRef}
-                    type="text"
-                    className="assistant-v2-input"
-                    placeholder="Escribe algo como: hola, busco un anillo o quiero un regalo"
-                    value={inputValue}
-                    onChange={(event) => setInputValue(event.target.value)}
-                  />
-                  <button type="submit" className="assistant-v2-chip assistant-v2-chip-primary" disabled={isThinking}>
-                    {isThinking ? 'Pensando...' : 'Enviar'}
-                  </button>
-                </form>
-
-                <div className="assistant-v2-toolbar">
-                  <button type="button" className="assistant-v2-chip" onClick={resetConversation}>
-                    Reiniciar brief
-                  </button>
+            <div className="assistant-v2-body">
+              {messages.map((message) => (
+                <MessageBubble key={message.id} role={message.role} text={message.text} />
+              ))}
+              {isThinking ? (
+                <div className="assistant-v2-message assistant-v2-message-assistant">
+                  Estoy aterrizando la mejor ruta para ti...
                 </div>
+              ) : null}
+            </div>
 
-                {chatError ? <p className="assistant-v2-error">{chatError}</p> : null}
+            <div className="assistant-v2-actions">
+              {mode === 'chat' ? (
+                <>
+                  <form
+                    className="assistant-v2-composer"
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      submitPrompt(inputValue, { source: 'free_text' });
+                    }}
+                  >
+                    <input
+                      ref={inputRef}
+                      type="text"
+                      className="assistant-v2-input"
+                      placeholder="Ejemplo: regalo delicado para aniversario"
+                      value={inputValue}
+                      onChange={(event) => setInputValue(event.target.value)}
+                    />
+                    <button type="submit" className="assistant-v2-chip assistant-v2-chip-primary" disabled={isThinking}>
+                      {isThinking ? 'Pensando...' : 'Enviar'}
+                    </button>
+                  </form>
 
-                <div className="assistant-v2-grid">
-                  {quickReplies.map((reply) => (
-                    <button
-                      key={`${reply.label}-${reply.message}`}
-                      type="button"
-                      className="assistant-v2-chip"
-                      onClick={() => submitPrompt(reply.message, {
-                        source: 'quick_reply',
-                        label: reply.label,
+                  {chatError ? <p className="assistant-v2-error">{chatError}</p> : null}
+
+                  <div className="assistant-v2-quick-replies" aria-label="Recomendaciones rapidas">
+                    {quickReplies.map((reply) => (
+                      <button
+                        key={`${reply.label}-${reply.message}`}
+                        type="button"
+                        className="assistant-v2-chip assistant-v2-chip-compact"
+                        onClick={() => submitPrompt(reply.message, {
+                          source: 'quick_reply',
+                          label: reply.label,
+                        })}
+                      >
+                        {reply.label}
+                      </button>
+                    ))}
+                    <button type="button" className="assistant-v2-chip assistant-v2-chip-compact assistant-v2-chip-subtle" onClick={resetConversation}>
+                      Reiniciar
+                    </button>
+                    <a
+                      href={whatsappHref}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="assistant-v2-link assistant-v2-chip-compact"
+                      onClick={() => trackAssistantEvent('action_opened', {
+                        route: 'open_whatsapp',
+                        source: 'direct_link',
                       })}
                     >
-                      {reply.label}
-                    </button>
-                  ))}
-                  <a
-                    href={whatsappHref}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="assistant-v2-link"
-                    onClick={() => trackAssistantEvent('action_opened', {
-                      route: 'open_whatsapp',
-                      source: 'direct_link',
-                    })}
-                  >
-                    Hablar por WhatsApp
-                  </a>
-                </div>
-              </>
-            ) : null}
+                      WhatsApp
+                    </a>
+                  </div>
+                </>
+              ) : null}
 
-            {mode === 'appointment' ? (
-              <form className="assistant-v2-form" onSubmit={handleAppointmentSubmit}>
-                <label>
-                  <span>Nombre</span>
-                  <input type="text" value={appointmentForm.clientName} onChange={handleAppointmentFieldChange('clientName')} required />
-                </label>
-                <label>
-                  <span>Email</span>
-                  <input type="email" value={appointmentForm.email} onChange={handleAppointmentFieldChange('email')} required />
-                </label>
-                <label>
-                  <span>WhatsApp</span>
-                  <input type="text" value={appointmentForm.whatsapp} onChange={handleAppointmentFieldChange('whatsapp')} required />
-                </label>
-                <label>
-                  <span>Fecha</span>
-                  <input type="date" min={buildToday()} value={appointmentForm.preferredDate} onChange={handleAppointmentFieldChange('preferredDate')} required />
-                </label>
-                <label>
-                  <span>Horario</span>
-                  <select value={appointmentForm.preferredSlot} onChange={handleAppointmentFieldChange('preferredSlot')}>
-                    {slotOptions.map((slot) => (
-                      <option key={slot} value={slot}>
-                        {slot}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  <span>Motivo</span>
-                  <input type="text" value={appointmentForm.reason} onChange={handleAppointmentFieldChange('reason')} required />
-                </label>
-                <label className="assistant-v2-form-wide">
-                  <span>Notas</span>
-                  <textarea value={appointmentForm.notes} onChange={handleAppointmentFieldChange('notes')} />
-                </label>
-                {formError ? <p className="assistant-v2-error">{formError}</p> : null}
-                {successMessage ? <p className="assistant-v2-success">{successMessage}</p> : null}
-                <div className="assistant-v2-grid">
-                  <button type="submit" className="assistant-v2-chip assistant-v2-chip-primary" disabled={isSubmitting}>
-                    {isSubmitting ? 'Enviando...' : 'Solicitar cita'}
-                  </button>
-                  <button type="button" className="assistant-v2-chip" onClick={() => setMode('chat')}>
-                    Volver al chat
-                  </button>
-                </div>
-              </form>
-            ) : null}
-          </div>
-        </section>
+              {mode === 'appointment' ? (
+                <form className="assistant-v2-form" onSubmit={handleAppointmentSubmit}>
+                  <label>
+                    <span>Nombre</span>
+                    <input type="text" value={appointmentForm.clientName} onChange={handleAppointmentFieldChange('clientName')} required />
+                  </label>
+                  <label>
+                    <span>Email</span>
+                    <input type="email" value={appointmentForm.email} onChange={handleAppointmentFieldChange('email')} required />
+                  </label>
+                  <label>
+                    <span>WhatsApp</span>
+                    <input type="text" value={appointmentForm.whatsapp} onChange={handleAppointmentFieldChange('whatsapp')} required />
+                  </label>
+                  <label>
+                    <span>Fecha</span>
+                    <input type="date" min={buildToday()} value={appointmentForm.preferredDate} onChange={handleAppointmentFieldChange('preferredDate')} required />
+                  </label>
+                  <label>
+                    <span>Horario</span>
+                    <select value={appointmentForm.preferredSlot} onChange={handleAppointmentFieldChange('preferredSlot')}>
+                      {slotOptions.map((slot) => (
+                        <option key={slot} value={slot}>
+                          {slot}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    <span>Motivo</span>
+                    <input type="text" value={appointmentForm.reason} onChange={handleAppointmentFieldChange('reason')} required />
+                  </label>
+                  <label className="assistant-v2-form-wide">
+                    <span>Notas</span>
+                    <textarea value={appointmentForm.notes} onChange={handleAppointmentFieldChange('notes')} />
+                  </label>
+                  {formError ? <p className="assistant-v2-error">{formError}</p> : null}
+                  {successMessage ? <p className="assistant-v2-success">{successMessage}</p> : null}
+                  <div className="assistant-v2-grid">
+                    <button type="submit" className="assistant-v2-chip assistant-v2-chip-primary" disabled={isSubmitting}>
+                      {isSubmitting ? 'Enviando...' : 'Solicitar cita'}
+                    </button>
+                    <button type="button" className="assistant-v2-chip" onClick={() => setMode('chat')}>
+                      Volver al chat
+                    </button>
+                  </div>
+                </form>
+              ) : null}
+            </div>
+          </section>
+        </div>
       ) : null}
 
       <button

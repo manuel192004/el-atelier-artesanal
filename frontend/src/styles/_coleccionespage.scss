@@ -1194,3 +1194,147 @@
     font-size: 0.76rem;
   }
 }
+
+@media (max-width: 768px) {
+  .collections-hero {
+    min-height: 340px;
+  }
+
+  .collections-hero-content,
+  .collections-description,
+  .collections-filter-shell,
+  .collections-empty-state {
+    padding: 22px 18px;
+  }
+
+  .collections-description {
+    margin: 40px auto;
+  }
+
+  .collection-trust-bar,
+  .collections-insights-bar,
+  .collections-favorites-grid,
+  .collections-discovery-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .collections-favorites-head,
+  .collections-discovery-head,
+  .collections-filter-head,
+  .collection-category-topline,
+  .collection-card-topline {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .collections-discovery-card {
+    grid-template-columns: 1fr;
+  }
+
+  .collections-discovery-card img {
+    min-height: 180px;
+    max-height: 220px;
+  }
+
+  .collections-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .collections-overview-grid {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .collection-category-card {
+    min-height: 280px;
+  }
+
+  .collection-card-visual {
+    padding-top: 44px;
+  }
+
+  .item-image {
+    height: 220px;
+  }
+
+  .product-modal-visual {
+    padding: 28px 20px;
+  }
+
+  .product-modal-image {
+    max-height: 300px;
+  }
+}
+
+@media (max-width: 480px) {
+  .collections-hero {
+    min-height: 280px;
+    padding: 18px 14px;
+  }
+
+  .collections-hero-title {
+    font-size: 1.95rem;
+  }
+
+  .collections-hero-subtitle {
+    font-size: 0.98rem;
+  }
+
+  .collections-main-content,
+  .collection-trust-bar {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .collections-filter-shell,
+  .collections-empty-state,
+  .collection-card-copy,
+  .collections-favorites-shelf,
+  .collections-insight-card {
+    padding: 20px 18px;
+  }
+
+  .collections-filter-pills,
+  .collection-card-actions,
+  .product-modal-actions,
+  .collections-discovery-card-actions {
+    flex-direction: column;
+  }
+
+  .filter-button,
+  .product-action-primary,
+  .product-action-secondary,
+  .product-action-link,
+  .collections-filter-reset {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+  }
+
+  .product-modal-copy h2 {
+    font-size: 1.7rem;
+  }
+
+  .product-modal-overlay {
+    padding: 0;
+    align-items: flex-end;
+  }
+
+  .product-modal {
+    max-height: 90vh;
+    border-radius: 22px 22px 0 0;
+  }
+
+  .product-modal-visual {
+    padding-top: 46px;
+  }
+
+  .product-journey-strip {
+    gap: 8px;
+  }
+
+  .product-journey-strip span {
+    font-size: 0.76rem;
+  }
+}

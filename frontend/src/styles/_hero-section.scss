@@ -145,20 +145,23 @@
 
 @media (max-width: 640px) {
   .hero-section {
-    padding: 20px 14px;
+    min-height: calc(100svh - 78px);
+    padding: 18px 14px;
   }
 
   .hero-content {
-    padding: 24px 18px;
+    padding: 22px 18px;
+    border-radius: 20px;
   }
 
   .hero-content h1 {
-    font-size: clamp(2rem, 9vw, 2.8rem);
+    font-size: clamp(1.85rem, 8.4vw, 2.6rem);
   }
 
   .hero-content p {
-    font-size: 1rem;
-    margin-bottom: 22px;
+    font-size: 0.98rem;
+    line-height: 1.65;
+    margin-bottom: 20px;
   }
 
   .hero-actions {
@@ -171,5 +174,27 @@
 
   .hero-highlights {
     justify-content: flex-start;
+  }
+
+  .hero-highlights span {
+    min-height: 34px;
+    padding: 7px 11px;
+    font-size: 0.82rem;
+  }
+}
+
+@media (max-width: 420px) {
+  .hero-section {
+    min-height: auto;
+    padding: 16px 12px;
+  }
+
+  .hero-content {
+    padding: 20px 16px;
+  }
+
+  .hero-kicker {
+    margin-bottom: 10px;
+    font-size: 0.74rem;
   }
 }

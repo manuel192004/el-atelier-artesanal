@@ -212,12 +212,29 @@
 
 @media (max-width: 640px) {
   .atelier-page {
-    padding: 34px 14px 70px;
+    padding: 28px 14px 62px;
+  }
+
+  .atelier-title {
+    margin-bottom: 32px;
+    padding-bottom: 14px;
+    font-size: clamp(1.95rem, 8vw, 2.6rem);
   }
 
   .atelier-text,
   .value-card {
     padding: 22px 18px;
+  }
+
+  .atelier-text h2 {
+    font-size: 1.45rem;
+  }
+
+  .atelier-text p,
+  .cta-subtitle,
+  .value-card p {
+    font-size: 0.98rem;
+    line-height: 1.72;
   }
 
   .cta-button {
