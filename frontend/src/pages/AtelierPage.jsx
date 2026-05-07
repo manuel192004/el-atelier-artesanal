@@ -8,19 +8,19 @@ const AtelierPage = () => {
   return (
     <div className="atelier-page fade-in-section">
       <PageMeta
-        title="El Atelier | Historia, proceso y artesania de El Atelier Artesanal"
-        description="Conoce la historia, el proceso creativo y la fusion entre artesania y tecnologia que define a El Atelier Artesanal."
-        path="/atelier"
+        title="Orviane | Historia, proceso y alta joyeria personalizada"
+        description="Conoce la historia, el proceso creativo y la fusion entre artesania y tecnologia que define a Orviane."
+        path="/orviane"
         image="/fondo-atelier.jpg"
       />
       <div className="atelier-container">
-        <h1 className="atelier-title">El Corazon del Artesano</h1>
+        <h1 className="atelier-title">La Casa Orviane</h1>
 
         <div className="atelier-content">
           <div className="atelier-text">
             <h2>Nuestra Historia</h2>
             <p>
-              El Atelier Artesanal nacio del eco de un martillo sobre plata, en el pequeno
+              Orviane nace del eco de un martillo sobre plata, en el pequeno
               taller de mi abuelo. Creci entre el brillo de gemas en bruto y el aroma a
               metal pulido, aprendiendo que cada joya no es un objeto, sino el guardian de
               una historia.
@@ -36,14 +36,14 @@ const AtelierPage = () => {
 
             <h2>Una Fusion de Tradicion y Futuro</h2>
             <p>
-              Creemos que la artesania no debe estar anclada en el pasado. Por eso, hemos
+              Creemos que la artesania no debe quedarse anclada en el pasado. Por eso, hemos
               abrazado la tecnologia no como un reemplazo, sino como un puente. Nuestro
-              disenador de IA es el interprete de tus suenos.
+              asistente creativo es el interprete de tus suenos.
             </p>
           </div>
 
           <div className="atelier-image">
-            <img src="/fondo-atelier.jpg" alt="El artesano en el taller de El Atelier Artesanal" loading="lazy" decoding="async" />
+            <img src="/fondo-atelier.jpg" alt="Proceso artesanal de Orviane en el taller" loading="lazy" decoding="async" />
           </div>
         </div>
 
@@ -74,7 +74,7 @@ const AtelierPage = () => {
         <div className="cta-section">
           <h2 className="cta-title">Donde el Oro<br />Toma la Forma de tus Suenos</h2>
           <p className="cta-subtitle">
-            Si ya conectaste con la historia del atelier, el siguiente paso puede ser catalogo, personalizacion o una
+            Si ya conectaste con la historia de Orviane, el siguiente paso puede ser catalogo, personalizacion o una
             conversacion corta para definir mejor la pieza.
           </p>
           <div className="cta-button-row">
@@ -92,11 +92,11 @@ const AtelierPage = () => {
           kicker="Atencion mas personal"
           title="Cuando la pieza tiene peso emocional, conviene hablarla bien"
           copy="Compromisos, aniversarios, regalos simbolicos o ideas aun borrosas suelen resolverse mejor con una conversacion corta que ordene referencias, materiales y siguiente paso."
-          highlights={['Asesoria para piezas simbolicas', 'Lectura de materiales y acabados', 'Seguimiento humano del atelier']}
+          highlights={['Asesoria para piezas simbolicas', 'Lectura de materiales y acabados', 'Seguimiento humano de Orviane']}
           primaryAction={{ label: 'Ir al configurador', to: '/configurador' }}
           secondaryAction={{
             label: 'Agendar por WhatsApp',
-            href: 'https://wa.me/573156347878?text=Hola,%20quiero%20una%20asesoria%20con%20El%20Atelier%20Artesanal.',
+            href: 'https://wa.me/573156347878?text=Hola,%20quiero%20una%20asesoria%20con%20Orviane.',
             external: true,
           }}
           formTitle="Pide una cita para hablar tu idea"

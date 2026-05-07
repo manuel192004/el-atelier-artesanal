@@ -176,7 +176,8 @@
   color: #dcc89f;
 }
 
-.account-field input {
+.account-field input,
+.account-field textarea {
   width: 100%;
   border: 1px solid #343434;
   background: #101010;
@@ -186,11 +187,20 @@
   font-size: 1rem;
 }
 
-.account-field input::placeholder {
+.account-field textarea {
+  resize: vertical;
+  min-height: 96px;
+  font-family: 'Lato', sans-serif;
+  line-height: 1.55;
+}
+
+.account-field input::placeholder,
+.account-field textarea::placeholder {
   color: #8f8779;
 }
 
-.account-field input:focus {
+.account-field input:focus,
+.account-field textarea:focus {
   outline: none;
   border-color: #c1a97e;
 }
@@ -451,9 +461,58 @@
   padding: 12px 4px 4px;
 }
 
+.account-chat-transcript,
+.account-admin-editor,
+.account-admin-metrics,
+.account-metric-list {
+  display: grid;
+  gap: 12px;
+}
+
+.account-chat-transcript {
+  margin-top: 14px;
+  padding: 14px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.account-chat-transcript p,
+.account-metric-list p {
+  margin: 0;
+  color: #d8d8d8;
+  line-height: 1.55;
+  font-family: 'Lato', sans-serif;
+}
+
+.account-admin-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(300px, 0.85fr);
+  gap: 22px;
+}
+
+.account-profile-grid-compact {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.account-metric-list {
+  margin-top: 18px;
+  padding: 18px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.account-metric-list h3 {
+  margin: 10px 0 2px;
+  color: #ead8b7;
+  font-family: 'Cinzel', serif;
+}
+
 @media (max-width: 960px) {
   .account-auth-shell,
-  .account-profile-grid {
+  .account-profile-grid,
+  .account-admin-grid {
     grid-template-columns: 1fr;
   }
 

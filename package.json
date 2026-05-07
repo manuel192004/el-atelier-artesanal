@@ -1,7 +1,7 @@
 {
-  "name": "el_atelier_artesanal",
+  "name": "orviane",
   "version": "1.0.0",
-  "description": "Experiencia web para El Atelier Artesanal con frontend React, backend Express, PostgreSQL y Docker.",
+  "description": "Experiencia web para Orviane con frontend React, backend Express, PostgreSQL y Docker.",
   "private": true,
   "scripts": {
     "dev": "docker compose up --build",
@@ -23,7 +23,7 @@
     "docker",
     "ai-assistant"
   ],
-  "author": "El Atelier Artesanal",
+  "author": "Orviane",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/manuel192004/el-atelier-artesanal/issues"

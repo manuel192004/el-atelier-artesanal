@@ -11,7 +11,7 @@ const Header = () => {
     logout();
     closeMenu();
   };
-  const accountLabel = isAuthenticated ? `Mi Cuenta - ${String(user?.fullName || '').split(' ')[0] || 'Atelier'}` : 'Mi Cuenta';
+  const accountLabel = isAuthenticated ? `Mi Cuenta - ${String(user?.fullName || '').split(' ')[0] || 'Orviane'}` : 'Mi Cuenta';
 
   return (
     <header className="header">
@@ -19,7 +19,7 @@ const Header = () => {
         <div className="header-topline-inner">
           <p>Sincelejo, Sucre | Citas previas y asesoria por WhatsApp</p>
           <div className="header-topline-actions">
-            <a href="https://wa.me/573156347878?text=Hola,%20quiero%20una%20asesoria%20con%20El%20Atelier%20Artesanal." target="_blank" rel="noreferrer">
+            <a href="https://wa.me/573156347878?text=Hola,%20quiero%20una%20asesoria%20con%20Orviane." target="_blank" rel="noreferrer">
               WhatsApp
             </a>
             <Link to="/cuenta" onClick={closeMenu}>
@@ -31,13 +31,13 @@ const Header = () => {
 
       <div className="header-container">
         <Link to="/" className="header-logo" onClick={closeMenu}>
-          <img src="/logo-atelier.png" alt="El Atelier Artesanal Logo" />
+          <img src="/logo-orviane.png" alt="Orviane logo" />
         </Link>
 
         <nav className="header-nav desktop-nav" aria-label="Navegacion principal">
           <ul>
             <li><Link to="/" className="nav-link">Inicio</Link></li>
-            <li><Link to="/atelier" className="nav-link">El Atelier</Link></li>
+            <li><Link to="/orviane" className="nav-link">La Casa</Link></li>
             <li><Link to="/colecciones" className="nav-link">Colecciones</Link></li>
           </ul>
         </nav>
@@ -47,7 +47,7 @@ const Header = () => {
             {accountLabel}
           </Link>
           <a
-            href="https://wa.me/573156347878?text=Hola,%20quiero%20agendar%20una%20asesoria%20con%20El%20Atelier%20Artesanal."
+            href="https://wa.me/573156347878?text=Hola,%20quiero%20agendar%20una%20asesoria%20con%20Orviane."
             target="_blank"
             rel="noreferrer"
             className="header-ghost-cta"
@@ -79,11 +79,11 @@ const Header = () => {
         <div className="mobile-menu">
           <nav className="mobile-nav-links" aria-label="Navegacion movil">
             <Link to="/" className="nav-link" onClick={closeMenu}>Inicio</Link>
-            <Link to="/atelier" className="nav-link" onClick={closeMenu}>El Atelier</Link>
+            <Link to="/orviane" className="nav-link" onClick={closeMenu}>La Casa</Link>
             <Link to="/colecciones" className="nav-link" onClick={closeMenu}>Colecciones</Link>
             <Link to="/cuenta" className="nav-link special-link" onClick={closeMenu}>{accountLabel}</Link>
             <a
-              href="https://wa.me/573156347878?text=Hola,%20quiero%20agendar%20una%20asesoria%20con%20El%20Atelier%20Artesanal."
+              href="https://wa.me/573156347878?text=Hola,%20quiero%20agendar%20una%20asesoria%20con%20Orviane."
               className="nav-link special-link"
               target="_blank"
               rel="noreferrer"

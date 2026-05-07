@@ -1,6 +1,6 @@
-# El Atelier Artesanal
+# Orviane
 
-Experiencia web para joyeria personalizada con catalogo editorial, configurador, area de cliente y asistente conversacional `Atel-IA`.
+Experiencia web para joyeria personalizada con catalogo editorial, configurador, area de cliente y asistente conversacional `Orvia`.
 
 ![Vista principal](./frontend/public/aretes-hero.png)
 
@@ -11,7 +11,7 @@ Experiencia web para joyeria personalizada con catalogo editorial, configurador,
 - `PostgreSQL` como almacenamiento principal para usuarios, citas, cotizaciones y contexto del bot.
 - `Docker Compose` para levantar todo el stack local en una sola orden.
 - Registro e inicio de sesion con Google.
-- Integracion de IA para `Atel-IA` usando Azure OpenAI u OpenAI directa, segun variables.
+- Integracion de IA para `Orvia` usando Azure OpenAI u OpenAI directa, segun variables.
 
 ## Stack
 
@@ -104,7 +104,7 @@ Despues pega el `client id` en:
 
 ## IA del asistente
 
-`Atel-IA` puede funcionar de dos maneras:
+`Orvia` puede funcionar de dos maneras:
 
 - Con `Azure OpenAI`, si defines `AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_API_KEY` y `AZURE_OPENAI_DEPLOYMENT`.
 - Con `OpenAI` directa, si defines `OPENAI_API_KEY` y `OPENAI_ASSISTANT_MODEL`.
@@ -186,7 +186,7 @@ Actualmente el proyecto ya incluye:
 - catalogo por colecciones con fichas relacionadas
 - flujo de producto -> configurador -> cita
 - area de cliente con citas, cotizaciones y favoritos
-- `Atel-IA` con memoria y acciones rapidas
+- `Orvia` con memoria y acciones rapidas
 
 ## Nota
 

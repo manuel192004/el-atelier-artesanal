@@ -54,7 +54,7 @@ function renderAction(action, className) {
 }
 
 const AtelierConversionSection = ({
-  kicker = 'Asesoria Atelier',
+  kicker = 'Asesoria Orviane',
   title,
   copy,
   highlights = [],
@@ -243,7 +243,7 @@ const AtelierConversionSection = ({
                 {isSubmitting ? 'Enviando solicitud...' : 'Solicitar cita'}
               </button>
               <a
-                href="https://wa.me/573156347878?text=Hola,%20quiero%20una%20asesoria%20con%20El%20Atelier%20Artesanal."
+                href="https://wa.me/573156347878?text=Hola,%20quiero%20una%20asesoria%20con%20Orviane."
                 target="_blank"
                 rel="noreferrer"
                 className="conversion-secondary-cta"

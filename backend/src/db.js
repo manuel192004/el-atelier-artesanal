@@ -122,6 +122,13 @@ const schemaStatements = [
   "ALTER TABLE quote_requests ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'received';",
   'ALTER TABLE quote_requests ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ;',
   'ALTER TABLE appointment_requests ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ;',
+  "ALTER TABLE assistant_memories ADD COLUMN IF NOT EXISTS metal TEXT NOT NULL DEFAULT '';",
+  "ALTER TABLE assistant_memories ADD COLUMN IF NOT EXISTS gemstone TEXT NOT NULL DEFAULT '';",
+  "ALTER TABLE assistant_memories ADD COLUMN IF NOT EXISTS ring_size TEXT NOT NULL DEFAULT '';",
+  "ALTER TABLE assistant_memories ADD COLUMN IF NOT EXISTS recipient TEXT NOT NULL DEFAULT '';",
+  "ALTER TABLE assistant_memories ADD COLUMN IF NOT EXISTS deadline TEXT NOT NULL DEFAULT '';",
+  "ALTER TABLE assistant_memories ADD COLUMN IF NOT EXISTS budget_range TEXT NOT NULL DEFAULT '';",
+  "ALTER TABLE assistant_memories ADD COLUMN IF NOT EXISTS last_product_reference TEXT NOT NULL DEFAULT '';",
   'CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email_lower ON users ((LOWER(email)));',
   "CREATE UNIQUE INDEX IF NOT EXISTS idx_users_google_sub ON users(google_sub) WHERE google_sub IS NOT NULL AND google_sub <> '';",
   'CREATE INDEX IF NOT EXISTS idx_registrants_email ON registrants(email);',
@@ -608,8 +615,15 @@ function mapAssistantMemoryRow(row) {
     jewelryType: row.jewelry_type || '',
     budget: row.budget || '',
     style: row.style || '',
+    metal: row.metal || '',
+    gemstone: row.gemstone || '',
+    ringSize: row.ring_size || '',
+    recipient: row.recipient || '',
+    deadline: row.deadline || '',
+    budgetRange: row.budget_range || '',
     lastIntent: row.last_intent || '',
     lastCollectionSlug: row.last_collection_slug || '',
+    lastProductReference: row.last_product_reference || '',
     updatedAt: row.updated_at ? new Date(row.updated_at).toISOString() : '',
   };
 }
@@ -687,7 +701,8 @@ async function getAssistantMemoryByUserId(userId) {
   const { rows } = await getPool().query(
     `
       SELECT
-        user_id, occasion, jewelry_type, budget, style, last_intent, last_collection_slug, updated_at
+        user_id, occasion, jewelry_type, budget, style, metal, gemstone, ring_size, recipient,
+        deadline, budget_range, last_intent, last_collection_slug, last_product_reference, updated_at
       FROM assistant_memories
       WHERE user_id = $1
       LIMIT 1
@@ -711,21 +726,36 @@ async function upsertAssistantMemory(record) {
         jewelry_type,
         budget,
         style,
+        metal,
+        gemstone,
+        ring_size,
+        recipient,
+        deadline,
+        budget_range,
         last_intent,
         last_collection_slug,
+        last_product_reference,
         updated_at
       )
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
       ON CONFLICT (user_id) DO UPDATE SET
         occasion = EXCLUDED.occasion,
         jewelry_type = EXCLUDED.jewelry_type,
         budget = EXCLUDED.budget,
         style = EXCLUDED.style,
+        metal = EXCLUDED.metal,
+        gemstone = EXCLUDED.gemstone,
+        ring_size = EXCLUDED.ring_size,
+        recipient = EXCLUDED.recipient,
+        deadline = EXCLUDED.deadline,
+        budget_range = EXCLUDED.budget_range,
         last_intent = EXCLUDED.last_intent,
         last_collection_slug = EXCLUDED.last_collection_slug,
+        last_product_reference = EXCLUDED.last_product_reference,
         updated_at = EXCLUDED.updated_at
       RETURNING
-        user_id, occasion, jewelry_type, budget, style, last_intent, last_collection_slug, updated_at
+        user_id, occasion, jewelry_type, budget, style, metal, gemstone, ring_size, recipient,
+        deadline, budget_range, last_intent, last_collection_slug, last_product_reference, updated_at
     `,
     [
       record.userId,
@@ -733,8 +763,15 @@ async function upsertAssistantMemory(record) {
       record.jewelryType || '',
       record.budget || '',
       record.style || '',
+      record.metal || '',
+      record.gemstone || '',
+      record.ringSize || '',
+      record.recipient || '',
+      record.deadline || '',
+      record.budgetRange || '',
       record.lastIntent || '',
       record.lastCollectionSlug || '',
+      record.lastProductReference || '',
       record.updatedAt || new Date().toISOString(),
     ],
   );

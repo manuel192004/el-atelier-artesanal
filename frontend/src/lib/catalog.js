@@ -271,7 +271,7 @@ function inferCombinesWith(slug, type, style) {
 }
 
 function buildSummary(collectionTitle, itemName, idealFor) {
-  return `${itemName} pertenece a la coleccion ${collectionTitle.toLowerCase()} y mantiene el lenguaje elegante de El Atelier Artesanal, con materiales nobles, proporciones limpias y una presencia refinada. ${idealFor}`;
+  return `${itemName} pertenece a la coleccion ${collectionTitle.toLowerCase()} y mantiene el lenguaje elegante de Orviane, con materiales nobles, proporciones limpias y una presencia refinada. ${idealFor}`;
 }
 
 function buildConfiguratorPrompt(collectionTitle, itemName) {

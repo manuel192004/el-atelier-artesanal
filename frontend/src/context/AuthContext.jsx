@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { apiFetch } from '../lib/api';
 
-const AUTH_STORAGE_KEY = 'atelierAuthSession';
+const AUTH_STORAGE_KEY = 'orvianeAuthSession';
 
 const AuthContext = createContext(null);
 

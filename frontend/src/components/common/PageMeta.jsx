@@ -1,10 +1,10 @@
 import { useEffect } from 'react';
 
-const DEFAULT_TITLE = 'El Atelier Artesanal | Alta joyeria artesanal y diseno personalizado';
+const DEFAULT_TITLE = 'Orviane | Alta joyeria personalizada y diseno a medida';
 const DEFAULT_DESCRIPTION =
-  'Explora colecciones de joyeria artesanal, disena una pieza personalizada y agenda asesoria con El Atelier Artesanal.';
+  'Explora colecciones de alta joyeria personalizada, disena una pieza a medida y agenda asesoria con Orviane.';
 const DEFAULT_IMAGE = '/hero-background.png';
-const SITE_NAME = 'El Atelier Artesanal';
+const SITE_NAME = 'Orviane';
 
 function upsertMetaByName(name, content) {
   if (typeof document === 'undefined' || !name) {

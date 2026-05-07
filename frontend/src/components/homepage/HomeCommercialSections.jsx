@@ -16,9 +16,9 @@ const clientRoutes = [
   },
   {
     title: 'Quiero Agendar Cita',
-    copy: 'Si necesitas una decision importante o una pieza especial, te conviene pasar por asesoria directa del atelier.',
+    copy: 'Si necesitas una decision importante o una pieza especial, te conviene pasar por asesoria directa con Orviane.',
     ctaLabel: 'Hablar por WhatsApp',
-    href: 'https://wa.me/573156347878?text=Hola,%20quiero%20agendar%20una%20asesoria%20con%20El%20Atelier%20Artesanal.',
+    href: 'https://wa.me/573156347878?text=Hola,%20quiero%20agendar%20una%20asesoria%20con%20Orviane.',
   },
 ];
 
@@ -73,7 +73,7 @@ const atelierStories = [
   },
   {
     occasion: 'Aniversario',
-    client: 'Caso frecuente del atelier',
+    client: 'Caso frecuente de la casa',
     piece: 'Cadena o pieza con narrativa de permanencia',
     text: 'Mientras reunimos testimonios publicados, mostramos el tipo de historia que mejor conversa con regalos de aniversario y piezas con mas permanencia.',
     image: '/cadenas/cadenas-09-cadena-delicada.png',
@@ -268,7 +268,7 @@ const HomeCommercialSections = () => {
         <div className="home-shell home-contact-card">
           <div className="home-contact-copy">
             <span className="home-section-kicker">Contacto Visible</span>
-            <h2 className="section-title">Habla con el atelier por la via que te resulte mas natural</h2>
+            <h2 className="section-title">Habla con Orviane por la via que te resulte mas natural</h2>
             <p className="section-subtitle">
               Si ya sabes lo que buscas, podemos ir directo a catalogo o configurador. Si necesitas contexto, mejor
               pasar por una conversacion corta.
@@ -286,7 +286,7 @@ const HomeCommercialSections = () => {
 
           <div className="home-contact-actions">
             <a
-              href="https://wa.me/573156347878?text=Hola,%20quiero%20una%20asesoria%20con%20El%20Atelier%20Artesanal."
+              href="https://wa.me/573156347878?text=Hola,%20quiero%20una%20asesoria%20con%20Orviane."
               target="_blank"
               rel="noreferrer"
               className="home-primary-cta"

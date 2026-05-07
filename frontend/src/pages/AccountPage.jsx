@@ -41,7 +41,7 @@ const emptyOverview = {
 };
 
 function firstName(name) {
-  return String(name || '').trim().split(' ')[0] || 'Atelier';
+  return String(name || '').trim().split(' ')[0] || 'Orviane';
 }
 
 function formatDate(value) {
@@ -394,7 +394,7 @@ const AccountPage = () => {
     return (
       <div className="account-page">
         <div className="account-shell">
-          <p className="account-loading-copy">Cargando tu cuenta del atelier...</p>
+          <p className="account-loading-copy">Cargando tu cuenta de Orviane...</p>
         </div>
       </div>
     );
@@ -404,10 +404,10 @@ const AccountPage = () => {
     return (
       <div className="account-page">
         <PageMeta
-          title="Mi Cuenta | Registro, acceso y seguimiento en El Atelier Artesanal"
-          description="Crea tu cuenta, inicia sesion con email o Google y guarda favoritos, disenos, citas y cotizaciones en El Atelier Artesanal."
+          title="Mi Cuenta | Registro, acceso y seguimiento en Orviane"
+          description="Crea tu cuenta, inicia sesion con email o Google y guarda favoritos, disenos, citas y cotizaciones en Orviane."
           path="/cuenta"
-          image="/logo-atelier.png"
+          image="/logo-orviane.png"
         />
         <div className="account-shell">
           <div className="account-auth-shell">
@@ -416,7 +416,7 @@ const AccountPage = () => {
               <h1>Guarda favoritos, canasta y disenos personalizados.</h1>
               <p>
                 Desde tu cuenta puedes volver a ver tus creaciones, reunir piezas que te gustaron, construir una
-                canasta de cotizacion y seguir el historial de solicitudes del atelier.
+                canasta de cotizacion y seguir el historial de solicitudes de Orviane.
               </p>
 
               <div className="account-feature-list">
@@ -548,12 +548,12 @@ const AccountPage = () => {
           <AtelierConversionSection
             className="account-conversion-section"
             kicker="Prefieres hablar primero"
-            title="Tambien puedes entrar al atelier sin crear cuenta de inmediato"
+            title="Tambien puedes entrar a Orviane sin crear cuenta de inmediato"
             copy="Si todavia estas comparando opciones o quieres una compra mas asistida, puedes pedir una cita corta y retomar el registro despues, ya con una ruta mas clara."
             highlights={['Cuenta para guardar favoritos', 'Cita para orientar la decision', 'WhatsApp directo si prefieres rapidez']}
             primaryAction={{
               label: 'Hablar por WhatsApp',
-              href: 'https://wa.me/573156347878?text=Hola,%20quiero%20una%20asesoria%20con%20El%20Atelier%20Artesanal.',
+              href: 'https://wa.me/573156347878?text=Hola,%20quiero%20una%20asesoria%20con%20Orviane.',
               external: true,
             }}
             secondaryAction={{ label: 'Ver colecciones', to: '/colecciones' }}
@@ -570,10 +570,10 @@ const AccountPage = () => {
   return (
     <div className="account-page">
       <PageMeta
-        title="Mi Cuenta | Area de cliente de El Atelier Artesanal"
-        description="Revisa favoritos, canasta, disenos guardados, citas y cotizaciones desde tu area de cliente de El Atelier Artesanal."
+        title="Mi Cuenta | Area de cliente de Orviane"
+        description="Revisa favoritos, canasta, disenos guardados, citas y cotizaciones desde tu area de cliente de Orviane."
         path="/cuenta"
-        image="/logo-atelier.png"
+        image="/logo-orviane.png"
       />
       <div className="account-shell">
         <section className="account-hero">
@@ -582,7 +582,7 @@ const AccountPage = () => {
             <h1>Hola, {firstName(user.fullName)}.</h1>
             <p>
               Desde aqui puedes revisar tus gustos, armar tu canasta de cotizacion, volver a ver disenos guardados
-              y seguir el rastro de tus solicitudes con el atelier.
+              y seguir el rastro de tus solicitudes con Orviane.
             </p>
           </div>
 
@@ -705,7 +705,7 @@ const AccountPage = () => {
             title="Citas y asesoria"
             action={
               <a
-                href={buildWhatsappHref('Hola, quiero solicitar una cita con El Atelier Artesanal.')}
+                href={buildWhatsappHref('Hola, quiero solicitar una cita con Orviane.')}
                 target="_blank"
                 rel="noreferrer"
                 className="account-inline-link"
@@ -730,7 +730,7 @@ const AccountPage = () => {
                         <p>
                           Fecha sugerida: {formatDate(item.preferredDate)} | Horario: {item.preferredSlot}
                         </p>
-                        <p>{item.notes || 'Solicitud registrada para asesoria del atelier.'}</p>
+                        <p>{item.notes || 'Solicitud registrada para asesoria de Orviane.'}</p>
                       </div>
                       <div className="account-list-actions">
                         <StatusChip label={statusMeta.label} tone={statusMeta.tone} />
@@ -770,7 +770,7 @@ const AccountPage = () => {
                         <p className="account-list-meta">
                           Enviada: {formatDateTime(item.createdAt)} | Actualizada: {formatDateTime(item.updatedAt || item.createdAt)}
                         </p>
-                        <p>{summaryBits || item.occasion || 'Cotizacion recibida por el atelier.'}</p>
+                        <p>{summaryBits || item.occasion || 'Cotizacion recibida por Orviane.'}</p>
                         <p>{item.notes || item.prompt}</p>
                       </div>
                       <div className="account-list-actions">
@@ -861,7 +861,7 @@ const AccountPage = () => {
                     <div className="account-list-copy">
                       <strong>{item.name}</strong>
                       <span>{item.reference || item.category}</span>
-                      <p>{item.notes || 'Lista para cotizar con el atelier.'}</p>
+                      <p>{item.notes || 'Lista para cotizar con Orviane.'}</p>
                     </div>
                     <div className="account-list-actions">
                       <Link to={`/colecciones/${item.slug || 'anillos'}`} className="account-inline-link">
@@ -973,13 +973,14 @@ const AccountPage = () => {
               <EmptyState title="Sin generaciones recientes." copy="Tus renders apareceran aqui despues de usar Disena tu Joya." />
             )}
           </SectionCard>
+
         </div>
 
         <AtelierConversionSection
           className="account-conversion-section"
           kicker="Siguiente paso"
           title="Tu cuenta ya organiza tus gustos; ahora podemos llevarlos a una conversacion real"
-          copy="Usa lo que ya guardaste en favoritos, canasta o disenos como punto de partida para una cita mas productiva con el atelier."
+          copy="Usa lo que ya guardaste en favoritos, canasta o disenos como punto de partida para una cita mas productiva con Orviane."
           highlights={['Retomar piezas guardadas', 'Revisar presupuesto con contexto', 'Aterrizar una propuesta mas fina']}
           primaryAction={{ label: 'Seguir en colecciones', to: '/colecciones' }}
           secondaryAction={{ label: 'Volver al configurador', to: '/configurador' }}

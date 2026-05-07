@@ -1,19 +1,19 @@
 {
-  "name": "El Atelier Artesanal",
-  "short_name": "Atelier",
-  "description": "Alta joyeria artesanal, colecciones curadas y diseno personalizado con asesoria.",
+  "name": "Orviane",
+  "short_name": "Orviane",
+  "description": "Alta joyeria personalizada, colecciones curadas y diseno a medida con asesoria.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#080808",
   "theme_color": "#080808",
   "icons": [
     {
-      "src": "/logo-atelier.png",
+      "src": "/logo-orviane.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/logo-atelier.png",
+      "src": "/logo-orviane.png",
       "sizes": "512x512",
       "type": "image/png"
     }
