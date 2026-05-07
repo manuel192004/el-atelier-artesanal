@@ -10,7 +10,7 @@ const HeroSection = () => {
         <span className="hero-kicker">Alta joyeria personalizada</span>
         <h1>Joyas con presencia real, detalles legibles y una experiencia mas guiada.</h1>
         <p>
-          Descubre colecciones, crea una pieza a medida y ahora tambien agenda una cita directa con el atelier
+          Descubre colecciones, crea una pieza a medida y agenda una cita directa con Orviane
           desde la web.
         </p>
         <div className="hero-actions">

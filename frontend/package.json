@@ -4,10 +4,10 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
+    "dev": "NAPI_RS_FORCE_WASI=1 vite",
+    "build": "NAPI_RS_FORCE_WASI=1 vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "NAPI_RS_FORCE_WASI=1 vite preview"
   },
   "dependencies": {
     "react": "^19.1.1",

@@ -42,7 +42,16 @@ const {
   migrateLegacyUsers,
   getUserStoreStatus,
 } = require('./userStore');
-const { createAssistantReply, isAssistantConfigured } = require('./assistant');
+const { createAssistantV2RulesReply } = require('./assistant-v2/service');
+const {
+  createAssistantV2VertexReply,
+  isAssistantV2AiConfigured,
+} = require('./assistant-v2/vertex');
+const {
+  ensureTelemetryStore,
+  recordAssistantV2Event,
+  getAssistantV2TelemetrySummary,
+} = require('./assistant-v2/telemetry');
 
 const app = express();
 app.disable('x-powered-by');
@@ -88,15 +97,16 @@ function resolveGoogleApplicationCredentials() {
 }
 
 const PORT = Number(process.env.PORT || 3001);
-const PROJECT_ID = sanitizeText(process.env.GOOGLE_CLOUD_PROJECT_ID, 120) || 'atelier-personal-ia';
+const PROJECT_ID = sanitizeText(process.env.GOOGLE_CLOUD_PROJECT_ID, 120) || 'orviane-studio-ia';
 const LOCATION = sanitizeText(process.env.GOOGLE_CLOUD_LOCATION, 80) || 'us-central1';
 const PUBLISHER = sanitizeText(process.env.GOOGLE_CLOUD_PUBLISHER, 40) || 'google';
 const MODEL = sanitizeText(process.env.GOOGLE_CLOUD_MODEL, 120) || 'imagen-3.0-generate-002';
+const ASSISTANT_V2_MODEL = sanitizeText(process.env.ASSISTANT_V2_MODEL, 120) || 'gemini-2.5-flash';
 const GOOGLE_APPLICATION_CREDENTIALS = sanitizeText(resolveGoogleApplicationCredentials(), 400);
-const AUTH_JWT_SECRET = sanitizeText(process.env.AUTH_JWT_SECRET, 200) || 'atelier-local-dev-secret';
+const AUTH_JWT_SECRET = sanitizeText(process.env.AUTH_JWT_SECRET, 200) || 'orviane-local-dev-secret';
 const GOOGLE_CLIENT_ID = sanitizeText(process.env.GOOGLE_CLIENT_ID, 200);
 const FRONTEND_ORIGINS = (process.env.FRONTEND_ORIGINS ||
-  'http://localhost:5173,https://el-atelier-artesanal.netlify.app')
+  'http://localhost:5173,https://www.orviane.com')
   .split(',')
   .map((value) => value.trim())
   .filter(Boolean);
@@ -314,8 +324,15 @@ function buildAssistantMemory(baseMemory, reply) {
     jewelryType: sanitizeText(baseMemory?.jewelryType, 80),
     budget: sanitizeText(baseMemory?.budget, 120),
     style: sanitizeText(baseMemory?.style, 80),
+    metal: sanitizeText(baseMemory?.metal, 80),
+    gemstone: sanitizeText(baseMemory?.gemstone, 80),
+    ringSize: sanitizeText(baseMemory?.ringSize, 40),
+    recipient: sanitizeText(baseMemory?.recipient, 80),
+    deadline: sanitizeText(baseMemory?.deadline, 80),
+    budgetRange: sanitizeText(baseMemory?.budgetRange, 120),
     lastIntent: sanitizeText(baseMemory?.lastIntent, 80),
     lastCollectionSlug: sanitizeText(baseMemory?.lastCollectionSlug, 80),
+    lastProductReference: sanitizeText(baseMemory?.lastProductReference, 80),
   };
 
   return {
@@ -323,11 +340,21 @@ function buildAssistantMemory(baseMemory, reply) {
     jewelryType: sanitizeText(reply?.memory?.jewelryType, 80) || seed.jewelryType,
     budget: sanitizeText(reply?.memory?.budget, 120) || seed.budget,
     style: sanitizeText(reply?.memory?.style, 80) || seed.style,
+    metal: sanitizeText(reply?.memory?.metal, 80) || seed.metal,
+    gemstone: sanitizeText(reply?.memory?.gemstone, 80) || seed.gemstone,
+    ringSize: sanitizeText(reply?.memory?.ringSize, 40) || seed.ringSize,
+    recipient: sanitizeText(reply?.memory?.recipient, 80) || seed.recipient,
+    deadline: sanitizeText(reply?.memory?.deadline, 80) || seed.deadline,
+    budgetRange: sanitizeText(reply?.memory?.budgetRange, 120) || sanitizeText(reply?.memory?.budget, 120) || seed.budgetRange,
     lastIntent: sanitizeText(reply?.memory?.lastIntent, 80) || sanitizeText(reply?.detectedIntent, 80) || seed.lastIntent,
     lastCollectionSlug:
       sanitizeText(reply?.memory?.lastCollectionSlug, 80)
       || sanitizeText(reply?.suggestedAction?.collectionSlug, 80)
       || seed.lastCollectionSlug,
+    lastProductReference:
+      sanitizeText(reply?.memory?.lastProductReference, 80)
+      || sanitizeText(reply?.suggestedAction?.productReference, 80)
+      || seed.lastProductReference,
   };
 }
 
@@ -365,6 +392,16 @@ function createRateLimiter(windowMs, maxRequests) {
 
 function isImageGenerationConfigured() {
   return Boolean(GOOGLE_APPLICATION_CREDENTIALS && PROJECT_ID);
+}
+
+function isAssistantV2Configured() {
+  return Boolean(
+    GOOGLE_APPLICATION_CREDENTIALS &&
+    PROJECT_ID &&
+    LOCATION &&
+    PUBLISHER &&
+    ASSISTANT_V2_MODEL,
+  );
 }
 
 function validateGeneratePayload(body) {
@@ -561,14 +598,14 @@ function validateSavedDesignPayload(body) {
   return payload;
 }
 
-function validateAssistantPayload(body) {
+function validateAssistantV2Payload(body) {
   const message = sanitizeText(body.message, 500);
   const conversation = Array.isArray(body.conversation)
     ? body.conversation
-        .slice(-10)
+        .slice(-8)
         .map((entry) => ({
           role: entry?.role === 'assistant' ? 'assistant' : 'user',
-          text: sanitizeText(entry?.text, 400),
+          text: sanitizeText(entry?.text, 240),
         }))
         .filter((entry) => entry.text)
     : [];
@@ -578,26 +615,68 @@ function validateAssistantPayload(body) {
         jewelryType: sanitizeText(body.memory.jewelryType, 80),
         budget: sanitizeText(body.memory.budget, 120),
         style: sanitizeText(body.memory.style, 80),
-        lastIntent: sanitizeText(body.memory.lastIntent, 80),
-        lastCollectionSlug: sanitizeText(body.memory.lastCollectionSlug, 80),
+        metal: sanitizeText(body.memory.metal, 80),
+        gemstone: sanitizeText(body.memory.gemstone, 80),
+        deadline: sanitizeText(body.memory.deadline, 80),
       }
     : {
         occasion: '',
         jewelryType: '',
         budget: '',
         style: '',
-        lastIntent: '',
-        lastCollectionSlug: '',
+        metal: '',
+        gemstone: '',
+        deadline: '',
+      };
+  const clientContext = body.clientContext && typeof body.clientContext === 'object'
+    ? {
+        currentPath: sanitizeText(body.clientContext.currentPath, 160),
+        currentCollectionSlug: sanitizeText(body.clientContext.currentCollectionSlug, 80),
+        sessionType: body.clientContext.sessionType === 'registered' ? 'registered' : 'guest',
+      }
+    : {
+        currentPath: '',
+        currentCollectionSlug: '',
+        sessionType: 'guest',
       };
 
   if (!message || message.length < 2) {
-    throw new Error('Escribe un mensaje para que la asesora pueda orientarte.');
+    throw new Error('Escribe un mensaje para que Orvia pueda orientarte.');
   }
 
   return {
     message,
     conversation,
     memory,
+    clientContext,
+  };
+}
+
+function validateAssistantV2EventPayload(body) {
+  return {
+    eventName: sanitizeText(body.eventName, 80),
+    route: sanitizeText(body.route, 80),
+    source: sanitizeText(body.source, 80),
+    label: sanitizeText(body.label, 120),
+    message: sanitizeText(body.message, 160),
+    collectionSlug: sanitizeText(body.collectionSlug, 80),
+    productReference: sanitizeText(body.productReference, 80),
+    currentPath: sanitizeText(body.currentPath, 160),
+    provider: sanitizeText(body.provider, 80),
+    model: sanitizeText(body.model, 120),
+    sessionType: sanitizeText(body.sessionType, 40),
+  };
+}
+
+function buildAssistantV2DefaultMemory(memory) {
+  return {
+    occasion: sanitizeText(memory?.occasion, 80),
+    jewelryType: sanitizeText(memory?.jewelryType, 80),
+    budget: sanitizeText(memory?.budget, 120),
+    style: sanitizeText(memory?.style, 80),
+    metal: sanitizeText(memory?.metal, 80),
+    gemstone: sanitizeText(memory?.gemstone, 80),
+    deadline: sanitizeText(memory?.deadline, 80),
   };
 }
 
@@ -1104,7 +1183,7 @@ app.use(express.urlencoded({ extended: true, limit: '2mb' }));
 
 app.get('/', (request, response) => {
   response.json({
-    service: 'El Atelier Artesanal API',
+    service: 'Orviane API',
     status: 'ok',
     provider: 'vertex-ai',
   });
@@ -1138,18 +1217,20 @@ app.get('/api/health', (request, response) => {
     generationStoreReady: fs.existsSync(GENERATIONS_FILE),
     appointmentStoreReady: fs.existsSync(APPOINTMENTS_FILE),
     imageGenerationReady: isImageGenerationConfigured(),
-    assistantAiConfigured: isAssistantConfigured(),
+    assistantV2Ready: true,
+    assistantV2AiConfigured: isAssistantV2Configured(),
+    assistantV2Model: ASSISTANT_V2_MODEL,
   });
 });
 
-app.get('/api/assistant/context', authenticateRequest, async (request, response, next) => {
+app.get('/api/assistant-v2/context', authenticateRequest, async (request, response, next) => {
   try {
-    const memory = (await getAssistantMemoryByUserId(request.user.userId)) || buildAssistantMemory({}, {});
+    const persistedMemory = await getAssistantMemoryByUserId(request.user.userId);
     const accountContext = await buildAssistantAccountContext(request.user);
 
     return response.json({
       profile: toPublicUser(request.user),
-      memory,
+      memory: buildAssistantV2DefaultMemory(persistedMemory),
       accountContext,
     });
   } catch (error) {
@@ -1157,19 +1238,112 @@ app.get('/api/assistant/context', authenticateRequest, async (request, response,
   }
 });
 
-app.post('/api/assistant/chat', createRateLimiter(10 * 60 * 1000, 40), async (request, response, next) => {
+app.get('/api/assistant-v2/telemetry-summary', (request, response, next) => {
   try {
-    const payload = validateAssistantPayload(request.body);
+    return response.json(getAssistantV2TelemetrySummary());
+  } catch (error) {
+    return next(error);
+  }
+});
+
+app.post('/api/assistant-v2/event', async (request, response, next) => {
+  try {
+    const payload = validateAssistantV2EventPayload(request.body);
+    const requestUser = await getOptionalAuthenticatedUser(request);
+
+    await recordAssistantV2Event({
+      ...payload,
+      actorType: requestUser ? 'registered' : 'guest',
+      isPersonalized: Boolean(requestUser),
+      occurredAt: new Date().toISOString(),
+    });
+
+    return response.status(204).end();
+  } catch (error) {
+    return next(error);
+  }
+});
+
+app.post('/api/assistant-v2/reset', authenticateRequest, async (request, response, next) => {
+  try {
+    await upsertAssistantMemory({
+      userId: request.user.userId,
+      occasion: '',
+      jewelryType: '',
+      budget: '',
+      style: '',
+      metal: '',
+      gemstone: '',
+      ringSize: '',
+      recipient: '',
+      deadline: '',
+      budgetRange: '',
+      lastIntent: '',
+      lastCollectionSlug: '',
+      lastProductReference: '',
+      updatedAt: new Date().toISOString(),
+    });
+
+    return response.status(204).end();
+  } catch (error) {
+    return next(error);
+  }
+});
+
+app.post('/api/assistant-v2/chat', createRateLimiter(10 * 60 * 1000, 50), async (request, response, next) => {
+  try {
+    const startedAt = Date.now();
+    const payload = validateAssistantV2Payload(request.body);
     const requestUser = await getOptionalAuthenticatedUser(request);
     const persistedMemory = requestUser ? await getAssistantMemoryByUserId(requestUser.userId) : null;
     const accountContext = requestUser ? await buildAssistantAccountContext(requestUser) : null;
-    const reply = await createAssistantReply({
+    const replyPayload = {
       ...payload,
-      persistentMemory: persistedMemory,
+      memory: {
+        ...buildAssistantV2DefaultMemory(persistedMemory),
+        ...payload.memory,
+      },
       accountContext,
       profile: requestUser ? toPublicUser(requestUser) : null,
-    });
-    const nextMemory = buildAssistantMemory({ ...persistedMemory, ...payload.memory }, reply);
+    };
+    let reply;
+
+    if (
+      isAssistantV2AiConfigured({
+        projectId: PROJECT_ID,
+        location: LOCATION,
+        publisher: PUBLISHER,
+        model: ASSISTANT_V2_MODEL,
+        getAccessToken: getGoogleAccessToken,
+      })
+    ) {
+      try {
+        reply = await createAssistantV2VertexReply(replyPayload, {
+          projectId: PROJECT_ID,
+          location: LOCATION,
+          publisher: PUBLISHER,
+          model: ASSISTANT_V2_MODEL,
+          getAccessToken: getGoogleAccessToken,
+        });
+      } catch (error) {
+        console.error('Orvia uso fallback por reglas:', error.message);
+        reply = {
+          ...createAssistantV2RulesReply(replyPayload),
+          provider: 'assistant-v2-rules-fallback',
+          model: ASSISTANT_V2_MODEL,
+        };
+      }
+    } else {
+      reply = createAssistantV2RulesReply(replyPayload);
+    }
+
+    const nextMemory = buildAssistantMemory(
+      {
+        ...persistedMemory,
+        ...payload.memory,
+      },
+      reply,
+    );
 
     if (requestUser) {
       await upsertAssistantMemory({
@@ -1179,9 +1353,35 @@ app.post('/api/assistant/chat', createRateLimiter(10 * 60 * 1000, 40), async (re
       });
     }
 
+    try {
+      await recordAssistantV2Event({
+        eventName: 'chat_response',
+        provider: reply.provider,
+        model: reply.model,
+        route: reply.suggestedAction?.type || 'none',
+        intent: reply.detectedIntent || '',
+        source:
+          reply.provider === 'assistant-v2-rules-fallback'
+            ? 'fallback'
+            : reply.provider === 'vertex-ai'
+              ? 'ai'
+              : 'rules',
+        collectionSlug: reply.suggestedAction?.collectionSlug || payload.clientContext.currentCollectionSlug,
+        productReference: reply.suggestedAction?.productReference || '',
+        currentPath: payload.clientContext.currentPath,
+        sessionType: payload.clientContext.sessionType,
+        actorType: requestUser ? 'registered' : 'guest',
+        isPersonalized: Boolean(requestUser),
+        latencyMs: Date.now() - startedAt,
+        occurredAt: new Date().toISOString(),
+      });
+    } catch (telemetryError) {
+      console.error('No se pudo registrar la telemetria de Orvia:', telemetryError.message);
+    }
+
     return response.json({
       ...reply,
-      memory: nextMemory,
+      memory: buildAssistantV2DefaultMemory(nextMemory),
       accountContext: accountContext || undefined,
       isPersonalized: Boolean(requestUser),
     });
@@ -1577,6 +1777,7 @@ app.use((error, request, response, next) => {
 
 ensureQuoteStore();
 ensureAccountStore();
+ensureTelemetryStore();
 initDatabase()
   .then(async () => {
     const migration = await migrateLegacyUsers();

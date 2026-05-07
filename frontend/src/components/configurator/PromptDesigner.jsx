@@ -4,7 +4,7 @@ import ShareModal from './ShareModal';
 import { useAuth } from '../../context/AuthContext';
 import { API_BASE_URL, apiFetch } from '../../lib/api';
 
-const REGISTRATION_STORAGE_KEY = 'atelierRegistrantProfile';
+const REGISTRATION_STORAGE_KEY = 'orvianeRegistrantProfile';
 
 const categoryOptions = ['Anillo', 'Aretes', 'Cadena', 'Pulsera', 'Collar', 'Pieza unica'];
 const metalOptions = ['Oro amarillo', 'Oro blanco', 'Oro rosado', 'Plata', 'Bicolor', 'No definido'];
@@ -317,7 +317,7 @@ const PromptDesigner = ({ initialPrompt = '', sourceReference = '', sourceProduc
         <div className="registration-copy">
           <h3>Registro previo obligatorio</h3>
           <p>
-            Para generar una joya pedimos un registro rapido. Asi desbloqueas la experiencia y al mismo tiempo el atelier
+            Para generar una joya pedimos un registro rapido. Asi desbloqueas la experiencia y al mismo tiempo Orviane
             va construyendo una base de datos real de interesados, briefs y solicitudes.
           </p>
         </div>
@@ -370,7 +370,7 @@ const PromptDesigner = ({ initialPrompt = '', sourceReference = '', sourceProduc
                 checked={registrationForm.marketingConsent}
                 onChange={handleRegistrationFieldChange('marketingConsent')}
               />
-              <span>Acepto que el atelier me contacte para seguimiento de esta solicitud.</span>
+              <span>Acepto que Orviane me contacte para seguimiento de esta solicitud.</span>
             </label>
 
             {registrationError && <p className="error-text modal-error">{registrationError}</p>}

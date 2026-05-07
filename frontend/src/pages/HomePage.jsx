@@ -8,8 +8,8 @@ const HomePage = () => {
   return (
     <div className="homepage fade-in-section">
       <PageMeta
-        title="El Atelier Artesanal | Joyeria artesanal, citas y diseno personalizado"
-        description="Descubre colecciones de alta joyeria artesanal, agenda una asesoria y disena una pieza personalizada en El Atelier Artesanal."
+        title="Orviane | Alta joyeria personalizada, citas y diseno a medida"
+        description="Descubre colecciones de alta joyeria personalizada, agenda una asesoria y disena una pieza a medida con Orviane."
         path="/"
         image="/hero-background.png"
       />

@@ -43,8 +43,8 @@ const ConfiguratorPage = () => {
   return (
     <div className="configurator-page-ia">
       <PageMeta
-        title="Disenador de Joyas | Configurador personalizado de El Atelier Artesanal"
-        description="Construye una propuesta visual de joya personalizada con categoria, materiales, estilo y ocasion dentro del configurador de El Atelier Artesanal."
+        title="Disenador de Joyas | Configurador personalizado de Orviane"
+        description="Construye una propuesta visual de joya personalizada con categoria, materiales, estilo y ocasion dentro del configurador de Orviane."
         path="/configurador"
         image="/hero-background1.jpg"
       />
@@ -85,7 +85,7 @@ const ConfiguratorPage = () => {
             className="configurator-conversion-section"
           kicker="Prefieres una ruta asistida"
           title="Si el configurador te ayuda a imaginar, la cita ayuda a decidir mejor"
-          copy="Puedes seguir generando propuestas visuales por tu cuenta o dejar una solicitud para que el atelier revise contigo materiales, tiempos y nivel de personalizacion."
+          copy="Puedes seguir generando propuestas visuales por tu cuenta o dejar una solicitud para que Orviane revise contigo materiales, tiempos y nivel de personalizacion."
           highlights={['Brief mas claro', 'Cotizacion con contexto', 'Paso natural de render a asesoria']}
           primaryAction={{
             label: 'Hablar por WhatsApp',
@@ -94,7 +94,7 @@ const ConfiguratorPage = () => {
           }}
           secondaryAction={{ label: 'Ver colecciones', to: '/colecciones' }}
             formTitle="Agenda una revision de tu idea"
-            formCopy="Ideal si ya generaste una direccion visual y quieres aterrizar presupuesto, ocasion o acabados con alguien del atelier."
+            formCopy="Ideal si ya generaste una direccion visual y quieres aterrizar presupuesto, ocasion o acabados con alguien de Orviane."
             defaultReason={sourceProductName ? `Revision de ${sourceProductName}${sourceReference ? ` (${sourceReference})` : ''}` : 'Revision de una joya personalizada'}
             source={sourceReference ? `configurator-${sourceReference}` : 'configurator-page'}
           />

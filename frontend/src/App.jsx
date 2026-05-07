@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Header from './components/common/Header';
 import Footer from './components/common/Footer';
-import AtelierAssistant from './components/common/AtelierAssistant';
+import AtelierAssistantV2 from './features/assistant-v2/AtelierAssistantV2';
 import HomePage from './pages/HomePage';
 import AtelierPage from './pages/AtelierPage';
 import ConfiguratorPage from './pages/ConfiguratorPage';
@@ -19,6 +19,7 @@ function App() {
         <main id="main-content">
           <Routes>
             <Route path="/" element={<HomePage />} />
+            <Route path="/orviane" element={<AtelierPage />} />
             <Route path="/atelier" element={<AtelierPage />} />
             <Route path="/configurador" element={<ConfiguratorPage />} />
             <Route path="/colecciones" element={<ColeccionesPage />} />
@@ -27,7 +28,7 @@ function App() {
           </Routes>
         </main>
         <Footer />
-        <AtelierAssistant />
+        <AtelierAssistantV2 />
       </div>
     </Router>
   );

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useLocation, useParams } from 'react-router-dom';
 import '../styles/_coleccionespage.scss';
 import { apiFetch } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
@@ -18,7 +18,7 @@ import {
 
 const WHATSAPP_LINK = 'https://wa.me/qr/JXM3LVGEI75HC1';
 
-const atelierPromises = [
+const brandPromises = [
   {
     title: 'Hecho a Mano',
     text: 'Cada propuesta se trabaja con atencion al detalle y criterio artesanal.',
@@ -66,7 +66,7 @@ const CollectionsDescription = ({ text }) => (
 
 const CollectionTrustBar = () => (
   <section className="collection-trust-bar">
-    {atelierPromises.map((promise) => (
+    {brandPromises.map((promise) => (
       <div key={promise.title} className="collection-trust-card">
         <h3>{promise.title}</h3>
         <p>{promise.text}</p>
@@ -103,14 +103,14 @@ const CollectionOverviewCard = ({ collection, insights }) => (
 const CollectionsOverview = () => (
   <div className="colecciones-page fade-in-section">
     <PageMeta
-      title="Colecciones | Anillos, aretes, cadenas y pulseras de El Atelier Artesanal"
-      description="Explora las colecciones activas de El Atelier Artesanal y descubre joyas por ocasion, estilo y protagonismo."
+      title="Colecciones | Anillos, aretes, cadenas y pulseras de Orviane"
+      description="Explora las colecciones activas de Orviane y descubre joyas por ocasion, estilo y protagonismo."
       path="/colecciones"
       image="/hero-background1.jpg"
     />
     <CollectionsHero
       title="Colecciones"
-      subtitle="Explora todas las familias disponibles del atelier y entra a la que quieras descubrir primero."
+      subtitle="Explora todas las familias disponibles de Orviane y entra a la que quieras descubrir primero."
       backgroundImage="/hero-background1.jpg"
     />
 
@@ -140,7 +140,7 @@ const CollectionsOverview = () => (
       kicker="Compra con criterio"
       title="Si ya viste una familia que te gusta, el siguiente paso puede ser mucho mas claro"
       copy="Puedes seguir explorando el catalogo, pasar al configurador para aterrizar una idea propia o solicitar una cita corta si necesitas una recomendacion mas personal."
-      highlights={['Catalogo mas guiado', 'Cotizacion con referencia', 'Asesoria directa del atelier']}
+      highlights={['Catalogo mas guiado', 'Cotizacion con referencia', 'Asesoria directa de Orviane']}
       primaryAction={{ label: 'Ir al configurador', to: '/configurador' }}
       secondaryAction={{ label: 'Hablar por WhatsApp', href: WHATSAPP_LINK, external: true }}
       formTitle="Agenda una asesoria breve"
@@ -161,7 +161,7 @@ const CollectionInsightsBar = ({ filteredCount, favoriteCount, insights }) => (
     <div className="collections-insight-card">
       <span>Favoritos guardados</span>
       <strong>{favoriteCount}</strong>
-      <p>Piezas tuyas guardadas del atelier para volver luego.</p>
+      <p>Piezas tuyas guardadas de Orviane para volver luego.</p>
     </div>
     <div className="collections-insight-card">
       <span>Ocasiones fuertes</span>
@@ -589,6 +589,7 @@ const ProductModal = ({
 
 const ColeccionesPage = () => {
   const { categoria } = useParams();
+  const location = useLocation();
   const { token, isAuthenticated } = useAuth();
   const currentCollection = useMemo(() => (categoria ? getCollectionCatalog(categoria) : null), [categoria]);
   const filterOptions = useMemo(() => getCollectionFilterOptions(currentCollection), [currentCollection]);
@@ -622,6 +623,20 @@ const ColeccionesPage = () => {
       error: '',
     });
   }, [currentCollection]);
+
+  useEffect(() => {
+    const selectedReference = location.state?.selectedReference;
+
+    if (!selectedReference || !currentCollection) {
+      return;
+    }
+
+    const matchedItem = currentCollection.items.find((item) => item.reference === selectedReference);
+
+    if (matchedItem) {
+      setSelectedItem(matchedItem);
+    }
+  }, [currentCollection, location.state]);
 
   useEffect(() => {
     if (!isAuthenticated || !token) {
@@ -786,8 +801,8 @@ const ColeccionesPage = () => {
   return (
     <div className="colecciones-page fade-in-section">
       <PageMeta
-        title={`${currentCollection.title} | Coleccion de El Atelier Artesanal`}
-        description={`${currentCollection.subtitle} Explora ${currentCollection.title.toLowerCase()} por ocasion, estilo y protagonismo dentro del atelier.`}
+        title={`${currentCollection.title} | Coleccion de Orviane`}
+        description={`${currentCollection.subtitle} Explora ${currentCollection.title.toLowerCase()} por ocasion, estilo y protagonismo dentro de Orviane.`}
         path={`/colecciones/${categoria}`}
         image={currentCollection.backgroundImage || currentCollection.cardImage || '/hero-background1.jpg'}
       />
@@ -840,7 +855,7 @@ const ColeccionesPage = () => {
         ) : (
           <div className="collections-empty-state">
             <h3>No encontramos piezas con esta combinacion.</h3>
-            <p>Prueba limpiar filtros o cambia ocasion, estilo o protagonismo para descubrir otras referencias del atelier.</p>
+            <p>Prueba limpiar filtros o cambia ocasion, estilo o protagonismo para descubrir otras referencias de Orviane.</p>
             <button type="button" className="collections-filter-reset" onClick={resetFilters}>
               Volver a ver todo
             </button>
