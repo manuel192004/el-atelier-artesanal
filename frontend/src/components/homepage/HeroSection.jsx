@@ -5,7 +5,7 @@ import '../../styles/_hero-section.scss';
 const HeroSection = () => {
   return (
     <section className="hero-section">
-      <img src="/hero-background.png" alt="Fondo de taller de joyeria" className="hero-background" />
+      <img src="/orviane-home-hero.png" alt="Escena editorial de alta joyeria Orviane" className="hero-background" />
       <div className="hero-content">
         <span className="hero-kicker">Alta joyeria personalizada</span>
         <h1>Joyas con presencia real, detalles legibles y una experiencia mas guiada.</h1>

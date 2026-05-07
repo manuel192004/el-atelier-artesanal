@@ -46,7 +46,7 @@ const ConfiguratorPage = () => {
         title="Disenador de Joyas | Configurador personalizado de Orviane"
         description="Construye una propuesta visual de joya personalizada con categoria, materiales, estilo y ocasion dentro del configurador de Orviane."
         path="/configurador"
-        image="/hero-background1.jpg"
+        image="/orviane-collections-hero.png"
       />
       <div className="configurator-main-panel">
         <div className="configurator-hero-card">

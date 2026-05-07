@@ -2,7 +2,7 @@
 
 Experiencia web para joyeria personalizada con catalogo editorial, configurador, area de cliente y asistente conversacional `Orvia`.
 
-![Vista principal](./frontend/public/aretes-hero.png)
+![Vista principal](./frontend/public/orviane-home-hero.png)
 
 ## Lo que incluye
 

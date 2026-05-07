@@ -11,7 +11,7 @@ const HomePage = () => {
         title="Orviane | Alta joyeria personalizada, citas y diseno a medida"
         description="Descubre colecciones de alta joyeria personalizada, agenda una asesoria y disena una pieza a medida con Orviane."
         path="/"
-        image="/hero-background.png"
+        image="/orviane-home-hero.png"
       />
       <HeroSection />
       <CollectionsShowcase />

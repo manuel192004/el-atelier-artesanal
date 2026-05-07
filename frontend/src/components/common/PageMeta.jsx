@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 const DEFAULT_TITLE = 'Orviane | Alta joyeria personalizada y diseno a medida';
 const DEFAULT_DESCRIPTION =
   'Explora colecciones de alta joyeria personalizada, disena una pieza a medida y agenda asesoria con Orviane.';
-const DEFAULT_IMAGE = '/hero-background.png';
+const DEFAULT_IMAGE = '/orviane-home-hero.png';
 const SITE_NAME = 'Orviane';
 
 function upsertMetaByName(name, content) {

@@ -106,12 +106,12 @@ const CollectionsOverview = () => (
       title="Colecciones | Anillos, aretes, cadenas y pulseras de Orviane"
       description="Explora las colecciones activas de Orviane y descubre joyas por ocasion, estilo y protagonismo."
       path="/colecciones"
-      image="/hero-background1.jpg"
+      image="/orviane-collections-hero.png"
     />
     <CollectionsHero
       title="Colecciones"
       subtitle="Explora todas las familias disponibles de Orviane y entra a la que quieras descubrir primero."
-      backgroundImage="/hero-background1.jpg"
+      backgroundImage="/orviane-collections-hero.png"
     />
 
     <CollectionsDescription text="Aqui reunimos las colecciones base activas del sitio. Ya estan visibles Anillos, Aretes, Cadenas y Pulseras para que el recorrido sea claro desde el encabezado." />
@@ -804,7 +804,7 @@ const ColeccionesPage = () => {
         title={`${currentCollection.title} | Coleccion de Orviane`}
         description={`${currentCollection.subtitle} Explora ${currentCollection.title.toLowerCase()} por ocasion, estilo y protagonismo dentro de Orviane.`}
         path={`/colecciones/${categoria}`}
-        image={currentCollection.backgroundImage || currentCollection.cardImage || '/hero-background1.jpg'}
+        image={currentCollection.backgroundImage || currentCollection.cardImage || '/orviane-collections-hero.png'}
       />
       <CollectionsHero
         title={currentCollection.title}

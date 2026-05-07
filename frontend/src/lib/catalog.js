@@ -2,8 +2,8 @@ const rawCollectionConfig = {
   anillos: {
     title: 'Anillos',
     subtitle: 'Promesas forjadas en metal noble y gemas eternas, esperando contar tu historia.',
-    backgroundImage: '/hero-anillos.png',
-    cardImage: '/anillos-catalogo.png',
+    backgroundImage: '/orviane-rings-hero.png',
+    cardImage: '/orviane-rings-card.png',
     description:
       'Cada anillo es el inicio de una historia de amor unica, el reflejo de un compromiso eterno. Esta seleccion ya fue reorganizada a partir de la nueva lamina del catalogo para mostrar cada pieza por separado.',
     items: [
@@ -24,8 +24,8 @@ const rawCollectionConfig = {
   cadenas: {
     title: 'Cadenas',
     subtitle: 'Piezas que enmarcan el gesto y elevan la presencia con elegancia atemporal.',
-    backgroundImage: '/cadenas-catalogo.png',
-    cardImage: '/cadenas-catalogo.png',
+    backgroundImage: '/orviane-chains-card.png',
+    cardImage: '/orviane-chains-card.png',
     description:
       'Nuestra linea de cadenas reune presencia, caida y detalles delicados para complementar momentos especiales y looks cotidianos con un toque artesanal. Ya quedo separada pieza por pieza desde la nueva lamina del catalogo.',
     items: [
@@ -46,8 +46,8 @@ const rawCollectionConfig = {
   pulseras: {
     title: 'Pulseras',
     subtitle: 'Brazaletes y piezas de pulso con caracter, textura y presencia artesanal.',
-    backgroundImage: '/pulseras-catalogo.png',
-    cardImage: '/pulseras-catalogo.png',
+    backgroundImage: '/orviane-bracelets-card.png',
+    cardImage: '/orviane-bracelets-card.png',
     description:
       'La categoria de pulseras ya se reconstruyo desde la nueva lamina del catalogo para mostrar cada diseno de forma independiente y dejar atras las imagenes antiguas.',
     items: [
@@ -65,8 +65,8 @@ const rawCollectionConfig = {
   aretes: {
     title: 'Aretes',
     subtitle: 'Detalles ligeros, clasicos y colgantes para elevar cada gesto con brillo y movimiento.',
-    backgroundImage: '/aretes-hero.png',
-    cardImage: '/aretes-hero.png',
+    backgroundImage: '/orviane-earrings-card.png',
+    cardImage: '/orviane-earrings-card.png',
     description:
       'Esta coleccion reune aretes esenciales y colgantes delicados en oro con acentos brillantes. La idea es probar una reconstruccion del catalogo pieza por pieza a partir de una sola lamina fuente.',
     items: [

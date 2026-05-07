@@ -11,7 +11,7 @@ const AtelierPage = () => {
         title="Orviane | Historia, proceso y alta joyeria personalizada"
         description="Conoce la historia, el proceso creativo y la fusion entre artesania y tecnologia que define a Orviane."
         path="/orviane"
-        image="/fondo-atelier.jpg"
+        image="/orviane-story-atelier.png"
       />
       <div className="atelier-container">
         <h1 className="atelier-title">La Casa Orviane</h1>
@@ -43,7 +43,7 @@ const AtelierPage = () => {
           </div>
 
           <div className="atelier-image">
-            <img src="/fondo-atelier.jpg" alt="Proceso artesanal de Orviane en el taller" loading="lazy" decoding="async" />
+            <img src="/orviane-story-atelier.png" alt="Proceso artesanal de Orviane en el taller" loading="lazy" decoding="async" />
           </div>
         </div>
 
