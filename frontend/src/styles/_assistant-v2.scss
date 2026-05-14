@@ -57,6 +57,12 @@
   gap: 4px;
 }
 
+.assistant-v2-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .assistant-v2-kicker {
   display: inline-flex;
   margin-bottom: 2px;
@@ -75,6 +81,25 @@
   color: #faf2e3;
   font-size: 1.12rem;
   line-height: 1.02;
+}
+
+.assistant-v2-call-mini {
+  min-height: 34px;
+  padding: 8px 11px;
+  border: 1px solid rgba(214, 186, 136, 0.22);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.035);
+  color: #f1dfbd;
+  font-family: 'Lato', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.assistant-v2-call-mini.is-active {
+  background: rgba(154, 218, 176, 0.13);
+  border-color: rgba(154, 218, 176, 0.28);
+  color: #c4f0d1;
 }
 
 .assistant-v2-close {
@@ -117,6 +142,74 @@
   border-top-right-radius: 6px;
   background: linear-gradient(135deg, #d4b47b, #a27a45);
   color: #15110d;
+}
+
+.assistant-v2-call-card {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid rgba(214, 186, 136, 0.16);
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.018)),
+    rgba(0, 0, 0, 0.18);
+}
+
+.assistant-v2-call-orb {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 1px solid rgba(214, 186, 136, 0.25);
+  background: radial-gradient(circle at 35% 30%, #f0dcb3, #a97943 65%, #1d1710);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+}
+
+.assistant-v2-call-orb span {
+  position: absolute;
+  inset: 12px;
+  border-radius: 50%;
+  background: rgba(10, 10, 10, 0.42);
+}
+
+.assistant-v2-call-card.is-listening .assistant-v2-call-orb,
+.assistant-v2-call-card.is-speaking .assistant-v2-call-orb {
+  animation: assistantCallPulse 1.3s ease-in-out infinite;
+}
+
+.assistant-v2-call-copy {
+  min-width: 0;
+}
+
+.assistant-v2-call-copy span {
+  display: block;
+  margin-bottom: 4px;
+  color: #d8c39a;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.assistant-v2-call-copy strong {
+  display: block;
+  color: #fff2dc;
+  font-size: 0.98rem;
+}
+
+.assistant-v2-call-copy p,
+.assistant-v2-call-copy small {
+  display: block;
+  margin-top: 4px;
+  color: #d9cebd;
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.assistant-v2-call-copy small {
+  color: #f0d6a8;
 }
 
 .assistant-v2-actions {
@@ -314,6 +407,48 @@
   background: rgba(212, 183, 130, 0.32);
 }
 
+.assistant-v2-call-controls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 9px;
+}
+
+.assistant-v2-call-button {
+  min-height: 36px;
+  padding: 9px 12px;
+  border: 1px solid rgba(214, 186, 136, 0.25);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  color: #f2e5cf;
+  font-family: 'Lato', sans-serif;
+  font-size: 0.84rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.assistant-v2-call-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.assistant-v2-call-button.is-active {
+  background: rgba(154, 218, 176, 0.13);
+  border-color: rgba(154, 218, 176, 0.3);
+  color: #c6f0d2;
+}
+
+.assistant-v2-call-button-secondary {
+  background: rgba(214, 186, 136, 0.1);
+  color: #f5dcae;
+}
+
+.assistant-v2-call-button:disabled {
+  opacity: 0.62;
+  cursor: not-allowed;
+}
+
 .assistant-v2-cta-row {
   display: flex;
   flex-wrap: wrap;
@@ -412,6 +547,17 @@
   box-shadow: 0 18px 36px rgba(0, 0, 0, 0.3);
 }
 
+@keyframes assistantCallPulse {
+  0%,
+  100% {
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28), 0 0 0 0 rgba(214, 186, 136, 0.26);
+  }
+
+  50% {
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28), 0 0 0 8px rgba(214, 186, 136, 0);
+  }
+}
+
 @media (max-width: 720px) {
   .assistant-v2-shell {
     right: 12px;
@@ -434,6 +580,10 @@
 
   .assistant-v2-composer {
     grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .assistant-v2-call-controls {
+    grid-template-columns: 1fr;
   }
 
   .assistant-v2-cta-row > * {
@@ -469,8 +619,24 @@
     font-size: 1rem;
   }
 
+  .assistant-v2-call-mini {
+    min-height: 32px;
+    padding: 7px 10px;
+    font-size: 0.74rem;
+  }
+
   .assistant-v2-body {
     margin: 0 12px;
+  }
+
+  .assistant-v2-call-card {
+    grid-template-columns: 42px minmax(0, 1fr);
+    padding: 10px;
+  }
+
+  .assistant-v2-call-orb {
+    width: 42px;
+    height: 42px;
   }
 
   .assistant-v2-actions {

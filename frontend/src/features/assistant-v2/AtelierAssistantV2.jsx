@@ -84,6 +84,37 @@ function createWelcomeMessages() {
   ];
 }
 
+function getSpeechRecognitionConstructor() {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  return window.SpeechRecognition || window.webkitSpeechRecognition || null;
+}
+
+function isSpeechSynthesisAvailable() {
+  return typeof window !== 'undefined' && 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window;
+}
+
+function buildVoiceAvailabilityLabel() {
+  const canListen = Boolean(getSpeechRecognitionConstructor());
+  const canSpeak = isSpeechSynthesisAvailable();
+
+  if (canListen && canSpeak) {
+    return 'Voz activa';
+  }
+
+  if (canListen) {
+    return 'Microfono activo';
+  }
+
+  if (canSpeak) {
+    return 'Respuesta hablada';
+  }
+
+  return 'Chat escrito';
+}
+
 function MemoryPills({ memory }) {
   const items = [
     memory.occasion ? `Ocasion: ${memory.occasion}` : '',
@@ -464,7 +495,17 @@ const AtelierAssistantV2 = () => {
   const [formError, setFormError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isVoiceMode, setIsVoiceMode] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [voiceStatus, setVoiceStatus] = useState('Lista para llamada');
+  const [voiceTranscript, setVoiceTranscript] = useState('');
   const inputRef = useRef(null);
+  const recognitionRef = useRef(null);
+  const voiceModeRef = useRef(false);
+  const voiceTranscriptRef = useRef('');
+  const voiceRecognitionHadErrorRef = useRef(false);
+  const voiceRestartTimerRef = useRef(null);
 
   const clientContext = useMemo(() => {
     const collectionMatch = location.pathname.match(/^\/colecciones\/([^/]+)/);
@@ -511,6 +552,27 @@ const AtelierAssistantV2 = () => {
   }, []);
 
   useEffect(() => {
+    voiceModeRef.current = isVoiceMode;
+  }, [isVoiceMode]);
+
+  useEffect(() => {
+    return () => {
+      if (voiceRestartTimerRef.current) {
+        window.clearTimeout(voiceRestartTimerRef.current);
+      }
+
+      if (recognitionRef.current) {
+        recognitionRef.current.onend = null;
+        recognitionRef.current.abort?.();
+      }
+
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
+
+  useEffect(() => {
     if (!isOpen || mode !== 'chat') {
       return;
     }
@@ -546,6 +608,236 @@ const AtelierAssistantV2 = () => {
     return;
   };
 
+  const stopVoiceListening = () => {
+    if (voiceRestartTimerRef.current) {
+      window.clearTimeout(voiceRestartTimerRef.current);
+      voiceRestartTimerRef.current = null;
+    }
+
+    if (recognitionRef.current) {
+      recognitionRef.current.onend = null;
+      recognitionRef.current.onerror = null;
+      recognitionRef.current.onresult = null;
+      recognitionRef.current.abort?.();
+      recognitionRef.current = null;
+    }
+
+    voiceTranscriptRef.current = '';
+    voiceRecognitionHadErrorRef.current = false;
+    setIsListening(false);
+  };
+
+  const stopVoiceOutput = () => {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+
+    setIsSpeaking(false);
+  };
+
+  const endVoiceCall = () => {
+    voiceModeRef.current = false;
+    setIsVoiceMode(false);
+    stopVoiceListening();
+    stopVoiceOutput();
+    setVoiceTranscript('');
+    setVoiceStatus('Llamada finalizada. Puedes seguir por chat cuando quieras.');
+  };
+
+  const speakAssistantText = (text, options = {}) => {
+    const spokenText = String(text || '').trim();
+
+    if (!spokenText || !voiceModeRef.current) {
+      return;
+    }
+
+    if (!isSpeechSynthesisAvailable()) {
+      setVoiceStatus('Tu navegador permite leer el chat, pero no reproducir voz en esta sesion.');
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+
+    const utterance = new window.SpeechSynthesisUtterance(spokenText);
+    const voices = window.speechSynthesis.getVoices();
+    const spanishVoice = voices.find((voice) => /^es(-|_)/i.test(voice.lang));
+
+    utterance.lang = 'es-CO';
+    utterance.rate = 0.94;
+    utterance.pitch = 0.98;
+
+    if (spanishVoice) {
+      utterance.voice = spanishVoice;
+    }
+
+    utterance.onstart = () => {
+      setIsSpeaking(true);
+      setVoiceStatus('Orvia esta respondiendo.');
+    };
+
+    utterance.onend = () => {
+      setIsSpeaking(false);
+
+      if (options.resumeListening && voiceModeRef.current) {
+        setVoiceStatus('Te escucho de nuevo en un momento.');
+        voiceRestartTimerRef.current = window.setTimeout(() => {
+          startVoiceListening();
+        }, 450);
+        return;
+      }
+
+      if (voiceModeRef.current) {
+        setVoiceStatus('Pulsa Hablar para continuar la llamada.');
+      }
+    };
+
+    utterance.onerror = () => {
+      setIsSpeaking(false);
+      setVoiceStatus('No pude reproducir la voz, pero la respuesta quedo escrita en el chat.');
+    };
+
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const startVoiceListening = () => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    if (isThinking || isSpeaking) {
+      setVoiceStatus('Espera un momento y continuamos.');
+      return;
+    }
+
+    const SpeechRecognition = getSpeechRecognitionConstructor();
+
+    if (!SpeechRecognition) {
+      setIsVoiceMode(true);
+      voiceModeRef.current = true;
+      setVoiceStatus('Este navegador no permite dictado por voz. Puedes seguir escribiendo en el chat.');
+      return;
+    }
+
+    stopVoiceListening();
+    setVoiceTranscript('');
+    voiceTranscriptRef.current = '';
+    voiceRecognitionHadErrorRef.current = false;
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'es-CO';
+    recognition.continuous = false;
+    recognition.interimResults = true;
+    recognition.maxAlternatives = 1;
+
+    recognition.onstart = () => {
+      setIsListening(true);
+      setVoiceStatus('Te escucho. Habla con calma y Orvia responde.');
+    };
+
+    recognition.onresult = (event) => {
+      let finalTranscript = '';
+      let interimTranscript = '';
+
+      for (let index = event.resultIndex; index < event.results.length; index += 1) {
+        const transcript = event.results[index]?.[0]?.transcript || '';
+
+        if (event.results[index].isFinal) {
+          finalTranscript += transcript;
+        } else {
+          interimTranscript += transcript;
+        }
+      }
+
+      if (finalTranscript) {
+        voiceTranscriptRef.current = `${voiceTranscriptRef.current} ${finalTranscript}`.trim();
+      }
+
+      setVoiceTranscript((finalTranscript || interimTranscript).trim());
+    };
+
+    recognition.onerror = (event) => {
+      setIsListening(false);
+      voiceRecognitionHadErrorRef.current = true;
+
+      if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+        setVoiceStatus('Activa el permiso de microfono para usar la llamada. El chat escrito sigue disponible.');
+        return;
+      }
+
+      if (event.error === 'no-speech') {
+        setVoiceStatus('No alcance a escucharte. Pulsa Hablar e intenta otra vez.');
+        return;
+      }
+
+      setVoiceStatus('No pude tomar audio en este intento. Puedes volver a pulsar Hablar.');
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+      const capturedText = voiceTranscriptRef.current.trim();
+      voiceTranscriptRef.current = '';
+
+      if (voiceRecognitionHadErrorRef.current) {
+        voiceRecognitionHadErrorRef.current = false;
+        return;
+      }
+
+      if (!voiceModeRef.current) {
+        return;
+      }
+
+      if (capturedText) {
+        setVoiceTranscript(capturedText);
+        submitPrompt(capturedText, { source: 'voice_call', speak: true });
+        return;
+      }
+
+      setVoiceStatus('Pulsa Hablar para continuar la llamada.');
+    };
+
+    recognitionRef.current = recognition;
+
+    try {
+      recognition.start();
+    } catch (error) {
+      console.error(error);
+      setIsListening(false);
+      setVoiceStatus('El microfono ya estaba ocupado. Espera un segundo y vuelve a intentar.');
+    }
+  };
+
+  const startVoiceCall = () => {
+    setIsOpen(true);
+    setMode('chat');
+    setIsVoiceMode(true);
+    voiceModeRef.current = true;
+    setChatError('');
+    setVoiceTranscript('');
+    setVoiceStatus('Conectando llamada con Orvia.');
+    trackAssistantEvent('voice_call_started', {
+      source: 'voice_call_button',
+    });
+
+    const intro = 'Hola, soy Orvia. Te escucho para ayudarte a elegir una joya, una coleccion, una cita o una pieza personalizada.';
+
+    window.setTimeout(() => {
+      if (isSpeechSynthesisAvailable()) {
+        speakAssistantText(intro, { resumeListening: true });
+        return;
+      }
+
+      startVoiceListening();
+    }, 120);
+  };
+
+  const closeAssistant = () => {
+    if (voiceModeRef.current) {
+      endVoiceCall();
+    }
+
+    setIsOpen(false);
+  };
+
   const openSavedDesignShortcut = () => {
     const savedDesign = accountContext.savedDesigns?.[0];
 
@@ -566,7 +858,7 @@ const AtelierAssistantV2 = () => {
         reference: savedDesign.reference,
       },
     });
-    setIsOpen(false);
+    closeAssistant();
   };
 
   const openQuoteShortcut = () => {
@@ -604,7 +896,7 @@ const AtelierAssistantV2 = () => {
     if (action.type === 'open_collection' && action.collectionSlug) {
       navigate(`/colecciones/${action.collectionSlug}`);
       setPendingAction(null);
-      setIsOpen(false);
+      closeAssistant();
       return;
     }
 
@@ -615,7 +907,7 @@ const AtelierAssistantV2 = () => {
         },
       });
       setPendingAction(null);
-      setIsOpen(false);
+      closeAssistant();
       return;
     }
 
@@ -627,7 +919,7 @@ const AtelierAssistantV2 = () => {
         },
       });
       setPendingAction(null);
-      setIsOpen(false);
+      closeAssistant();
       return;
     }
 
@@ -648,7 +940,9 @@ const AtelierAssistantV2 = () => {
   };
 
   const applyAssistantReply = (data) => {
-    appendMessages([{ id: `${Date.now()}-assistant`, role: 'assistant', text: data.assistantMessage }]);
+    const assistantMessage = data.assistantMessage || 'Puedo seguir orientandote por coleccion, pieza, configurador o cita.';
+
+    appendMessages([{ id: `${Date.now()}-assistant`, role: 'assistant', text: assistantMessage }]);
     setQuickReplies(Array.isArray(data.quickReplies) && data.quickReplies.length ? data.quickReplies : starterReplies);
     setPendingAction(data.suggestedAction?.type && data.suggestedAction.type !== 'none' ? data.suggestedAction : null);
     setGuidanceCard(data.guidanceCard || null);
@@ -666,6 +960,8 @@ const AtelierAssistantV2 = () => {
     if (data.accountContext) {
       setAccountContext(data.accountContext);
     }
+
+    return assistantMessage;
   };
 
   const submitPrompt = async (rawText, metadata = {}) => {
@@ -683,6 +979,12 @@ const AtelierAssistantV2 = () => {
       });
     }
 
+    if (metadata.source === 'voice_call') {
+      trackAssistantEvent('voice_message_submitted', {
+        source: 'voice_call',
+      });
+    }
+
     const conversation = messages.map((entry) => ({
       role: entry.role,
       text: entry.text,
@@ -694,6 +996,10 @@ const AtelierAssistantV2 = () => {
     setChatError('');
     setSuccessMessage('');
 
+    if (metadata.speak) {
+      setVoiceStatus('Orvia esta pensando la respuesta.');
+    }
+
     try {
       const requestBody = {
         message,
@@ -701,21 +1007,31 @@ const AtelierAssistantV2 = () => {
         memory,
         clientContext,
       };
+      let replyData;
 
       try {
-        const data = await apiFetch('/api/assistant-v2/chat', {
+        replyData = await apiFetch('/api/assistant-v2/chat', {
           method: 'POST',
           body: requestBody,
         });
-
-        applyAssistantReply(data);
       } catch (requestError) {
         console.error(requestError);
-        applyAssistantReply(buildGuestFallbackReply(message));
+        replyData = buildGuestFallbackReply(message);
+      }
+
+      const spokenText = applyAssistantReply(replyData);
+
+      if (metadata.speak) {
+        speakAssistantText(spokenText, { resumeListening: true });
       }
     } catch (error) {
       console.error(error);
-      applyAssistantReply(buildGuestFallbackReply(message));
+      const fallbackReply = buildGuestFallbackReply(message);
+      const spokenText = applyAssistantReply(fallbackReply);
+
+      if (metadata.speak) {
+        speakAssistantText(spokenText, { resumeListening: true });
+      }
     } finally {
       setIsThinking(false);
     }
@@ -771,7 +1087,7 @@ const AtelierAssistantV2 = () => {
           type="button"
           className="assistant-v2-backdrop"
           aria-label="Cerrar Orvia"
-          onClick={() => setIsOpen(false)}
+          onClick={closeAssistant}
         />
       ) : null}
 
@@ -796,12 +1112,37 @@ const AtelierAssistantV2 = () => {
                 <span className="assistant-v2-kicker">Orvia</span>
                 <h2>Elige sin enredos</h2>
               </div>
-              <button type="button" className="assistant-v2-close" onClick={() => setIsOpen(false)} aria-label="Cerrar">
-                x
-              </button>
+              <div className="assistant-v2-header-actions">
+                <button
+                  type="button"
+                  className={`assistant-v2-call-mini ${isVoiceMode ? 'is-active' : ''}`}
+                  onClick={isVoiceMode ? endVoiceCall : startVoiceCall}
+                >
+                  {isVoiceMode ? 'En llamada' : 'Llamar'}
+                </button>
+                <button type="button" className="assistant-v2-close" onClick={closeAssistant} aria-label="Cerrar">
+                  x
+                </button>
+              </div>
             </header>
 
             <div className="assistant-v2-body">
+              {isVoiceMode ? (
+                <div className={`assistant-v2-call-card ${isListening ? 'is-listening' : ''} ${isSpeaking ? 'is-speaking' : ''}`}>
+                  <div className="assistant-v2-call-orb" aria-hidden="true">
+                    <span />
+                  </div>
+                  <div className="assistant-v2-call-copy">
+                    <span>{buildVoiceAvailabilityLabel()}</span>
+                    <strong>
+                      {isListening ? 'Te estoy escuchando' : isSpeaking ? 'Orvia responde' : 'Llamada lista'}
+                    </strong>
+                    <p>{voiceStatus}</p>
+                    {voiceTranscript ? <small>Escuche: {voiceTranscript}</small> : null}
+                  </div>
+                </div>
+              ) : null}
+
               {messages.map((message) => (
                 <MessageBubble key={message.id} role={message.role} text={message.text} />
               ))}
@@ -836,6 +1177,26 @@ const AtelierAssistantV2 = () => {
                   </form>
 
                   {chatError ? <p className="assistant-v2-error">{chatError}</p> : null}
+
+                  <div className="assistant-v2-call-controls" aria-label="Controles de llamada con Orvia">
+                    <button
+                      type="button"
+                      className={`assistant-v2-call-button ${isVoiceMode ? 'is-active' : ''}`}
+                      onClick={isVoiceMode ? endVoiceCall : startVoiceCall}
+                    >
+                      {isVoiceMode ? 'Finalizar llamada' : 'Iniciar llamada'}
+                    </button>
+                    {isVoiceMode ? (
+                      <button
+                        type="button"
+                        className="assistant-v2-call-button assistant-v2-call-button-secondary"
+                        onClick={isSpeaking ? stopVoiceOutput : startVoiceListening}
+                        disabled={isListening || isThinking}
+                      >
+                        {isListening ? 'Escuchando...' : isSpeaking ? 'Detener voz' : 'Hablar'}
+                      </button>
+                    ) : null}
+                  </div>
 
                   <div className="assistant-v2-quick-replies" aria-label="Recomendaciones rapidas">
                     {quickReplies.map((reply) => (
@@ -926,19 +1287,17 @@ const AtelierAssistantV2 = () => {
       <button
         type="button"
         className="assistant-v2-launcher"
-        onClick={() =>
-          setIsOpen((current) => {
-            const next = !current;
+        onClick={() => {
+          if (isOpen) {
+            closeAssistant();
+            return;
+          }
 
-            if (next) {
-              trackAssistantEvent('launcher_opened', {
-                source: 'floating_launcher',
-              });
-            }
-
-            return next;
-          })
-        }
+          trackAssistantEvent('launcher_opened', {
+            source: 'floating_launcher',
+          });
+          setIsOpen(true);
+        }}
       >
         {isOpen ? 'Cerrar Orvia' : 'Abrir Orvia'}
       </button>

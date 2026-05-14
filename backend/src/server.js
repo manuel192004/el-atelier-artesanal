@@ -105,6 +105,12 @@ const ASSISTANT_V2_MODEL = sanitizeText(process.env.ASSISTANT_V2_MODEL, 120) || 
 const GOOGLE_APPLICATION_CREDENTIALS = sanitizeText(resolveGoogleApplicationCredentials(), 400);
 const AUTH_JWT_SECRET = sanitizeText(process.env.AUTH_JWT_SECRET, 200) || 'orviane-local-dev-secret';
 const GOOGLE_CLIENT_ID = sanitizeText(process.env.GOOGLE_CLIENT_ID, 200);
+const STATIC_FRONTEND_ORIGINS = [
+  'https://venerable-pie-81d20e.netlify.app',
+  'https://el-atelier-artesanal.netlify.app',
+  'https://www.orviane.com',
+  'https://orviane.com',
+];
 const FRONTEND_ORIGINS = (process.env.FRONTEND_ORIGINS ||
   'http://localhost:5173,https://www.orviane.com')
   .split(',')
@@ -116,7 +122,7 @@ const QUOTES_FILE = path.join(QUOTES_DIR, 'quote-requests.ndjson');
 const REGISTRATIONS_FILE = path.join(QUOTES_DIR, 'design-registrations.ndjson');
 const GENERATIONS_FILE = path.join(QUOTES_DIR, 'design-generations.ndjson');
 const APPOINTMENTS_FILE = path.join(QUOTES_DIR, 'appointment-requests.ndjson');
-const allowedOrigins = new Set(FRONTEND_ORIGINS);
+const allowedOrigins = new Set([...FRONTEND_ORIGINS, ...STATIC_FRONTEND_ORIGINS]);
 const googleAuth = new GoogleAuth({
   scopes: ['https://www.googleapis.com/auth/cloud-platform'],
   ...(GOOGLE_APPLICATION_CREDENTIALS ? { keyFilename: GOOGLE_APPLICATION_CREDENTIALS } : {}),
@@ -1162,7 +1168,7 @@ app.use((request, response, next) => {
   response.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   response.setHeader('X-Content-Type-Options', 'nosniff');
   response.setHeader('X-Frame-Options', 'DENY');
-  response.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  response.setHeader('Permissions-Policy', 'camera=(), microphone=(self), geolocation=()');
   next();
 });
 

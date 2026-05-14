@@ -6,7 +6,8 @@ import '../styles/_accountpage.scss';
 import AtelierConversionSection from '../components/common/AtelierConversionSection';
 import PageMeta from '../components/common/PageMeta';
 
-const GOOGLE_CLIENT_ID_BUILD = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+const DEFAULT_GOOGLE_CLIENT_ID = '99865942569-8no1fd17kohm1c8ao80vbgon4gekmgf0.apps.googleusercontent.com';
+const GOOGLE_CLIENT_ID_BUILD = import.meta.env.VITE_GOOGLE_CLIENT_ID || DEFAULT_GOOGLE_CLIENT_ID;
 
 const createRegisterState = () => ({
   fullName: '',
