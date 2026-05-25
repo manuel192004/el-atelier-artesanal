@@ -111,6 +111,7 @@ const OPENAI_API_KEY = sanitizeText(process.env.OPENAI_API_KEY, 400);
 const OPENAI_ASSISTANT_MODEL = sanitizeText(process.env.OPENAI_ASSISTANT_MODEL, 120) || 'gpt-5-mini';
 const OPENAI_REALTIME_MODEL = sanitizeText(process.env.OPENAI_REALTIME_MODEL, 120) || 'gpt-realtime';
 const OPENAI_REALTIME_VOICE = sanitizeText(process.env.OPENAI_REALTIME_VOICE, 40) || 'marin';
+const OPENAI_TRANSCRIPTION_MODEL = sanitizeText(process.env.OPENAI_TRANSCRIPTION_MODEL, 120) || 'gpt-4o-mini-transcribe';
 const GOOGLE_APPLICATION_CREDENTIALS = sanitizeText(resolveGoogleApplicationCredentials(), 400);
 const AUTH_JWT_SECRET = sanitizeText(process.env.AUTH_JWT_SECRET, 200) || 'orviane-local-dev-secret';
 const GOOGLE_CLIENT_ID = sanitizeText(process.env.GOOGLE_CLIENT_ID, 200);
@@ -422,14 +423,28 @@ function isAssistantV2Configured() {
 function buildOrviaRealtimeInstructions() {
   return [
     'Eres Orvia, asesora de voz de Orviane.',
-    'Habla en espanol natural, breve y humano. Maximo dos frases por turno salvo que el cliente pida detalle.',
+    'Habla en espanol natural, calido y humano, como una asesora por llamada. Maximo dos frases por turno salvo que el cliente pida detalle.',
     'Tu trabajo es ayudar a elegir joyas, colecciones, configurador, WhatsApp o cita.',
     'No inventes precios exactos, stock, fechas garantizadas ni materiales no confirmados.',
     'No fuerces cita. Solo sugierela si el cliente la pide, hay urgencia o la decision necesita acompanamiento humano.',
     'Pregunta una sola cosa cuando falte informacion: ocasion, tipo de joya, estilo, presupuesto o fecha.',
     'Si el cliente saluda, responde con bienvenida corta y ofrece empezar por ocasion, tipo de joya o estilo.',
     'Si pide regalo, orienta hacia aretes, cadenas o una pieza delicada antes de pedir mas datos.',
+    'Si menciona mama o Dia de las Madres, recomienda primero aretes o cadenas delicadas y pregunta por estilo solo si hace falta.',
+    'Si pide diseno a medida, presenta el configurador como ruta creativa visual antes de sugerir cita.',
+    'Evita repetir la misma frase. Reconoce lo que dijo el cliente y avanza un paso concreto.',
   ].join(' ');
+}
+
+function buildOpenAISafetyIdentifier(request) {
+  return crypto
+    .createHash('sha256')
+    .update([
+      request.ip || '',
+      request.headers['user-agent'] || '',
+      request.headers.origin || '',
+    ].join('|'))
+    .digest('hex');
 }
 
 function validateGeneratePayload(body) {
@@ -1314,6 +1329,7 @@ app.post('/api/assistant-v2/realtime-client-secret', createRateLimiter(10 * 60 *
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${OPENAI_API_KEY}`,
+        'OpenAI-Safety-Identifier': buildOpenAISafetyIdentifier(request),
       },
       body: JSON.stringify({
         expires_after: {
@@ -1327,10 +1343,17 @@ app.post('/api/assistant-v2/realtime-client-secret', createRateLimiter(10 * 60 *
           output_modalities: ['audio'],
           audio: {
             input: {
+              noise_reduction: {
+                type: 'near_field',
+              },
+              transcription: {
+                model: OPENAI_TRANSCRIPTION_MODEL,
+                language: 'es',
+                prompt: 'Orviane, Orvia, joyeria, anillos, aretes, cadenas, pulseras, regalo, mama, Dia de las Madres, compromiso, oro, plata, perlas, diamantes.',
+              },
               turn_detection: {
-                type: 'server_vad',
-                silence_duration_ms: 450,
-                idle_timeout_ms: 7000,
+                type: 'semantic_vad',
+                eagerness: 'auto',
                 create_response: true,
                 interrupt_response: true,
               },

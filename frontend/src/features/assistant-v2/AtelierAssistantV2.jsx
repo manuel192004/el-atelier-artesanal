@@ -96,7 +96,17 @@ function isSpeechSynthesisAvailable() {
   return typeof window !== 'undefined' && 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window;
 }
 
-function buildVoiceAvailabilityLabel() {
+function isRealtimeVoiceAvailable() {
+  return typeof window !== 'undefined' &&
+    'RTCPeerConnection' in window &&
+    Boolean(navigator.mediaDevices?.getUserMedia);
+}
+
+function buildVoiceAvailabilityLabel(isRealtimeVoice = false) {
+  if (isRealtimeVoice) {
+    return 'Voz OpenAI en vivo';
+  }
+
   const canListen = Boolean(getSpeechRecognitionConstructor());
   const canSpeak = isSpeechSynthesisAvailable();
 
@@ -113,6 +123,48 @@ function buildVoiceAvailabilityLabel() {
   }
 
   return 'Chat escrito';
+}
+
+function waitForIceGathering(peerConnection) {
+  if (!peerConnection || peerConnection.iceGatheringState === 'complete') {
+    return Promise.resolve();
+  }
+
+  return new Promise((resolve) => {
+    let timeout;
+    const finish = () => {
+      if (timeout) {
+        window.clearTimeout(timeout);
+      }
+      peerConnection.removeEventListener('icegatheringstatechange', handleStateChange);
+      resolve();
+    };
+
+    const handleStateChange = () => {
+      if (peerConnection.iceGatheringState === 'complete') {
+        finish();
+      }
+    };
+
+    timeout = window.setTimeout(finish, 1400);
+    peerConnection.addEventListener('icegatheringstatechange', handleStateChange);
+  });
+}
+
+function createRealtimeTextEvent(text) {
+  return {
+    type: 'conversation.item.create',
+    item: {
+      type: 'message',
+      role: 'user',
+      content: [
+        {
+          type: 'input_text',
+          text,
+        },
+      ],
+    },
+  };
 }
 
 function MemoryPills({ memory }) {
@@ -496,6 +548,7 @@ const AtelierAssistantV2 = () => {
   const [successMessage, setSuccessMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isVoiceMode, setIsVoiceMode] = useState(false);
+  const [isRealtimeVoice, setIsRealtimeVoice] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [voiceStatus, setVoiceStatus] = useState('Lista para llamada');
@@ -506,6 +559,14 @@ const AtelierAssistantV2 = () => {
   const voiceTranscriptRef = useRef('');
   const voiceRecognitionHadErrorRef = useRef(false);
   const voiceRestartTimerRef = useRef(null);
+  const realtimePeerRef = useRef(null);
+  const realtimeDataChannelRef = useRef(null);
+  const realtimeAudioRef = useRef(null);
+  const realtimeStreamRef = useRef(null);
+  const realtimeAssistantTextRef = useRef('');
+  const realtimeUserTextRef = useRef('');
+  const realtimeUserItemsRef = useRef(new Set());
+  const realtimeIsActiveRef = useRef(false);
 
   const clientContext = useMemo(() => {
     const collectionMatch = location.pathname.match(/^\/colecciones\/([^/]+)/);
@@ -569,6 +630,24 @@ const AtelierAssistantV2 = () => {
       if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
         window.speechSynthesis.cancel();
       }
+
+      if (realtimeDataChannelRef.current) {
+        realtimeDataChannelRef.current.close();
+      }
+
+      if (realtimePeerRef.current) {
+        realtimePeerRef.current.close();
+      }
+
+      if (realtimeStreamRef.current) {
+        realtimeStreamRef.current.getTracks().forEach((track) => track.stop());
+      }
+
+      if (realtimeAudioRef.current) {
+        realtimeAudioRef.current.pause();
+        realtimeAudioRef.current.srcObject = null;
+        realtimeAudioRef.current.remove();
+      }
     };
   }, []);
 
@@ -608,7 +687,280 @@ const AtelierAssistantV2 = () => {
     return;
   };
 
+  const sendRealtimeEvent = (event) => {
+    const channel = realtimeDataChannelRef.current;
+
+    if (!channel || channel.readyState !== 'open') {
+      return false;
+    }
+
+    channel.send(JSON.stringify(event));
+    return true;
+  };
+
+  const appendRealtimeAssistantTranscript = (text) => {
+    const transcript = String(text || '').trim();
+
+    if (!transcript) {
+      return;
+    }
+
+    appendMessages([{ id: `${Date.now()}-realtime-assistant`, role: 'assistant', text: transcript }]);
+    setVoiceStatus('Te escucho en vivo. Puedes hablar sin pulsar botones.');
+    setIsSpeaking(false);
+  };
+
+  const handleRealtimeEvent = (rawEvent) => {
+    let event;
+
+    try {
+      event = JSON.parse(rawEvent.data);
+    } catch (error) {
+      console.error(error);
+      return;
+    }
+
+    if (event.type === 'session.created' || event.type === 'session.updated') {
+      setVoiceStatus('Llamada conectada. Habla normal; Orvia detecta cuando terminas.');
+      return;
+    }
+
+    if (event.type === 'input_audio_buffer.speech_started') {
+      realtimeUserTextRef.current = '';
+      setIsListening(true);
+      setIsSpeaking(false);
+      setVoiceStatus('Te escucho en vivo.');
+      return;
+    }
+
+    if (event.type === 'input_audio_buffer.speech_stopped') {
+      setIsListening(false);
+      setVoiceStatus('Orvia esta entendiendo tu idea.');
+      return;
+    }
+
+    if (event.type === 'conversation.item.input_audio_transcription.delta') {
+      realtimeUserTextRef.current = `${realtimeUserTextRef.current}${event.delta || ''}`;
+      setVoiceTranscript(realtimeUserTextRef.current.trim());
+      return;
+    }
+
+    if (event.type === 'conversation.item.input_audio_transcription.completed') {
+      const transcript = String(event.transcript || realtimeUserTextRef.current || '').trim();
+      const itemId = event.item_id || `${Date.now()}-${transcript}`;
+      realtimeUserTextRef.current = '';
+      setVoiceTranscript(transcript);
+
+      if (transcript && !realtimeUserItemsRef.current.has(itemId)) {
+        realtimeUserItemsRef.current.add(itemId);
+        appendMessages([{ id: `${Date.now()}-realtime-user`, role: 'user', text: transcript }]);
+      }
+
+      return;
+    }
+
+    if (event.type === 'response.created') {
+      realtimeAssistantTextRef.current = '';
+      setIsSpeaking(true);
+      setVoiceStatus('Orvia esta respondiendo.');
+      return;
+    }
+
+    if (event.type === 'response.output_audio_transcript.delta') {
+      realtimeAssistantTextRef.current = `${realtimeAssistantTextRef.current}${event.delta || ''}`;
+      return;
+    }
+
+    if (event.type === 'response.output_audio_transcript.done') {
+      appendRealtimeAssistantTranscript(event.transcript || realtimeAssistantTextRef.current);
+      realtimeAssistantTextRef.current = '';
+      return;
+    }
+
+    if (event.type === 'response.done') {
+      appendRealtimeAssistantTranscript(realtimeAssistantTextRef.current);
+      realtimeAssistantTextRef.current = '';
+      setIsSpeaking(false);
+      return;
+    }
+
+    if (event.type === 'error') {
+      console.error(event.error || event);
+      setVoiceStatus(event.error?.message || 'La llamada tuvo un corte. Puedes seguir por chat o reiniciarla.');
+    }
+  };
+
+  const stopRealtimeVoiceCall = () => {
+    realtimeIsActiveRef.current = false;
+    setIsRealtimeVoice(false);
+
+    if (realtimeDataChannelRef.current) {
+      realtimeDataChannelRef.current.close();
+      realtimeDataChannelRef.current = null;
+    }
+
+    if (realtimePeerRef.current) {
+      realtimePeerRef.current.close();
+      realtimePeerRef.current = null;
+    }
+
+    if (realtimeStreamRef.current) {
+      realtimeStreamRef.current.getTracks().forEach((track) => track.stop());
+      realtimeStreamRef.current = null;
+    }
+
+    if (realtimeAudioRef.current) {
+      realtimeAudioRef.current.pause();
+      realtimeAudioRef.current.srcObject = null;
+      realtimeAudioRef.current.remove();
+      realtimeAudioRef.current = null;
+    }
+
+    realtimeAssistantTextRef.current = '';
+    realtimeUserTextRef.current = '';
+    realtimeUserItemsRef.current = new Set();
+  };
+
+  const sendRealtimeTextMessage = (text) => {
+    const message = String(text || '').trim();
+
+    if (!message) {
+      return false;
+    }
+
+    const sentMessage = sendRealtimeEvent(createRealtimeTextEvent(message));
+    const sentResponse = sendRealtimeEvent({
+      type: 'response.create',
+      response: {
+        instructions: 'Responde como Orvia con voz natural, breve y concreta. Reconoce el mensaje del cliente y avanza un paso util.',
+      },
+    });
+
+    return sentMessage && sentResponse;
+  };
+
+  const startRealtimeVoiceCall = async () => {
+    if (!isRealtimeVoiceAvailable()) {
+      throw new Error('Realtime voice is not available in this browser.');
+    }
+
+    setVoiceStatus('Preparando llamada de voz en vivo.');
+
+    const tokenData = await apiFetch('/api/assistant-v2/realtime-client-secret', {
+      method: 'POST',
+      body: {
+        currentPath: location.pathname,
+      },
+    });
+    const ephemeralKey = tokenData.clientSecret || tokenData.value;
+
+    if (!ephemeralKey) {
+      throw new Error('No se recibio token temporal de OpenAI Realtime.');
+    }
+
+    setVoiceStatus('Activa el permiso de microfono para hablar con Orvia.');
+
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true,
+      },
+    });
+    const peerConnection = new RTCPeerConnection();
+    const audioElement = document.createElement('audio');
+    const dataChannel = peerConnection.createDataChannel('oai-events');
+
+    realtimePeerRef.current = peerConnection;
+    realtimeStreamRef.current = stream;
+    realtimeAudioRef.current = audioElement;
+    realtimeDataChannelRef.current = dataChannel;
+    realtimeIsActiveRef.current = true;
+    setIsRealtimeVoice(true);
+
+    audioElement.autoplay = true;
+    audioElement.playsInline = true;
+    audioElement.setAttribute('playsinline', 'true');
+
+    peerConnection.ontrack = (event) => {
+      audioElement.srcObject = event.streams[0];
+      audioElement.play().catch((error) => {
+        console.error(error);
+        setVoiceStatus('La llamada esta conectada; toca la pantalla si el audio no se reproduce.');
+      });
+    };
+
+    peerConnection.onconnectionstatechange = () => {
+      if (peerConnection.connectionState === 'connected') {
+        setVoiceStatus('Llamada en vivo. Habla normal, sin tocar Hablar.');
+        return;
+      }
+
+      if (['failed', 'disconnected', 'closed'].includes(peerConnection.connectionState)) {
+        setIsListening(false);
+        setIsSpeaking(false);
+        setVoiceStatus('La llamada se desconecto. Puedes iniciarla otra vez o seguir por chat.');
+      }
+    };
+
+    dataChannel.addEventListener('open', () => {
+      setVoiceStatus('Llamada en vivo. Orvia te saluda y queda escuchando.');
+      sendRealtimeEvent({
+        type: 'response.create',
+        response: {
+          instructions: 'Saluda en una frase como Orvia y di que puedes ayudar a elegir regalo, anillo, coleccion o diseno a medida. Luego espera al cliente.',
+        },
+      });
+    });
+    dataChannel.addEventListener('message', handleRealtimeEvent);
+    dataChannel.addEventListener('close', () => {
+      setIsListening(false);
+      setIsSpeaking(false);
+    });
+
+    stream.getAudioTracks().forEach((track) => {
+      peerConnection.addTrack(track, stream);
+    });
+
+    const offer = await peerConnection.createOffer();
+    await peerConnection.setLocalDescription(offer);
+    await waitForIceGathering(peerConnection);
+
+    const sdpResponse = await fetch('https://api.openai.com/v1/realtime/calls', {
+      method: 'POST',
+      body: peerConnection.localDescription?.sdp || offer.sdp,
+      headers: {
+        Authorization: `Bearer ${ephemeralKey}`,
+        'Content-Type': 'application/sdp',
+      },
+    });
+
+    const answerSdp = await sdpResponse.text();
+
+    if (!sdpResponse.ok) {
+      throw new Error(answerSdp || 'No se pudo conectar la llamada Realtime de OpenAI.');
+    }
+
+    await peerConnection.setRemoteDescription({
+      type: 'answer',
+      sdp: answerSdp,
+    });
+
+    trackAssistantEvent('voice_realtime_connected', {
+      source: 'openai_realtime',
+      model: tokenData.model || '',
+      voice: tokenData.voice || '',
+    });
+
+    return true;
+  };
+
   const stopVoiceListening = () => {
+    if (realtimeIsActiveRef.current) {
+      setIsListening(false);
+      return;
+    }
+
     if (voiceRestartTimerRef.current) {
       window.clearTimeout(voiceRestartTimerRef.current);
       voiceRestartTimerRef.current = null;
@@ -638,6 +990,7 @@ const AtelierAssistantV2 = () => {
   const endVoiceCall = () => {
     voiceModeRef.current = false;
     setIsVoiceMode(false);
+    stopRealtimeVoiceCall();
     stopVoiceListening();
     stopVoiceOutput();
     setVoiceTranscript('');
@@ -648,6 +1001,10 @@ const AtelierAssistantV2 = () => {
     const spokenText = String(text || '').trim();
 
     if (!spokenText || !voiceModeRef.current) {
+      return;
+    }
+
+    if (realtimeIsActiveRef.current) {
       return;
     }
 
@@ -701,6 +1058,11 @@ const AtelierAssistantV2 = () => {
 
   const startVoiceListening = () => {
     if (typeof window === 'undefined') {
+      return;
+    }
+
+    if (realtimeIsActiveRef.current) {
+      setVoiceStatus('La llamada en vivo ya esta escuchando. Habla normal, sin pulsar Hablar.');
       return;
     }
 
@@ -806,17 +1168,35 @@ const AtelierAssistantV2 = () => {
     }
   };
 
-  const startVoiceCall = () => {
+  const startVoiceCall = async () => {
     setIsOpen(true);
     setMode('chat');
     setIsVoiceMode(true);
     voiceModeRef.current = true;
     setChatError('');
     setVoiceTranscript('');
+    stopVoiceListening();
+    stopVoiceOutput();
+    stopRealtimeVoiceCall();
     setVoiceStatus('Conectando llamada con Orvia.');
     trackAssistantEvent('voice_call_started', {
       source: 'voice_call_button',
     });
+
+    try {
+      await startRealtimeVoiceCall();
+      return;
+    } catch (error) {
+      console.error(error);
+      stopRealtimeVoiceCall();
+      setIsVoiceMode(true);
+      voiceModeRef.current = true;
+      setVoiceStatus('No pude abrir voz en vivo con OpenAI. Activo el modo de voz seguro del navegador.');
+      trackAssistantEvent('voice_realtime_fallback', {
+        source: 'openai_realtime',
+        reason: error.message || 'realtime_unavailable',
+      });
+    }
 
     const intro = 'Hola, soy Orvia. Te escucho para ayudarte a elegir una joya, una coleccion, una cita o una pieza personalizada.';
 
@@ -990,6 +1370,17 @@ const AtelierAssistantV2 = () => {
       text: entry.text,
     }));
 
+    if (realtimeIsActiveRef.current && metadata.source !== 'voice_call') {
+      if (sendRealtimeTextMessage(message)) {
+        appendMessages([{ id: `${Date.now()}-user`, role: 'user', text: message }]);
+        setInputValue('');
+        setVoiceStatus('Le pase tu mensaje a Orvia en la llamada.');
+        return;
+      }
+
+      setVoiceStatus('No pude pasarlo a la llamada, lo intento por chat.');
+    }
+
     appendMessages([{ id: `${Date.now()}-user`, role: 'user', text: message }]);
     setInputValue('');
     setIsThinking(true);
@@ -1128,14 +1519,14 @@ const AtelierAssistantV2 = () => {
 
             <div className="assistant-v2-body">
               {isVoiceMode ? (
-                <div className={`assistant-v2-call-card ${isListening ? 'is-listening' : ''} ${isSpeaking ? 'is-speaking' : ''}`}>
+                <div className={`assistant-v2-call-card ${isListening ? 'is-listening' : ''} ${isSpeaking ? 'is-speaking' : ''} ${isRealtimeVoice ? 'is-realtime' : ''}`}>
                   <div className="assistant-v2-call-orb" aria-hidden="true">
                     <span />
                   </div>
                   <div className="assistant-v2-call-copy">
-                    <span>{buildVoiceAvailabilityLabel()}</span>
+                    <span>{buildVoiceAvailabilityLabel(isRealtimeVoice)}</span>
                     <strong>
-                      {isListening ? 'Te estoy escuchando' : isSpeaking ? 'Orvia responde' : 'Llamada lista'}
+                      {isRealtimeVoice ? 'Llamada en vivo' : isListening ? 'Te estoy escuchando' : isSpeaking ? 'Orvia responde' : 'Llamada lista'}
                     </strong>
                     <p>{voiceStatus}</p>
                     {voiceTranscript ? <small>Escuche: {voiceTranscript}</small> : null}
@@ -1178,7 +1569,7 @@ const AtelierAssistantV2 = () => {
 
                   {chatError ? <p className="assistant-v2-error">{chatError}</p> : null}
 
-                  <div className="assistant-v2-call-controls" aria-label="Controles de llamada con Orvia">
+                  <div className={`assistant-v2-call-controls ${isRealtimeVoice ? 'is-realtime' : ''}`} aria-label="Controles de llamada con Orvia">
                     <button
                       type="button"
                       className={`assistant-v2-call-button ${isVoiceMode ? 'is-active' : ''}`}
@@ -1186,7 +1577,7 @@ const AtelierAssistantV2 = () => {
                     >
                       {isVoiceMode ? 'Finalizar llamada' : 'Iniciar llamada'}
                     </button>
-                    {isVoiceMode ? (
+                    {isVoiceMode && !isRealtimeVoice ? (
                       <button
                         type="button"
                         className="assistant-v2-call-button assistant-v2-call-button-secondary"

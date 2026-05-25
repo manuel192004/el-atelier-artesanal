@@ -179,6 +179,19 @@
   animation: assistantCallPulse 1.3s ease-in-out infinite;
 }
 
+.assistant-v2-call-card.is-realtime {
+  border-color: rgba(154, 218, 176, 0.28);
+  background:
+    radial-gradient(circle at left, rgba(154, 218, 176, 0.12), transparent 54%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.018)),
+    rgba(0, 0, 0, 0.2);
+}
+
+.assistant-v2-call-card.is-realtime .assistant-v2-call-orb {
+  border-color: rgba(154, 218, 176, 0.34);
+  background: radial-gradient(circle at 35% 30%, #dcffe5, #77b887 62%, #131c14);
+}
+
 .assistant-v2-call-copy {
   min-width: 0;
 }
@@ -412,6 +425,10 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
   margin-top: 9px;
+}
+
+.assistant-v2-call-controls.is-realtime {
+  grid-template-columns: 1fr;
 }
 
 .assistant-v2-call-button {
