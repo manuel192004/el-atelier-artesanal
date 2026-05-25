@@ -428,10 +428,12 @@ function buildOrviaRealtimeInstructions() {
     'No inventes precios exactos, stock, fechas garantizadas ni materiales no confirmados.',
     'No fuerces cita. Solo sugierela si el cliente la pide, hay urgencia o la decision necesita acompanamiento humano.',
     'Pregunta una sola cosa cuando falte informacion: ocasion, tipo de joya, estilo, presupuesto o fecha.',
+    'Si el cliente dice gracias, como estas, perfecto u otra cortesia, responde cordial y no pidas datos de compra.',
     'Si el cliente saluda, responde con bienvenida corta y ofrece empezar por ocasion, tipo de joya o estilo.',
     'Si pide regalo, orienta hacia aretes, cadenas o una pieza delicada antes de pedir mas datos.',
     'Si menciona mama o Dia de las Madres, recomienda primero aretes o cadenas delicadas y pregunta por estilo solo si hace falta.',
     'Si pide diseno a medida, presenta el configurador como ruta creativa visual antes de sugerir cita.',
+    'Si pide valorar una joya, explica que el rango depende de metal por gramo, peso, piedra, engaste, merma y mano de obra. Pide solo el dato mas importante que falte.',
     'Evita repetir la misma frase. Reconoce lo que dijo el cliente y avanza un paso concreto.',
   ].join(' ');
 }

@@ -51,6 +51,25 @@ function buildPhraseBank() {
     'me ayudas',
   ].forEach((phrase) => addPhrase(bank, phrase, 'recommend_jewelry'));
 
+  [
+    'gracias',
+    'muchas gracias',
+    'mil gracias',
+    'te agradezco',
+    'como estas',
+    'que tal',
+    'como vas',
+    'todo bien',
+    'perfecto',
+    'listo',
+    'ok',
+    'vale',
+    'de acuerdo',
+    'excelente',
+    'chao',
+    'hasta luego',
+  ].forEach((phrase) => addPhrase(bank, phrase, 'smalltalk'));
+
   const openings = [
     'quiero',
     'busco',
@@ -144,7 +163,7 @@ function buildPhraseBank() {
     }
   }
 
-  for (const opening of ['quiero cotizar', 'cuanto cuesta', 'precio de', 'valor de', 'me das precio de']) {
+  for (const opening of ['quiero cotizar', 'cuanto cuesta', 'precio de', 'valor de', 'me das precio de', 'quiero valorar', 'cuanto vale', 'estimame el precio']) {
     for (const type of jewelryTypes) {
       for (const style of styles.slice(0, 6)) {
         addPhrase(bank, `${opening} ${type.text} ${style.text}`, 'quote_request', {
@@ -152,7 +171,27 @@ function buildPhraseBank() {
           style: style.style,
         });
       }
+
+      for (const metal of metals.slice(0, 4)) {
+        addPhrase(bank, `${opening} ${type.text} ${metal.text}`, 'quote_request', {
+          jewelryType: type.jewelryType,
+          metal: metal.metal || '',
+        });
+      }
     }
+  }
+
+  for (const phrase of [
+    'quiero valorar una joya por gramos',
+    'calcular precio por gramo de oro',
+    'estimar valor con precio del mineral',
+    'avaluar un anillo en oro 18k',
+    'cuanto cuesta un anillo de 4 gramos',
+    'cuanto vale una cadena de oro 18k',
+    'precio de oro por gramo para una joya',
+    'valora una pulsera en plata 925',
+  ]) {
+    addPhrase(bank, phrase, 'quote_request');
   }
 
   for (const opening of ['quiero disenar', 'quiero personalizar', 'hacer a medida', 'crear desde cero', 'usar el configurador']) {

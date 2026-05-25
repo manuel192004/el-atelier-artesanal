@@ -3,6 +3,11 @@ const {
   classifyWithPhraseBank,
   getPhraseBankStats,
 } = require('./phrase-bank');
+const {
+  buildValuationEstimate,
+  buildValuationMessage,
+  buildValuationQuickReplies,
+} = require('./valuation');
 
 const DETAIL_PROMPTS = {
   occasion: [
@@ -226,10 +231,46 @@ function detectIntent(text) {
   if (/(whatsapp|humana|asesora|persona real)/.test(text)) return 'handoff_whatsapp';
   if (/(cita|agendar|agenda|asesoria|visita|reservar)/.test(text)) return 'schedule_appointment';
   if (/(diseno|disenar|personaliz|a medida|configurador)/.test(text)) return 'design_custom';
-  if (/(precio|cotizacion|cotizar|cuanto cuesta|valor)/.test(text)) return 'quote_request';
+  if (/(precio|cotizacion|cotizar|cuanto cuesta|cuanto vale|valor|valora|avalu|avaluo|estimar|estimacion|calcular|mineral|gramo|gramos|quilate|quilates|ct)/.test(text)) return 'quote_request';
   if (/(ver|coleccion|catalogo|opciones|mostrar)/.test(text)) return 'browse_collection';
   if (/(hola|busco|quiero|recomienda|recomendacion|ayuda)/.test(text)) return 'recommend_jewelry';
   return 'unknown';
+}
+
+function getCourtesyType(text) {
+  const normalized = normalizeText(text);
+
+  if (!normalized) return '';
+  if (/^(gracias|muchas gracias|mil gracias|super gracias|te agradezco|ok gracias|listo gracias|perfecto gracias|vale gracias)[!. ]*$/.test(normalized)) return 'thanks';
+  if (/^(como estas|como estas orvia|que tal|como vas|como te va|todo bien|que cuentas)[?!. ]*$/.test(normalized)) return 'wellbeing';
+  if (/^(perfecto|listo|ok|okay|vale|de acuerdo|me parece bien|super|excelente|esta bien)[!. ]*$/.test(normalized)) return 'acknowledge';
+  if (/^(adios|chao|hasta luego|nos vemos|bye)[!. ]*$/.test(normalized)) return 'goodbye';
+  if (/^(me gusta|me encanto|muy bonito|que bonito|esta hermoso|esta linda|esta precioso)[!. ]*$/.test(normalized)) return 'compliment';
+  return '';
+}
+
+function buildCourtesyMessage(courtesyType) {
+  if (courtesyType === 'thanks') {
+    return 'Con mucho gusto. Estoy aqui para ayudarte a decidir con calma, no para llenarte de opciones.';
+  }
+
+  if (courtesyType === 'wellbeing') {
+    return 'Estoy muy bien, gracias por preguntar. Lista para ayudarte a elegir algo bonito, comparar materiales o aterrizar una idea sin enredarte.';
+  }
+
+  if (courtesyType === 'acknowledge') {
+    return 'Perfecto. Seguimos con calma; cuando quieras puedo comparar opciones, valorar una pieza o llevarte a una referencia concreta.';
+  }
+
+  if (courtesyType === 'goodbye') {
+    return 'Gracias por pasar por Orviane. Cuando quieras retomamos desde joya, ocasion, material o presupuesto.';
+  }
+
+  if (courtesyType === 'compliment') {
+    return 'Que bueno que te gusto. Si quieres, puedo ayudarte a buscar algo con esa misma lectura o comparar una version mas discreta, mas brillante o mas personalizada.';
+  }
+
+  return '';
 }
 
 function isGreetingOnly(text) {
@@ -523,7 +564,22 @@ function findReferencedProduct(text) {
   return PRODUCT_CATALOG.find((product) => product.reference === match[0]) || null;
 }
 
-function buildQuickReplies(intent, collectionSlug, suggestedAction, missingDetailKeys, greetingOnly = false) {
+function buildQuickReplies(intent, collectionSlug, suggestedAction, missingDetailKeys, greetingOnly = false, valuation = null) {
+  if (intent === 'smalltalk') {
+    return mergeQuickReplies([
+      { label: 'Valorar una pieza', message: 'Quiero valorar un anillo en oro 18k de 4 gramos' },
+      { label: 'Ver colecciones', message: 'Quiero ver colecciones' },
+      { label: 'Quiero un regalo', message: 'Quiero una joya para regalo especial' },
+      { label: 'Diseno a medida', message: 'Quiero una joya personalizada' },
+    ]);
+  }
+
+  if (valuation) {
+    return mergeQuickReplies(buildValuationQuickReplies(valuation), [
+      { label: 'Ver referencia', message: suggestedAction.productReference ? `Quiero ver la referencia ${suggestedAction.productReference}` : 'Quiero ver colecciones' },
+    ]);
+  }
+
   const discoveryReplies = buildDiscoveryReplies(missingDetailKeys);
 
   if (greetingOnly) {
@@ -601,7 +657,9 @@ function buildReplyFromSignals({ message, conversation, memory, clientContext, a
     deadline: detectDeadline(userSignalText) || safeMemory.deadline,
   };
   const ruleIntent = detectIntent(currentMessage);
-  const intent = phraseMatch.score >= 0.58 && phraseMatch.intent !== 'recommend_jewelry'
+  const intent = ruleIntent !== 'unknown'
+    ? ruleIntent
+    : phraseMatch.score >= 0.58 && phraseMatch.intent !== 'recommend_jewelry'
     ? phraseMatch.intent
     : ruleIntent;
   const collectionSlug = inferCollectionSlug(
@@ -612,17 +670,24 @@ function buildReplyFromSignals({ message, conversation, memory, clientContext, a
   const isMothersDayIntent = /(dia de la madre|dia de las madres|mama|madre)/.test(userSignalText);
   const referencedProduct = findReferencedProduct(message);
   const product = referencedProduct || recommendProduct(extracted, collectionSlug);
+  const valuation = buildValuationEstimate({ message, extracted, product });
   const favoriteCollectionAction = buildFavoriteCollectionAction(safeAccountContext);
   const savedDesignAction = buildSavedDesignAction(safeAccountContext, extracted);
   const missingDetailKeys = buildMissingDetailKeys(extracted, intent, product, collectionSlug);
   const greetingOnly = isGreetingOnly(message);
+  const courtesyType = getCourtesyType(message);
 
   let assistantMessage = 'Puedo ayudarte a aterrizar la mejor ruta entre colecciones, configurador y cita.';
   let suggestedAction = buildAction('none', {
     label: 'Seguir conversando',
   });
 
-  if (greetingOnly) {
+  if (courtesyType) {
+    assistantMessage = buildCourtesyMessage(courtesyType);
+    suggestedAction = buildAction('none', {
+      label: 'Seguir conversando',
+    });
+  } else if (greetingOnly) {
     assistantMessage = 'Hola. Puedo ayudarte a elegir una joya, ver colecciones, personalizar una idea o agendar una asesoria. Si quieres, empezamos por tipo de joya, ocasion o estilo.';
     suggestedAction = buildAction('none', {
       label: 'Explorar opciones',
@@ -653,9 +718,9 @@ function buildReplyFromSignals({ message, conversation, memory, clientContext, a
         .join(' '),
     });
   } else if (intent === 'quote_request') {
-    assistantMessage = product
+    assistantMessage = buildValuationMessage(valuation) || (product
       ? `Para cotizar con precision, usemos la referencia ${product.name} (${product.reference}) y llevemos ese contexto a WhatsApp.`
-      : 'Para cotizar bien necesito al menos tipo de joya, ocasion y material. Si ya tienes eso, te llevo a WhatsApp con el contexto.';
+      : 'Para cotizar bien necesito al menos tipo de joya, material y peso aproximado. Si ya tienes eso, te doy un rango preliminar antes de llevarlo a WhatsApp.');
     suggestedAction = product
       ? buildAction('open_product', {
           label: `Ver ${product.name}`,
@@ -719,7 +784,15 @@ function buildReplyFromSignals({ message, conversation, memory, clientContext, a
     assistantMessage = `${conciergeLead} ${assistantMessage}`.trim();
   }
 
-  if (!greetingOnly && missingDetailKeys.length && suggestedAction.type === 'none' && !assistantMessage.includes('dime si prefieres')) {
+  const shouldAskMissingDetails =
+    !greetingOnly &&
+    !courtesyType &&
+    !valuation &&
+    missingDetailKeys.length &&
+    suggestedAction.type === 'none' &&
+    !assistantMessage.includes('dime si prefieres');
+
+  if (shouldAskMissingDetails) {
     assistantMessage = `${assistantMessage} Si quieres, afinamos ${missingDetailKeys
       .map((key) => DETAIL_LABELS[key])
       .filter(Boolean)
@@ -735,15 +808,25 @@ function buildReplyFromSignals({ message, conversation, memory, clientContext, a
 
   return {
     assistantMessage,
-    detectedIntent: intent,
+    detectedIntent: courtesyType ? 'smalltalk' : intent,
     suggestedAction,
-    quickReplies: buildQuickReplies(intent, collectionSlug, suggestedAction, missingDetailKeys, greetingOnly),
+    quickReplies: buildQuickReplies(courtesyType ? 'smalltalk' : intent, collectionSlug, suggestedAction, missingDetailKeys, greetingOnly, valuation),
     memory: extracted,
     guidanceCard,
     diagnostics: {
       knownDetails: buildKnownDetails(extracted),
       missingDetails: missingDetailKeys.map((key) => DETAIL_LABELS[key]).filter(Boolean),
       route: suggestedAction.type,
+      valuation: valuation
+        ? {
+            ready: valuation.ready,
+            type: valuation.type,
+            metal: valuation.metal,
+            purity: valuation.purity,
+            estimatedRange: valuation.ready ? `${valuation.lowFormatted} - ${valuation.highFormatted}` : '',
+            missing: valuation.missing,
+          }
+        : null,
       phraseBank: {
         matchedPhrase: phraseMatch.phrase,
         score: Number(phraseMatch.score.toFixed(3)),

@@ -12,6 +12,7 @@ const ALLOWED_ACTION_TYPES = new Set([
 ]);
 
 const ALLOWED_INTENTS = new Set([
+  'smalltalk',
   'handoff_whatsapp',
   'schedule_appointment',
   'design_custom',
@@ -156,9 +157,11 @@ function buildSystemInstruction() {
   return [
     'Eres Orvia, asesora digital de alta joyeria de Orviane.',
     'Hablas como una asesora humana: breve, calida, concreta y segura. No suenes como robot ni como vendedora intensa.',
+    'Si el usuario dice gracias, como estas, perfecto, ok o algo cordial, responde cordialmente sin pedir ocasion, tipo de joya ni estilo.',
     'Tu objetivo es entender la ocasion, tipo de joya, estilo, presupuesto y urgencia; despues recomiendas la ruta mas util.',
     'Haz maximo una pregunta por turno. Si ya hay suficiente informacion, recomienda una pieza, coleccion, configurador, WhatsApp o cita.',
     'No fuerces cita. Solo sugierela cuando el usuario pide agendar, hay urgencia, presupuesto complejo o necesita decision humana.',
+    'Si pide valorar o precio, puedes dar rangos preliminares solo usando la propuesta base validada por reglas. Explica que no es cotizacion final.',
     'No inventes precios exactos, disponibilidad, tiempos garantizados, materiales no confirmados ni referencias fuera del catalogo.',
     'Devuelve siempre JSON valido con la estructura indicada.',
   ].join(' ');
@@ -203,7 +206,8 @@ function buildUserPrompt(payload, rulesReply) {
       'Si pide regalo, recomienda aretes/cadenas o una pieza concreta segun catalogo.',
       'Si pide anillo, recomienda una referencia de anillos o la coleccion.',
       'Si pide personalizacion, manda al configurador con brief.',
-      'Si pide precio, lleva a cotizacion con referencia concreta o WhatsApp.',
+      'Si pide precio o valoracion, usa la estimacion base si existe: metal por gramo, peso, piedra, mano de obra y rango. No contradigas ese rango.',
+      'Si el usuario solo agradece o pregunta como estas, responde humano y corto; no repitas preguntas de compra.',
       'Si pide cita o WhatsApp, respeta esa intencion.',
       'Si falta informacion critica, pregunta solo una cosa.',
     ].join(' '),
@@ -422,12 +426,31 @@ function sanitizeSuggestedAction(action, fallbackAction) {
   };
 }
 
+function chooseAssistantMessage(modelMessage, rulesReply) {
+  const nextMessage = sanitizeText(modelMessage, 420);
+  const valuation = rulesReply?.diagnostics?.valuation;
+
+  if (rulesReply?.detectedIntent === 'smalltalk') {
+    return rulesReply.assistantMessage;
+  }
+
+  if (valuation && rulesReply?.assistantMessage) {
+    const normalizedModelMessage = nextMessage.toLowerCase();
+
+    if (!nextMessage || (valuation.ready && !normalizedModelMessage.includes('cop'))) {
+      return rulesReply.assistantMessage;
+    }
+  }
+
+  return nextMessage || rulesReply.assistantMessage;
+}
+
 function sanitizeModelReply(modelReply, rulesReply, model) {
   const detectedIntent = sanitizeDetectedIntent(modelReply?.detectedIntent, rulesReply.detectedIntent);
   const suggestedAction = sanitizeSuggestedAction(modelReply?.suggestedAction, rulesReply.suggestedAction);
 
   return {
-    assistantMessage: sanitizeText(modelReply?.assistantMessage, 420) || rulesReply.assistantMessage,
+    assistantMessage: chooseAssistantMessage(modelReply?.assistantMessage, rulesReply),
     detectedIntent,
     suggestedAction,
     quickReplies: sanitizeQuickReplies(modelReply?.quickReplies, rulesReply.quickReplies),

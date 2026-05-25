@@ -11,6 +11,7 @@ const ALLOWED_ACTION_TYPES = new Set([
 ]);
 
 const ALLOWED_INTENTS = new Set([
+  'smalltalk',
   'handoff_whatsapp',
   'schedule_appointment',
   'design_custom',
@@ -81,6 +82,8 @@ function buildSystemInstruction() {
     'Tu unico dominio es joyeria fina, asesorias de Orviane, colecciones, configurador, citas, WhatsApp y piezas del catalogo dado.',
     'No respondas como asistente general. Si el usuario pide algo ajeno a joyeria o a Orviane, redirigelo con amabilidad al contexto de joyas.',
     'No inventes precios exactos, tiempos garantizados, stock, politicas, materiales no confirmados ni referencias inexistentes.',
+    'Si el usuario solo dice gracias, como estas, perfecto u otra cortesia, responde cordialmente sin pedir ocasion, tipo de joya ni estilo.',
+    'Si la propuesta base trae una valoracion preliminar, usala como base y no inventes rangos distintos.',
     'Solo puedes sugerir colecciones, productos y acciones permitidas en el contexto recibido.',
     'La respuesta debe ser breve, comercial, clara y util, en espanol neutro.',
     'Debes devolver un JSON valido y nada mas.',
@@ -189,6 +192,7 @@ function buildUserPrompt(payload, rulesReply) {
     JSON.stringify(Array.from(ALLOWED_ACTION_TYPES)),
     'Propuesta base por reglas:',
     JSON.stringify({
+      assistantMessage: rulesReply.assistantMessage,
       detectedIntent: rulesReply.detectedIntent,
       suggestedAction: rulesReply.suggestedAction,
       diagnostics: rulesReply.diagnostics,
@@ -387,6 +391,25 @@ function sanitizeAssistantMessage(message, fallbackMessage, detectedIntent) {
   return nextMessage || fallbackMessage;
 }
 
+function chooseAssistantMessage(message, rulesReply, detectedIntent) {
+  if (rulesReply?.detectedIntent === 'smalltalk') {
+    return rulesReply.assistantMessage;
+  }
+
+  const valuation = rulesReply?.diagnostics?.valuation;
+  const nextMessage = sanitizeText(message, 420);
+
+  if (valuation && rulesReply?.assistantMessage) {
+    const normalizedMessage = nextMessage.toLowerCase();
+
+    if (!nextMessage || (valuation.ready && !normalizedMessage.includes('cop'))) {
+      return rulesReply.assistantMessage;
+    }
+  }
+
+  return sanitizeAssistantMessage(nextMessage, rulesReply.assistantMessage, detectedIntent);
+}
+
 function sanitizeDetectedIntent(intent, fallbackIntent) {
   const nextIntent = sanitizeText(intent, 80);
   return ALLOWED_INTENTS.has(nextIntent) ? nextIntent : fallbackIntent;
@@ -460,9 +483,9 @@ function sanitizeModelReply(modelReply, rulesReply) {
   const suggestedAction = sanitizeSuggestedAction(modelReply?.suggestedAction, rulesReply.suggestedAction);
 
   return {
-    assistantMessage: sanitizeAssistantMessage(
+    assistantMessage: chooseAssistantMessage(
       modelReply?.assistantMessage,
-      rulesReply.assistantMessage,
+      rulesReply,
       detectedIntent,
     ),
     detectedIntent,
