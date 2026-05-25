@@ -44,9 +44,14 @@ const {
 } = require('./userStore');
 const { createAssistantV2RulesReply } = require('./assistant-v2/service');
 const {
+  createAssistantV2OpenAIReply,
+  isAssistantV2OpenAIConfigured,
+} = require('./assistant-v2/openai');
+const {
   createAssistantV2VertexReply,
   isAssistantV2AiConfigured,
 } = require('./assistant-v2/vertex');
+const { getPhraseBankStats } = require('./assistant-v2/phrase-bank');
 const {
   ensureTelemetryStore,
   recordAssistantV2Event,
@@ -102,6 +107,10 @@ const LOCATION = sanitizeText(process.env.GOOGLE_CLOUD_LOCATION, 80) || 'us-cent
 const PUBLISHER = sanitizeText(process.env.GOOGLE_CLOUD_PUBLISHER, 40) || 'google';
 const MODEL = sanitizeText(process.env.GOOGLE_CLOUD_MODEL, 120) || 'imagen-3.0-generate-002';
 const ASSISTANT_V2_MODEL = sanitizeText(process.env.ASSISTANT_V2_MODEL, 120) || 'gemini-2.5-flash';
+const OPENAI_API_KEY = sanitizeText(process.env.OPENAI_API_KEY, 400);
+const OPENAI_ASSISTANT_MODEL = sanitizeText(process.env.OPENAI_ASSISTANT_MODEL, 120) || 'gpt-5-mini';
+const OPENAI_REALTIME_MODEL = sanitizeText(process.env.OPENAI_REALTIME_MODEL, 120) || 'gpt-realtime';
+const OPENAI_REALTIME_VOICE = sanitizeText(process.env.OPENAI_REALTIME_VOICE, 40) || 'marin';
 const GOOGLE_APPLICATION_CREDENTIALS = sanitizeText(resolveGoogleApplicationCredentials(), 400);
 const AUTH_JWT_SECRET = sanitizeText(process.env.AUTH_JWT_SECRET, 200) || 'orviane-local-dev-secret';
 const GOOGLE_CLIENT_ID = sanitizeText(process.env.GOOGLE_CLIENT_ID, 200);
@@ -401,13 +410,26 @@ function isImageGenerationConfigured() {
 }
 
 function isAssistantV2Configured() {
-  return Boolean(
+  return Boolean(OPENAI_API_KEY && OPENAI_ASSISTANT_MODEL) || Boolean(
     GOOGLE_APPLICATION_CREDENTIALS &&
     PROJECT_ID &&
     LOCATION &&
     PUBLISHER &&
     ASSISTANT_V2_MODEL,
   );
+}
+
+function buildOrviaRealtimeInstructions() {
+  return [
+    'Eres Orvia, asesora de voz de Orviane.',
+    'Habla en espanol natural, breve y humano. Maximo dos frases por turno salvo que el cliente pida detalle.',
+    'Tu trabajo es ayudar a elegir joyas, colecciones, configurador, WhatsApp o cita.',
+    'No inventes precios exactos, stock, fechas garantizadas ni materiales no confirmados.',
+    'No fuerces cita. Solo sugierela si el cliente la pide, hay urgencia o la decision necesita acompanamiento humano.',
+    'Pregunta una sola cosa cuando falte informacion: ocasion, tipo de joya, estilo, presupuesto o fecha.',
+    'Si el cliente saluda, responde con bienvenida corta y ofrece empezar por ocasion, tipo de joya o estilo.',
+    'Si pide regalo, orienta hacia aretes, cadenas o una pieza delicada antes de pedir mas datos.',
+  ].join(' ');
 }
 
 function validateGeneratePayload(body) {
@@ -1225,7 +1247,16 @@ app.get('/api/health', (request, response) => {
     imageGenerationReady: isImageGenerationConfigured(),
     assistantV2Ready: true,
     assistantV2AiConfigured: isAssistantV2Configured(),
+    assistantV2OpenAIConfigured: isAssistantV2OpenAIConfigured({
+      apiKey: OPENAI_API_KEY,
+      model: OPENAI_ASSISTANT_MODEL,
+    }),
     assistantV2Model: ASSISTANT_V2_MODEL,
+    assistantV2OpenAIModel: OPENAI_ASSISTANT_MODEL,
+    assistantV2RealtimeConfigured: Boolean(OPENAI_API_KEY && OPENAI_REALTIME_MODEL),
+    assistantV2RealtimeModel: OPENAI_REALTIME_MODEL,
+    assistantV2RealtimeVoice: OPENAI_REALTIME_VOICE,
+    assistantV2PhraseBank: getPhraseBankStats(),
   });
 });
 
@@ -1265,6 +1296,68 @@ app.post('/api/assistant-v2/event', async (request, response, next) => {
     });
 
     return response.status(204).end();
+  } catch (error) {
+    return next(error);
+  }
+});
+
+app.post('/api/assistant-v2/realtime-client-secret', createRateLimiter(10 * 60 * 1000, 20), async (request, response, next) => {
+  try {
+    if (!OPENAI_API_KEY) {
+      return response.status(503).json({
+        error: 'OpenAI Realtime no esta configurado. Falta OPENAI_API_KEY en el backend.',
+      });
+    }
+
+    const openAIResponse = await fetch('https://api.openai.com/v1/realtime/client_secrets', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        expires_after: {
+          anchor: 'created_at',
+          seconds: 600,
+        },
+        session: {
+          type: 'realtime',
+          model: OPENAI_REALTIME_MODEL,
+          instructions: buildOrviaRealtimeInstructions(),
+          output_modalities: ['audio'],
+          audio: {
+            input: {
+              turn_detection: {
+                type: 'server_vad',
+                silence_duration_ms: 450,
+                idle_timeout_ms: 7000,
+                create_response: true,
+                interrupt_response: true,
+              },
+            },
+            output: {
+              voice: OPENAI_REALTIME_VOICE,
+              speed: 1,
+            },
+          },
+        },
+      }),
+    });
+
+    const payload = await openAIResponse.json().catch(() => null);
+
+    if (!openAIResponse.ok) {
+      return response.status(openAIResponse.status).json({
+        error: payload?.error?.message || payload?.message || 'No se pudo crear la sesion Realtime de Orvia.',
+      });
+    }
+
+    return response.json({
+      clientSecret: payload?.value || '',
+      expiresAt: payload?.expires_at || null,
+      model: payload?.session?.model || OPENAI_REALTIME_MODEL,
+      voice: payload?.session?.audio?.output?.voice || OPENAI_REALTIME_VOICE,
+    });
   } catch (error) {
     return next(error);
   }
@@ -1314,15 +1407,27 @@ app.post('/api/assistant-v2/chat', createRateLimiter(10 * 60 * 1000, 50), async 
     };
     let reply;
 
-    if (
-      isAssistantV2AiConfigured({
-        projectId: PROJECT_ID,
-        location: LOCATION,
-        publisher: PUBLISHER,
-        model: ASSISTANT_V2_MODEL,
-        getAccessToken: getGoogleAccessToken,
-      })
-    ) {
+    if (isAssistantV2OpenAIConfigured({
+      apiKey: OPENAI_API_KEY,
+      model: OPENAI_ASSISTANT_MODEL,
+    })) {
+      try {
+        reply = await createAssistantV2OpenAIReply(replyPayload, {
+          apiKey: OPENAI_API_KEY,
+          model: OPENAI_ASSISTANT_MODEL,
+        });
+      } catch (error) {
+        console.error('Orvia uso fallback por OpenAI:', error.message);
+      }
+    }
+
+    if (!reply && isAssistantV2AiConfigured({
+      projectId: PROJECT_ID,
+      location: LOCATION,
+      publisher: PUBLISHER,
+      model: ASSISTANT_V2_MODEL,
+      getAccessToken: getGoogleAccessToken,
+    })) {
       try {
         reply = await createAssistantV2VertexReply(replyPayload, {
           projectId: PROJECT_ID,
@@ -1333,14 +1438,17 @@ app.post('/api/assistant-v2/chat', createRateLimiter(10 * 60 * 1000, 50), async 
         });
       } catch (error) {
         console.error('Orvia uso fallback por reglas:', error.message);
-        reply = {
-          ...createAssistantV2RulesReply(replyPayload),
-          provider: 'assistant-v2-rules-fallback',
-          model: ASSISTANT_V2_MODEL,
-        };
       }
-    } else {
-      reply = createAssistantV2RulesReply(replyPayload);
+    }
+
+    if (!reply) {
+      reply = {
+        ...createAssistantV2RulesReply(replyPayload),
+        provider: OPENAI_API_KEY || GOOGLE_APPLICATION_CREDENTIALS
+          ? 'assistant-v2-rules-fallback'
+          : 'assistant-v2-rules',
+        model: OPENAI_API_KEY ? OPENAI_ASSISTANT_MODEL : ASSISTANT_V2_MODEL,
+      };
     }
 
     const nextMemory = buildAssistantMemory(
@@ -1369,7 +1477,7 @@ app.post('/api/assistant-v2/chat', createRateLimiter(10 * 60 * 1000, 50), async 
         source:
           reply.provider === 'assistant-v2-rules-fallback'
             ? 'fallback'
-            : reply.provider === 'vertex-ai'
+            : reply.provider === 'vertex-ai' || reply.provider === 'openai'
               ? 'ai'
               : 'rules',
         collectionSlug: reply.suggestedAction?.collectionSlug || payload.clientContext.currentCollectionSlug,

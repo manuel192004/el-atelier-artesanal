@@ -1,4 +1,8 @@
 const { COLLECTIONS, COLLECTION_COPY, PRODUCT_CATALOG } = require('./catalog');
+const {
+  classifyWithPhraseBank,
+  getPhraseBankStats,
+} = require('./phrase-bank');
 
 const DETAIL_PROMPTS = {
   occasion: [
@@ -187,10 +191,10 @@ function detectBudget(text) {
 
 function detectStyle(text) {
   if (/(minimalista|limpio|sobrio|sencillo|discreto)/.test(text)) return 'minimalista';
-  if (/(romantico|delicado|floral|perla|femenino)/.test(text)) return 'romantico';
-  if (/(moderno|contemporaneo|actual|geometrico)/.test(text)) return 'moderno';
-  if (/(clasico|tradicional|vintage|atemporal)/.test(text)) return 'clasico';
-  if (/(statement|protagonista|llamativo|brillante|imponente)/.test(text)) return 'statement';
+  if (/(romantico|romantica|romanticos|romanticas|delicado|delicada|delicados|delicadas|floral|perla|femenino|femenina)/.test(text)) return 'romantico';
+  if (/(moderno|moderna|modernos|modernas|contemporaneo|contemporanea|actual|geometrico|geometrica)/.test(text)) return 'moderno';
+  if (/(clasico|clasica|clasicos|clasicas|tradicional|vintage|atemporal|elegante|elegantes)/.test(text)) return 'clasico';
+  if (/(statement|protagonista|llamativo|llamativa|llamativos|llamativas|brillante|brillantes|imponente)/.test(text)) return 'statement';
   return '';
 }
 
@@ -361,6 +365,16 @@ function buildKnownDetails(extracted) {
     extracted.gemstone ? `Piedra: ${extracted.gemstone}` : '',
     extracted.budget ? `Presupuesto: ${extracted.budget}` : '',
   ].filter(Boolean);
+}
+
+function describeStyle(style) {
+  return {
+    moderno: 'moderna',
+    romantico: 'romantica',
+    minimalista: 'minimalista',
+    clasico: 'clasica',
+    statement: 'protagonista',
+  }[style] || style;
 }
 
 function buildMissingDetailKeys(extracted, intent, product, collectionSlug) {
@@ -575,16 +589,21 @@ function buildReplyFromSignals({ message, conversation, memory, clientContext, a
       .map((entry) => entry.text)
       .join(' ')} ${message}`,
   );
+  const phraseMatch = classifyWithPhraseBank(message);
+  const phraseSignals = phraseMatch.score >= 0.78 ? phraseMatch.signals || {} : {};
   const extracted = {
-    occasion: detectOccasion(userSignalText) || safeMemory.occasion,
-    jewelryType: detectJewelryType(userSignalText) || safeMemory.jewelryType,
+    occasion: detectOccasion(userSignalText) || phraseSignals.occasion || safeMemory.occasion,
+    jewelryType: detectJewelryType(userSignalText) || phraseSignals.jewelryType || safeMemory.jewelryType,
     budget: detectBudget(userSignalText) || safeMemory.budget,
-    style: detectStyle(userSignalText) || safeMemory.style,
-    metal: detectMetal(userSignalText) || safeMemory.metal,
-    gemstone: detectGemstone(userSignalText) || safeMemory.gemstone,
+    style: detectStyle(userSignalText) || phraseSignals.style || safeMemory.style,
+    metal: detectMetal(userSignalText) || phraseSignals.metal || safeMemory.metal,
+    gemstone: detectGemstone(userSignalText) || phraseSignals.gemstone || safeMemory.gemstone,
     deadline: detectDeadline(userSignalText) || safeMemory.deadline,
   };
-  const intent = detectIntent(currentMessage);
+  const ruleIntent = detectIntent(currentMessage);
+  const intent = phraseMatch.score >= 0.58 && phraseMatch.intent !== 'recommend_jewelry'
+    ? phraseMatch.intent
+    : ruleIntent;
   const collectionSlug = inferCollectionSlug(
     extracted.jewelryType,
     extracted.occasion,
@@ -689,7 +708,9 @@ function buildReplyFromSignals({ message, conversation, memory, clientContext, a
       reason: 'Es la coleccion mas alineada con lo que contaste.',
     });
   } else {
-    assistantMessage = 'Para orientarte mejor dime al menos una de estas tres cosas: ocasion, tipo de joya o estilo.';
+    assistantMessage = extracted.style && !extracted.jewelryType
+      ? `Ya tengo una direccion ${describeStyle(extracted.style)}. Para recomendar mejor, dime si prefieres anillo, aretes, cadena o pulsera.`
+      : 'Para orientarte mejor dime al menos una de estas tres cosas: ocasion, tipo de joya o estilo.';
   }
 
   const conciergeLead = buildConciergeLead(safeAccountContext, profile);
@@ -698,7 +719,7 @@ function buildReplyFromSignals({ message, conversation, memory, clientContext, a
     assistantMessage = `${conciergeLead} ${assistantMessage}`.trim();
   }
 
-  if (!greetingOnly && missingDetailKeys.length && suggestedAction.type === 'none') {
+  if (!greetingOnly && missingDetailKeys.length && suggestedAction.type === 'none' && !assistantMessage.includes('dime si prefieres')) {
     assistantMessage = `${assistantMessage} Si quieres, afinamos ${missingDetailKeys
       .map((key) => DETAIL_LABELS[key])
       .filter(Boolean)
@@ -723,6 +744,11 @@ function buildReplyFromSignals({ message, conversation, memory, clientContext, a
       knownDetails: buildKnownDetails(extracted),
       missingDetails: missingDetailKeys.map((key) => DETAIL_LABELS[key]).filter(Boolean),
       route: suggestedAction.type,
+      phraseBank: {
+        matchedPhrase: phraseMatch.phrase,
+        score: Number(phraseMatch.score.toFixed(3)),
+        ready: getPhraseBankStats().ready,
+      },
     },
     accountContext: safeAccountContext,
     provider: 'assistant-v2-rules',
