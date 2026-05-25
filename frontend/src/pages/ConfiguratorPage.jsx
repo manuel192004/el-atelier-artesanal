@@ -13,18 +13,18 @@ const ConfiguratorPage = () => {
   const focusConversion = Boolean(location.state?.focusConversion);
   const journeyTitle = useMemo(() => {
     if (!sourceProductName) {
-      return 'Pasa de idea a propuesta con una ruta mas clara.';
+      return 'Brief visual primero; cotizacion despues.';
     }
 
-    return `Estas trabajando sobre ${sourceProductName}.`;
+    return `Base cargada: ${sourceProductName}.`;
   }, [sourceProductName]);
 
   const journeyCopy = useMemo(() => {
     if (!sourceProductName) {
-      return 'Primero afina la idea en el configurador y luego, si quieres, baja a cita para aterrizar materiales, tiempos y presupuesto.';
+      return 'Ajusta la pieza, revisa el resumen y desbloquea el render cuando estes listo.';
     }
 
-    return `${sourceProductName}${sourceReference ? ` (${sourceReference})` : ''} ya llega como punto de partida. Puedes personalizarlo y luego pasar directo a una cita guiada.`;
+    return `${sourceReference ? `Referencia ${sourceReference}. ` : ''}Puedes transformarla y pasar a cita solo si necesitas aterrizar materiales o presupuesto.`;
   }, [sourceProductName, sourceReference]);
 
   useEffect(() => {
@@ -53,25 +53,28 @@ const ConfiguratorPage = () => {
           <span className="configurator-kicker">Diseno guiado</span>
           <h1 className="configurator-title">Disenador Asistido por IA</h1>
           <p className="configurator-intro">
-            Construye una propuesta visual mas clara a partir de categoria, materiales, estilo, ocasion y un brief libre.
-            Luego puedes guardar el render o solicitar cotizacion.
+            Crea una direccion visual clara para una joya personalizada antes de cotizar.
           </p>
           <div className="configurator-journey-card">
-            <span className="configurator-journey-kicker">Ruta sugerida</span>
-            <strong>{journeyTitle}</strong>
-            <p>{journeyCopy}</p>
-            <div className="configurator-journey-steps">
-              <span>1. Ajusta la pieza</span>
-              <span>2. Guarda o cotiza</span>
-              <span>3. Agenda si quieres acompanamiento</span>
+            <div className="configurator-journey-copy">
+              <span className="configurator-journey-kicker">Ruta sugerida</span>
+              <strong>{journeyTitle}</strong>
+              <p>{journeyCopy}</p>
             </div>
-            <button
-              type="button"
-              className="configurator-journey-link"
-              onClick={() => conversionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-            >
-              Ir a cita guiada
-            </button>
+            <div className="configurator-journey-actions">
+              <div className="configurator-journey-steps">
+                <span>Brief</span>
+                <span>Render</span>
+                <span>Cotizacion</span>
+              </div>
+              <button
+                type="button"
+                className="configurator-journey-link"
+                onClick={() => conversionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+              >
+                Cita guiada
+              </button>
+            </div>
           </div>
         </div>
         <PromptDesigner

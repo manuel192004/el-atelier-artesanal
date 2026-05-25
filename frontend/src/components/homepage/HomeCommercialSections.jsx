@@ -3,21 +3,21 @@ import { Link } from 'react-router-dom';
 
 const clientRoutes = [
   {
-    title: 'Quiero Comprar',
-    copy: 'Entra al catalogo, compara familias, guarda favoritos y pasa a cotizacion con una referencia clara.',
-    ctaLabel: 'Explorar Catalogo',
+    title: 'Comprar una referencia',
+    copy: 'Explora piezas reales, elige una familia y llega a WhatsApp con referencia y contexto.',
+    ctaLabel: 'Ver colecciones',
     to: '/colecciones',
   },
   {
-    title: 'Quiero Personalizar',
-    copy: 'Construye una propuesta a medida con el configurador y llega a la conversacion con un brief mucho mas preciso.',
-    ctaLabel: 'Disenar Mi Joya',
+    title: 'Crear desde una idea',
+    copy: 'Convierte ocasion, estilo y materiales en un brief visual antes de cotizar la pieza.',
+    ctaLabel: 'Abrir configurador',
     to: '/configurador',
   },
   {
-    title: 'Quiero Agendar Cita',
-    copy: 'Si necesitas una decision importante o una pieza especial, te conviene pasar por asesoria directa con Orviane.',
-    ctaLabel: 'Hablar por WhatsApp',
+    title: 'Resolver con asesoria',
+    copy: 'Para regalos importantes, compromiso o dudas de presupuesto, conviene una guia directa.',
+    ctaLabel: 'Agendar por WhatsApp',
     href: 'https://wa.me/573156347878?text=Hola,%20quiero%20agendar%20una%20asesoria%20con%20Orviane.',
   },
 ];
@@ -25,23 +25,23 @@ const clientRoutes = [
 const commercialPolicies = [
   {
     title: 'Garantia y Ajustes',
-    text: 'Acompanamos el proceso posterior a la entrega con ajustes razonables, recomendaciones de cuidado y seguimiento directo segun el tipo de pieza.',
-    points: ['Ajustes razonables segun la pieza', 'Orientacion de cuidado y uso', 'Seguimiento directo despues de entrega'],
+    text: 'Acompanamiento despues de la entrega con orientacion de cuidado y ajustes segun la pieza.',
+    points: ['Cuidado de la joya', 'Seguimiento directo'],
   },
   {
     title: 'Tiempos Claros',
-    text: 'Cada propuesta se cotiza con una lectura mas realista de elaboracion, para que el cliente sepa si conviene una ruta inmediata o un desarrollo mas fino.',
-    points: ['Lectura realista de elaboracion', 'Priorizacion segun ocasion', 'Evita promesas vagas o genericas'],
+    text: 'Cada solicitud se lee segun ocasion, complejidad y ruta de compra para evitar promesas vagas.',
+    points: ['Prioridad por ocasion', 'Ruta viable'],
   },
   {
     title: 'Envios y Entrega',
-    text: 'Coordinamos entrega local y orientacion sobre envio segun destino, con una comunicacion mas humana y menos impersonal que una tienda generica.',
-    points: ['Entrega coordinada de forma directa', 'Orientacion de envio segun destino', 'Acompanamiento antes y despues de recibir'],
+    text: 'Entrega coordinada y comunicacion directa para que el cliente sepa que sigue.',
+    points: ['Entrega local', 'Orientacion de envio'],
   },
   {
     title: 'Cotizacion Personal',
-    text: 'No empujamos una tarifa cerrada sin contexto. Primero entendemos ocasion, materiales, nivel de detalle y viabilidad de la pieza.',
-    points: ['Presupuesto con contexto real', 'Lectura de materiales y detalle', 'Ruta clara entre catalogo, cita o personalizacion'],
+    text: 'Primero entendemos ocasion, materiales y nivel de detalle; luego se define la mejor ruta.',
+    points: ['Presupuesto con contexto', 'Lectura de materiales'],
   },
 ];
 
@@ -66,23 +66,23 @@ const materialNotes = [
 const atelierStories = [
   {
     occasion: 'Compromiso',
-    client: 'Historia preparada para testimonio real',
-    piece: 'Solitario en oro con lectura emocional',
-    text: 'Espacio editorial pensado para mostrar nombre, ocasion y foto final de una clienta real cuando nos compartas el testimonio autorizado.',
+    client: 'Decision simbolica',
+    piece: 'Anillo con intencion clara',
+    text: 'Cuando la pieza comunica promesa, conviene revisar proporciones, metal y brillo con mas cuidado.',
     image: '/anillos/anillos-01-solitario-oro-amarillo.png',
   },
   {
     occasion: 'Aniversario',
-    client: 'Caso frecuente de la casa',
-    piece: 'Cadena o pieza con narrativa de permanencia',
-    text: 'Mientras reunimos testimonios publicados, mostramos el tipo de historia que mejor conversa con regalos de aniversario y piezas con mas permanencia.',
+    client: 'Regalo de permanencia',
+    piece: 'Cadena o pulsera con uso real',
+    text: 'Una joya que se usa muchas veces necesita equilibrio entre presencia, comodidad y significado.',
     image: '/cadenas/cadenas-09-cadena-delicada.png',
   },
   {
     occasion: 'Regalo Especial',
-    client: 'Espacio listo para foto de pieza',
-    piece: 'Aretes y pulseras faciles de acertar',
-    text: 'Este bloque ya queda listo para cargar testimonios con nombre y foto real de pieza sin rehacer el diseno cuando nos pases ese material.',
+    client: 'Acierto rapido',
+    piece: 'Aretes y detalles faciles de elegir',
+    text: 'Para regalo, una recomendacion guiada reduce dudas de estilo, tamano y ocasion.',
     image: '/aretes/aretes-03-gotas-colgantes.png',
   },
 ];
@@ -131,10 +131,9 @@ const HomeCommercialSections = () => {
         <div className="home-shell">
           <div className="home-section-heading">
             <span className="home-section-kicker">Rutas claras</span>
-            <h2 className="section-title">Elige el camino que mejor encaja con tu momento</h2>
+            <h2 className="section-title">Tres caminos, una decision mas facil</h2>
             <p className="section-subtitle">
-              La web no deberia obligarte a adivinar el siguiente paso. Aqui puedes entrar por compra, personalizacion
-              o asesoria directa.
+              La experiencia te deja entrar por compra, personalizacion o asesoria sin obligarte a registrarte primero.
             </p>
           </div>
 
@@ -162,10 +161,9 @@ const HomeCommercialSections = () => {
         <div className="home-shell">
           <div className="home-section-heading">
             <span className="home-section-kicker">Confianza Comercial</span>
-            <h2 className="section-title">Lo que hace que la experiencia se sienta seria y bien cuidada</h2>
+            <h2 className="section-title">Lo esencial para comprar con mas seguridad</h2>
             <p className="section-subtitle">
-              Queremos que el cliente perciba claridad, acompanamiento y criterio desde el primer vistazo, no solo una
-              galeria bonita.
+              Menos ruido comercial y mas senales utiles: tiempos, entrega, seguimiento y cotizacion con contexto.
             </p>
           </div>
 
@@ -189,10 +187,9 @@ const HomeCommercialSections = () => {
         <div className="home-shell home-two-column">
           <div className="home-copy-panel">
             <span className="home-section-kicker">Materiales y Acabados</span>
-            <h2 className="section-title">Una lectura mas premium de metales, textura y presencia</h2>
+            <h2 className="section-title">La diferencia esta en proporciones, textura y brillo</h2>
             <p className="section-subtitle">
-              No se trata solo de listar materiales, sino de explicar por que una pieza se siente refinada, viable y
-              bien resuelta.
+              Orviane no vende solo material: ayuda a leer como se vera la pieza en foto, mano y uso real.
             </p>
           </div>
 
@@ -211,11 +208,10 @@ const HomeCommercialSections = () => {
       <section className="home-section home-stories-section">
         <div className="home-shell">
           <div className="home-section-heading">
-            <span className="home-section-kicker">Historias y Ocasiones</span>
-            <h2 className="section-title">Un bloque editorial listo para testimonios reales y piezas destacadas</h2>
+            <span className="home-section-kicker">Compra por ocasion</span>
+            <h2 className="section-title">Recomendaciones pensadas para el momento correcto</h2>
             <p className="section-subtitle">
-              No voy a inventar testimonios. Por eso dejamos esta seccion preparada con la estructura profesional para
-              cargar nombre, ocasion y foto real de pieza apenas nos compartas ese material.
+              La pieza cambia cuando cambia la intencion: compromiso, aniversario, regalo o uso diario.
             </p>
           </div>
 
@@ -247,9 +243,9 @@ const HomeCommercialSections = () => {
         <div className="home-shell home-two-column">
           <div className="home-copy-panel">
             <span className="home-section-kicker">Preguntas Frecuentes</span>
-            <h2 className="section-title">Respuestas mas utiles, menos genericas</h2>
+            <h2 className="section-title">Respuestas utiles antes de escribir</h2>
             <p className="section-subtitle">
-              Esta base reduce friccion antes de escribir por WhatsApp o pasar a una cita.
+              Aclara el siguiente paso antes de pasar a WhatsApp, catalogo o configurador.
             </p>
           </div>
 

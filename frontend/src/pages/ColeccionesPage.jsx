@@ -17,6 +17,11 @@ import {
 } from '../lib/catalog';
 
 const WHATSAPP_LINK = 'https://wa.me/qr/JXM3LVGEI75HC1';
+const WHATSAPP_PHONE = '573156347878';
+
+const createWhatsAppHref = (message) => `https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(message)}`;
+
+const buildProductWhatsappHref = (collection, item) => createWhatsAppHref(buildProductQuoteMessage(collection, item));
 
 const brandPromises = [
   {
@@ -287,13 +292,12 @@ const CollectionsFilters = ({ options, visibleSections, activeFilters, filteredC
 );
 
 const CollectionCard = ({
+  collection,
   item,
   isFavorite,
-  accountState,
   actionLoadingKey,
   onOpen,
   onFavorite,
-  onAddToCart,
   isAuthenticated,
 }) => (
   <article className="collection-card">
@@ -307,11 +311,7 @@ const CollectionCard = ({
         >
           {actionLoadingKey === `favorite-${item.reference}` ? 'Guardando...' : isFavorite ? 'Guardado' : 'Favorito'}
         </button>
-      ) : (
-        <Link to="/cuenta" className="collection-favorite-badge collection-favorite-link">
-          Entrar para guardar
-        </Link>
-      )}
+      ) : null}
       <button type="button" className="collection-item-button" onClick={() => onOpen(item)}>
         <img src={item.image} alt={item.name} className="item-image" loading="lazy" decoding="async" />
       </button>
@@ -343,28 +343,23 @@ const CollectionCard = ({
         </div>
       </div>
 
+      <div className="collection-card-commercial">
+        <span>Cotizacion personal</span>
+        <strong>Referencia {item.reference}</strong>
+      </div>
+
       <div className="collection-card-actions">
+        <a
+          href={buildProductWhatsappHref(collection, item)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="product-action-primary"
+        >
+          Cotizar por WhatsApp
+        </a>
         <button type="button" className="product-action-link" onClick={() => onOpen(item)}>
-          Ver ficha completa
+          Ver detalle
         </button>
-        {isAuthenticated ? (
-          <button
-            type="button"
-            className={`product-action-secondary ${accountState.cart === item.reference ? 'is-success' : ''}`}
-            onClick={() => onAddToCart(item)}
-            disabled={actionLoadingKey === `cart-${item.reference}`}
-          >
-            {actionLoadingKey === `cart-${item.reference}`
-              ? 'Agregando...'
-              : accountState.cart === item.reference
-                ? 'Agregado'
-                : 'Agregar a canasta'}
-          </button>
-        ) : (
-          <Link to="/cuenta" className="product-action-secondary">
-            Guarda en tu cuenta
-          </Link>
-        )}
       </div>
     </div>
   </article>
@@ -473,18 +468,18 @@ const ProductModal = ({
             </div>
 
             <div className="product-modal-actions">
-              <button type="button" className="product-action-secondary" onClick={() => onCopy(buildProductQuoteMessage(collection, item))}>
-                {copyState === item.reference ? 'Mensaje copiado' : 'Copiar mensaje de cotizacion'}
-              </button>
-
               <a
-                href={WHATSAPP_LINK}
+                href={buildProductWhatsappHref(collection, item)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="product-action-primary"
               >
-                Abrir WhatsApp
+                Cotizar por WhatsApp
               </a>
+
+              <button type="button" className="product-action-secondary" onClick={() => onCopy(buildProductQuoteMessage(collection, item))}>
+                {copyState === item.reference ? 'Mensaje copiado' : 'Copiar mensaje'}
+              </button>
 
               <Link
                 to="/configurador"
@@ -541,15 +536,11 @@ const ProductModal = ({
                         : 'Agregar a canasta'}
                   </button>
                 </>
-              ) : (
-                <Link to="/cuenta" className="product-action-secondary" onClick={onClose}>
-                  Inicia sesion para guardar
-                </Link>
-              )}
+              ) : null}
             </div>
 
             <p className="product-modal-note">
-              Abre WhatsApp y pega el mensaje copiado para que la consulta llegue con referencia y contexto.
+              El boton de WhatsApp ya lleva referencia, coleccion y contexto para que la asesoria empiece mas rapido.
             </p>
             {accountState.message ? <p className="product-modal-note product-modal-note-accent">{accountState.message}</p> : null}
             {accountState.error ? <p className="product-modal-note product-modal-note-error">{accountState.error}</p> : null}
@@ -714,7 +705,7 @@ const ColeccionesPage = () => {
     if (!isAuthenticated || !token) {
       setAccountState((current) => ({
         ...current,
-        error: 'Inicia sesion para guardar piezas en tu cuenta.',
+        error: 'Para guardar piezas, primero activa Mi Cuenta.',
         message: '',
       }));
       return;
@@ -841,6 +832,7 @@ const ColeccionesPage = () => {
             {filteredItems.map((item) => (
               <CollectionCard
                 key={item.reference}
+                collection={currentCollection}
                 item={item}
                 isFavorite={favoriteReferences.has(item.reference)}
                 accountState={accountState}

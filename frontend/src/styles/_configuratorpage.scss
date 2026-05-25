@@ -12,13 +12,13 @@
 
 .configurator-main-panel {
   width: 100%;
-  max-width: 980px;
+  max-width: 1040px;
   min-width: 0;
 }
 
 .configurator-hero-card {
-  margin-bottom: 26px;
-  padding: 26px 24px;
+  margin-bottom: 22px;
+  padding: 22px 24px;
   border-radius: 18px;
   border: 1px solid rgba(193, 169, 126, 0.18);
   background: linear-gradient(180deg, rgba(193, 169, 126, 0.1), rgba(255, 255, 255, 0.02));
@@ -36,9 +36,9 @@
 }
 
 .configurator-title {
-  font-size: 2.5rem;
+  font-size: clamp(2rem, 4vw, 2.8rem);
   font-weight: 500;
-  margin-bottom: 14px;
+  margin-bottom: 10px;
   text-align: center;
   line-height: 1.16;
 }
@@ -52,11 +52,16 @@
 }
 
 .configurator-journey-card {
-  margin-top: 22px;
-  padding: 18px 20px;
-  border-radius: 18px;
+  margin-top: 18px;
+  padding: 14px 16px;
+  border-radius: 16px;
   border: 1px solid rgba(193, 169, 126, 0.18);
   background: rgba(255, 255, 255, 0.03);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: center;
+  text-align: left;
 }
 
 .configurator-journey-kicker {
@@ -73,29 +78,36 @@
   display: block;
   color: #fff5e5;
   font-family: 'Cinzel', serif;
-  font-size: 1.12rem;
+  font-size: 1rem;
   line-height: 1.3;
 }
 
 .configurator-journey-card p {
-  margin-top: 10px;
+  margin-top: 6px;
   color: #ddd4c4;
   font-family: 'Lato', sans-serif;
-  line-height: 1.7;
+  line-height: 1.55;
+  font-size: 0.95rem;
+}
+
+.configurator-journey-actions {
+  display: grid;
+  gap: 10px;
+  justify-items: end;
 }
 
 .configurator-journey-steps {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
-  gap: 10px;
-  margin-top: 14px;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 0;
 }
 
 .configurator-journey-steps span {
   display: inline-flex;
   align-items: center;
-  padding: 8px 12px;
+  padding: 7px 11px;
   border-radius: 999px;
   border: 1px solid rgba(193, 169, 126, 0.24);
   background: rgba(193, 169, 126, 0.08);
@@ -105,12 +117,12 @@
 }
 
 .configurator-journey-link {
-  margin-top: 16px;
+  margin-top: 0;
   border: 1px solid rgba(193, 169, 126, 0.4);
   background: transparent;
   color: #f1e5cf;
-  min-height: 44px;
-  padding: 11px 18px;
+  min-height: 40px;
+  padding: 10px 16px;
   border-radius: 999px;
   font-family: 'Lato', sans-serif;
   font-weight: 700;
@@ -143,8 +155,82 @@
   line-height: 1.7;
 }
 
+.prompt-quickstart {
+  margin-bottom: 26px;
+  padding: 22px;
+  border: 1px solid rgba(193, 169, 126, 0.18);
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at top left, rgba(193, 169, 126, 0.12), transparent 34%),
+    rgba(255, 255, 255, 0.025);
+  text-align: left;
+}
+
+.prompt-quickstart-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.prompt-quickstart-heading span {
+  color: #dcc69b;
+  font-family: 'Lato', sans-serif;
+  font-size: 0.78rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.prompt-quickstart-heading strong {
+  max-width: 420px;
+  color: #efe4d0;
+  font-family: 'Lato', sans-serif;
+  font-size: 0.98rem;
+  line-height: 1.5;
+  text-align: right;
+}
+
+.prompt-quickstart-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.prompt-quickstart-card {
+  appearance: none;
+  border: 1px solid rgba(193, 169, 126, 0.24);
+  border-radius: 16px;
+  background: rgba(0, 0, 0, 0.22);
+  color: #f6eddc;
+  cursor: pointer;
+  padding: 16px;
+  text-align: left;
+  transition: transform 0.24s ease, border-color 0.24s ease, background-color 0.24s ease;
+}
+
+.prompt-quickstart-card span {
+  display: block;
+  margin-bottom: 8px;
+  font-family: 'Cinzel', serif;
+  font-size: 1.02rem;
+}
+
+.prompt-quickstart-card small {
+  display: block;
+  color: #c7bdad;
+  font-family: 'Lato', sans-serif;
+  line-height: 1.5;
+}
+
+.prompt-quickstart-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(193, 169, 126, 0.42);
+  background: rgba(193, 169, 126, 0.1);
+}
+
 .registration-gate {
-  margin-bottom: 28px;
+  margin: 0 0 22px;
   padding: 24px;
   border: 1px solid rgba(193, 169, 126, 0.28);
   border-radius: 18px;
@@ -605,7 +691,12 @@
   }
 
   .configurator-journey-card {
+    grid-template-columns: 1fr;
     padding: 16px;
+  }
+
+  .configurator-journey-actions {
+    justify-items: stretch;
   }
 
   .configurator-journey-steps {
@@ -614,6 +705,20 @@
 
   .prompt-form-grid,
   .quote-form {
+    grid-template-columns: 1fr;
+  }
+
+  .prompt-quickstart-heading {
+    display: grid;
+    align-items: start;
+  }
+
+  .prompt-quickstart-heading strong {
+    max-width: none;
+    text-align: left;
+  }
+
+  .prompt-quickstart-grid {
     grid-template-columns: 1fr;
   }
 
@@ -659,6 +764,7 @@
   }
 
   .configurator-hero-card,
+  .prompt-quickstart,
   .registration-gate,
   .prompt-prefill-note,
   .prompt-brief-preview,

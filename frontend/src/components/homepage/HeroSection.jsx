@@ -8,26 +8,34 @@ const HeroSection = () => {
       <img src="/orviane-home-hero.png" alt="Escena editorial de alta joyeria Orviane" className="hero-background" />
       <div className="hero-content">
         <span className="hero-kicker">Alta joyeria personalizada</span>
-        <h1>Joyas con presencia real, detalles legibles y una experiencia mas guiada.</h1>
-        <p>
-          Descubre colecciones, crea una pieza a medida y agenda una cita directa con Orviane
-          desde la web.
+        <h1>Orviane</h1>
+        <p className="hero-statement">
+          Joyas a medida, colecciones listas y asesoria directa para elegir con criterio, no por impulso.
         </p>
         <div className="hero-actions">
           <Link to="/colecciones" className="hero-button">
-            Quiero Comprar
+            Ver colecciones
           </Link>
           <Link to="/configurador" className="hero-button">
-            Quiero Personalizar
+            Crear una pieza
           </Link>
           <a href="#contacto-home" className="hero-button hero-button-secondary">
-            Quiero Agendar Cita
+            Agendar asesoria
           </a>
         </div>
-        <div className="hero-highlights">
-          <span>Citas directas</span>
-          <span>Asesoria guiada</span>
-          <span>Diseno personalizado</span>
+        <div className="hero-route-strip" aria-label="Rutas principales">
+          <Link to="/colecciones">
+            <span>01</span>
+            <strong>Comprar con referencia real</strong>
+          </Link>
+          <Link to="/configurador">
+            <span>02</span>
+            <strong>Personalizar con brief visual</strong>
+          </Link>
+          <a href="#contacto-home">
+            <span>03</span>
+            <strong>Resolver por WhatsApp o cita</strong>
+          </a>
         </div>
       </div>
     </section>

@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
 import ShareModal from './ShareModal';
 import { useAuth } from '../../context/AuthContext';
 import { API_BASE_URL, apiFetch } from '../../lib/api';
@@ -18,6 +17,59 @@ const refinementPresets = [
   { label: 'Mas lujoso', field: 'prompt', value: 'Quiero una lectura mas exclusiva, engaste limpio, acabados impecables y una presencia de alta joyeria mas rica.' },
   { label: 'Mas moderno', field: 'style', value: 'Moderno minimalista' },
   { label: 'Mas editorial', field: 'renderIntent', value: 'Editorial de campana' },
+];
+const quickStartPresets = [
+  {
+    label: 'Regalo delicado',
+    helper: 'Opcion segura para sorprender sin exagerar.',
+    values: {
+      category: 'Aretes',
+      metal: 'Oro amarillo',
+      gemstone: 'Perla',
+      style: 'Romantico delicado',
+      occasion: 'Regalo especial',
+      renderIntent: 'Catalogo premium',
+      cameraAngle: 'Frontal limpio',
+      silhouette: 'lineas suaves, proporcion ligera y uso comodo',
+      detailLevel: 'brillo sutil, acabado pulido y lectura femenina',
+      backgroundMood: 'Fondo calido editorial',
+      prompt: 'Quiero una pieza delicada para regalo, elegante sin verse exagerada, con presencia fina y facil de usar.',
+    },
+  },
+  {
+    label: 'Anillo protagonista',
+    helper: 'Para compromiso, aniversario o una decision importante.',
+    values: {
+      category: 'Anillo',
+      metal: 'Oro blanco',
+      gemstone: 'Diamantes',
+      style: 'Clasico elegante',
+      occasion: 'Compromiso',
+      renderIntent: 'Macro de detalle',
+      cameraAngle: 'Tres cuartos heroico',
+      silhouette: 'banda limpia con centro protagonista',
+      detailLevel: 'engaste pulcro, brillo controlado y proporcion refinada',
+      backgroundMood: 'Fondo oscuro refinado',
+      prompt: 'Busco un anillo con lectura simbolica y premium, que se vea importante pero viable para produccion real.',
+    },
+  },
+  {
+    label: 'Uso diario premium',
+    helper: 'Joya versatil, refinada y facil de combinar.',
+    values: {
+      category: 'Cadena',
+      metal: 'Oro amarillo',
+      gemstone: 'Sin piedras',
+      style: 'Moderno minimalista',
+      occasion: 'Uso diario premium',
+      renderIntent: 'Catalogo premium',
+      cameraAngle: 'Superior refinado',
+      silhouette: 'eslabones limpios, proporcion equilibrada y caida elegante',
+      detailLevel: 'acabado pulido, peso visual medio y textura discreta',
+      backgroundMood: 'Fondo neutro con sombra suave',
+      prompt: 'Quiero una joya para uso diario que se sienta premium, comoda y facil de combinar.',
+    },
+  },
 ];
 
 const createInitialState = (initialPrompt, sourceProductName) => ({
@@ -207,6 +259,18 @@ const PromptDesigner = ({ initialPrompt = '', sourceReference = '', sourceProduc
     setSaveError('');
   };
 
+  const handleQuickStart = (preset) => {
+    setForm((current) => ({
+      ...current,
+      ...preset.values,
+    }));
+    setGeneratedImage(null);
+    setGeneratedPromptUsed('');
+    setError(null);
+    setSaveMessage('');
+    setSaveError('');
+  };
+
   const handleGenerate = async () => {
     if (!registrant?.registrantId) {
       setError('Primero completa tu registro para desbloquear la generacion.');
@@ -272,7 +336,7 @@ const PromptDesigner = ({ initialPrompt = '', sourceReference = '', sourceProduc
     }
 
     if (!isAuthenticated || !token) {
-      setSaveError('Inicia sesion en Mi Cuenta para guardar este render.');
+      setSaveError('Para guardar este render, primero activa Mi Cuenta.');
       return;
     }
 
@@ -308,91 +372,25 @@ const PromptDesigner = ({ initialPrompt = '', sourceReference = '', sourceProduc
 
   return (
     <div className="prompt-designer">
-      <h2>Describe la Joya de tus Suenos</h2>
+      <h2>Construye tu brief visual</h2>
       <p className="prompt-subtitle">
-        Construyamos un brief mejor para que el render se vea mas realista, elegante y cercano a lo que imagina tu cliente.
+        Elige una ruta rapida o ajusta los detalles. Mientras mas claro sea el brief, mas util sera el render para cotizar.
       </p>
 
-      <div className="registration-gate">
-        <div className="registration-copy">
-          <h3>Registro previo obligatorio</h3>
-          <p>
-            Para generar una joya pedimos un registro rapido. Asi desbloqueas la experiencia y al mismo tiempo Orviane
-            va construyendo una base de datos real de interesados, briefs y solicitudes.
-          </p>
+      <div className="prompt-quickstart">
+        <div className="prompt-quickstart-heading">
+          <span>Rutas rapidas</span>
+          <strong>Empieza con una intencion y luego ajusta detalles.</strong>
         </div>
 
-        {!registrant ? (
-          <form className="quote-form registration-form" onSubmit={handleRegistrationSubmit}>
-            <label className="prompt-field">
-              <span>Nombre completo</span>
-              <input type="text" value={registrationForm.fullName} onChange={handleRegistrationFieldChange('fullName')} required />
-            </label>
-
-            <label className="prompt-field">
-              <span>Email</span>
-              <input type="email" value={registrationForm.email} onChange={handleRegistrationFieldChange('email')} required />
-            </label>
-
-            <label className="prompt-field">
-              <span>WhatsApp</span>
-              <input type="text" value={registrationForm.whatsapp} onChange={handleRegistrationFieldChange('whatsapp')} required />
-            </label>
-
-            <label className="prompt-field">
-              <span>Ciudad</span>
-              <input type="text" value={registrationForm.city} onChange={handleRegistrationFieldChange('city')} placeholder="Ej: Sincelejo" />
-            </label>
-
-            <label className="prompt-field">
-              <span>Que buscas hoy</span>
-              <input type="text" value={registrationForm.interest} onChange={handleRegistrationFieldChange('interest')} placeholder="Ej: anillo de compromiso" />
-            </label>
-
-            <label className="prompt-field">
-              <span>Ocasion</span>
-              <input type="text" value={registrationForm.occasion} onChange={handleRegistrationFieldChange('occasion')} placeholder="Ej: aniversario" />
-            </label>
-
-            <label className="prompt-field prompt-field-wide">
-              <span>Notas</span>
-              <textarea
-                className="prompt-textarea prompt-textarea-compact"
-                value={registrationForm.notes}
-                onChange={handleRegistrationFieldChange('notes')}
-                placeholder="Cuentanos si buscas un regalo, una fecha especial o una idea base."
-              />
-            </label>
-
-            <label className="prompt-checkbox prompt-field-wide">
-              <input
-                type="checkbox"
-                checked={registrationForm.marketingConsent}
-                onChange={handleRegistrationFieldChange('marketingConsent')}
-              />
-              <span>Acepto que Orviane me contacte para seguimiento de esta solicitud.</span>
-            </label>
-
-            {registrationError && <p className="error-text modal-error">{registrationError}</p>}
-            {registrationSuccess && <p className="success-text">{registrationSuccess}</p>}
-
-            <button type="submit" className="generate-button registration-submit" disabled={isRegistering}>
-              {isRegistering ? 'Registrando...' : 'Registrarme y desbloquear'}
+        <div className="prompt-quickstart-grid">
+          {quickStartPresets.map((preset) => (
+            <button key={preset.label} type="button" className="prompt-quickstart-card" onClick={() => handleQuickStart(preset)}>
+              <span>{preset.label}</span>
+              <small>{preset.helper}</small>
             </button>
-          </form>
-        ) : (
-          <div className="registration-success-card">
-            <h4>Registro activo</h4>
-            <p>
-              <strong>{registrant.fullName}</strong>
-              {' - '}
-              {registrant.email}
-              {' - '}
-              {registrant.whatsapp}
-            </p>
-            <p>Tu perfil ya esta habilitado. Ahora puedes generar, refinar y cotizar tus propuestas.</p>
-          </div>
-        )}
+          ))}
+        </div>
       </div>
 
       {hasCatalogStartingPoint && (
@@ -530,12 +528,94 @@ const PromptDesigner = ({ initialPrompt = '', sourceReference = '', sourceProduc
         <p>{creativeSummary || 'Completa algunos campos para construir un brief mas fuerte.'}</p>
       </div>
 
+      <div className="registration-gate">
+        <div className="registration-copy">
+          <h3>Desbloquea el render cuando el brief este listo</h3>
+          <p>
+            Solo pedimos estos datos al momento de generar la imagen, para poder guardar el contexto y continuar la
+            cotizacion por WhatsApp sin repetir todo.
+          </p>
+        </div>
+
+        {!registrant ? (
+          <form className="quote-form registration-form" onSubmit={handleRegistrationSubmit}>
+            <label className="prompt-field">
+              <span>Nombre completo</span>
+              <input type="text" value={registrationForm.fullName} onChange={handleRegistrationFieldChange('fullName')} required />
+            </label>
+
+            <label className="prompt-field">
+              <span>Email</span>
+              <input type="email" value={registrationForm.email} onChange={handleRegistrationFieldChange('email')} required />
+            </label>
+
+            <label className="prompt-field">
+              <span>WhatsApp</span>
+              <input type="text" value={registrationForm.whatsapp} onChange={handleRegistrationFieldChange('whatsapp')} required />
+            </label>
+
+            <label className="prompt-field">
+              <span>Ciudad</span>
+              <input type="text" value={registrationForm.city} onChange={handleRegistrationFieldChange('city')} placeholder="Ej: Sincelejo" />
+            </label>
+
+            <label className="prompt-field">
+              <span>Que buscas hoy</span>
+              <input type="text" value={registrationForm.interest} onChange={handleRegistrationFieldChange('interest')} placeholder="Ej: anillo de compromiso" />
+            </label>
+
+            <label className="prompt-field">
+              <span>Ocasion</span>
+              <input type="text" value={registrationForm.occasion} onChange={handleRegistrationFieldChange('occasion')} placeholder="Ej: aniversario" />
+            </label>
+
+            <label className="prompt-field prompt-field-wide">
+              <span>Notas</span>
+              <textarea
+                className="prompt-textarea prompt-textarea-compact"
+                value={registrationForm.notes}
+                onChange={handleRegistrationFieldChange('notes')}
+                placeholder="Cuentanos si buscas un regalo, una fecha especial o una idea base."
+              />
+            </label>
+
+            <label className="prompt-checkbox prompt-field-wide">
+              <input
+                type="checkbox"
+                checked={registrationForm.marketingConsent}
+                onChange={handleRegistrationFieldChange('marketingConsent')}
+              />
+              <span>Acepto que Orviane me contacte para seguimiento de esta solicitud.</span>
+            </label>
+
+            {registrationError && <p className="error-text modal-error">{registrationError}</p>}
+            {registrationSuccess && <p className="success-text">{registrationSuccess}</p>}
+
+            <button type="submit" className="generate-button registration-submit" disabled={isRegistering}>
+              {isRegistering ? 'Registrando...' : 'Desbloquear render'}
+            </button>
+          </form>
+        ) : (
+          <div className="registration-success-card">
+            <h4>Render desbloqueado</h4>
+            <p>
+              <strong>{registrant.fullName}</strong>
+              {' - '}
+              {registrant.email}
+              {' - '}
+              {registrant.whatsapp}
+            </p>
+            <p>Tu perfil ya esta habilitado. Ahora puedes generar, refinar y cotizar tus propuestas.</p>
+          </div>
+        )}
+      </div>
+
       <div className="prompt-hints">
         <p>Consejo: para joyeria premium suelen funcionar mejor frases como "proporcion refinada", "engaste limpio", "brillo controlado" y "pieza viable para produccion real".</p>
       </div>
 
       <button type="button" className="generate-button" onClick={handleGenerate} disabled={isLoading || !registrant}>
-        {isLoading ? 'Generando render...' : registrant ? 'Generar Render con IA' : 'Registrate para generar'}
+        {isLoading ? 'Generando render...' : registrant ? 'Generar Render con IA' : 'Completa datos para generar'}
       </button>
 
       <div className="generated-image-container">
@@ -570,11 +650,7 @@ const PromptDesigner = ({ initialPrompt = '', sourceReference = '', sourceProduc
               <button type="button" className="quote-button quote-button-secondary" onClick={handleSaveDesign} disabled={isSavingDesign}>
                 {isSavingDesign ? 'Guardando...' : 'Guardar en Mi Cuenta'}
               </button>
-            ) : (
-              <Link to="/cuenta" className="quote-inline-button">
-                Inicia sesion para guardar
-              </Link>
-            )}
+            ) : null}
 
             {saveMessage ? <p className="success-text">{saveMessage}</p> : null}
             {saveError ? <p className="error-text">{saveError}</p> : null}
