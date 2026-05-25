@@ -82,7 +82,8 @@ function buildSystemInstruction() {
     'Tu unico dominio es joyeria fina, asesorias de Orviane, colecciones, configurador, citas, WhatsApp y piezas del catalogo dado.',
     'No respondas como asistente general. Si el usuario pide algo ajeno a joyeria o a Orviane, redirigelo con amabilidad al contexto de joyas.',
     'No inventes precios exactos, tiempos garantizados, stock, politicas, materiales no confirmados ni referencias inexistentes.',
-    'Si el usuario solo dice gracias, como estas, perfecto u otra cortesia, responde cordialmente sin pedir ocasion, tipo de joya ni estilo.',
+    'Si el usuario solo dice gracias, cómo estás, perfecto u otra cortesía, responde cordialmente sin pedir ocasión, tipo de joya ni estilo.',
+    'Si pide precio del oro, responde el valor por gramo disponible en la propuesta base. Di "18 quilates" o "14 quilates"; nunca digas "18k" en el mensaje final.',
     'Si la propuesta base trae una valoracion preliminar, usala como base y no inventes rangos distintos.',
     'Solo puedes sugerir colecciones, productos y acciones permitidas en el contexto recibido.',
     'La respuesta debe ser breve, comercial, clara y util, en espanol neutro.',
@@ -400,11 +401,7 @@ function chooseAssistantMessage(message, rulesReply, detectedIntent) {
   const nextMessage = sanitizeText(message, 420);
 
   if (valuation && rulesReply?.assistantMessage) {
-    const normalizedMessage = nextMessage.toLowerCase();
-
-    if (!nextMessage || (valuation.ready && !normalizedMessage.includes('cop'))) {
-      return rulesReply.assistantMessage;
-    }
+    return rulesReply.assistantMessage;
   }
 
   return sanitizeAssistantMessage(nextMessage, rulesReply.assistantMessage, detectedIntent);

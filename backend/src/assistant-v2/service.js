@@ -231,7 +231,7 @@ function detectIntent(text) {
   if (/(whatsapp|humana|asesora|persona real)/.test(text)) return 'handoff_whatsapp';
   if (/(cita|agendar|agenda|asesoria|visita|reservar)/.test(text)) return 'schedule_appointment';
   if (/(diseno|disenar|personaliz|a medida|configurador)/.test(text)) return 'design_custom';
-  if (/(precio|cotizacion|cotizar|cuanto cuesta|cuanto vale|valor|valora|avalu|avaluo|estimar|estimacion|calcular|mineral|gramo|gramos|quilate|quilates|ct)/.test(text)) return 'quote_request';
+  if (/(precio|cotizacion|cotizar|cuanto cuesta|cuanto vale|valor|valora|avalu|avaluo|estimar|estimacion|calcular|mineral|gramo|gramos|quilate|quilates|kilate|kilates|\bct\b|\bcts\b)/.test(text)) return 'quote_request';
   if (/(ver|coleccion|catalogo|opciones|mostrar)/.test(text)) return 'browse_collection';
   if (/(hola|busco|quiero|recomienda|recomendacion|ayuda)/.test(text)) return 'recommend_jewelry';
   return 'unknown';
@@ -239,8 +239,10 @@ function detectIntent(text) {
 
 function getCourtesyType(text) {
   const normalized = normalizeText(text);
+  const hasShoppingSignal = /(precio|cotiz|cuanto cuesta|cuanto vale|valor|valora|oro|plata|diamante|anillo|arete|aretes|cadena|collar|pulsera|joya|pieza|regalo|comprar|quiero|busco|necesito|ver|mostrar|catalogo|coleccion|configurador|cita|whatsapp)/.test(normalized);
 
   if (!normalized) return '';
+  if (!hasShoppingSignal && /^(hola|buenas|buenos dias|buen dia|buenas tardes|buenas noches)?\s*(como estas|que tal|como vas|como te va|todo bien)(\s*(todo bien|como estas|que tal))?[?!. ]*$/.test(normalized)) return 'wellbeing';
   if (/^(gracias|muchas gracias|mil gracias|super gracias|te agradezco|ok gracias|listo gracias|perfecto gracias|vale gracias)[!. ]*$/.test(normalized)) return 'thanks';
   if (/^(como estas|como estas orvia|que tal|como vas|como te va|todo bien|que cuentas)[?!. ]*$/.test(normalized)) return 'wellbeing';
   if (/^(perfecto|listo|ok|okay|vale|de acuerdo|me parece bien|super|excelente|esta bien)[!. ]*$/.test(normalized)) return 'acknowledge';
@@ -249,25 +251,29 @@ function getCourtesyType(text) {
   return '';
 }
 
-function buildCourtesyMessage(courtesyType) {
+function buildCourtesyMessage(courtesyType, extracted = {}) {
+  const memoryHint = extracted.jewelryType
+    ? ` Tengo presente lo del ${extracted.jewelryType}; cuando quieras lo retomamos sin empezar de cero.`
+    : '';
+
   if (courtesyType === 'thanks') {
-    return 'Con mucho gusto. Estoy aqui para ayudarte a decidir con calma, no para llenarte de opciones.';
+    return `Con mucho gusto. Estoy aquí para ayudarte a decidir con calma, no para llenarte de opciones.${memoryHint}`;
   }
 
   if (courtesyType === 'wellbeing') {
-    return 'Estoy muy bien, gracias por preguntar. Lista para ayudarte a elegir algo bonito, comparar materiales o aterrizar una idea sin enredarte.';
+    return `Estoy muy bien, gracias por preguntar. Lista para ayudarte a elegir algo bonito, comparar materiales o aterrizar una idea sin enredarte.${memoryHint}`;
   }
 
   if (courtesyType === 'acknowledge') {
-    return 'Perfecto. Seguimos con calma; cuando quieras puedo comparar opciones, valorar una pieza o llevarte a una referencia concreta.';
+    return `Perfecto. Seguimos con calma; cuando quieras puedo comparar opciones, valorar una pieza o llevarte a una referencia concreta.${memoryHint}`;
   }
 
   if (courtesyType === 'goodbye') {
-    return 'Gracias por pasar por Orviane. Cuando quieras retomamos desde joya, ocasion, material o presupuesto.';
+    return 'Gracias por pasar por Orviane. Cuando quieras retomamos desde joya, ocasión, material o presupuesto.';
   }
 
   if (courtesyType === 'compliment') {
-    return 'Que bueno que te gusto. Si quieres, puedo ayudarte a buscar algo con esa misma lectura o comparar una version mas discreta, mas brillante o mas personalizada.';
+    return 'Qué bueno que te gustó. Si quieres, puedo ayudarte a buscar algo con esa misma lectura o comparar una versión más discreta, más brillante o más personalizada.';
   }
 
   return '';
@@ -294,7 +300,7 @@ function inferCollectionSlug(jewelryType, occasion, currentCollectionSlug) {
 function buildConfiguratorHint(extracted) {
   return [
     extracted.jewelryType ? `Quiero una propuesta de ${extracted.jewelryType}.` : 'Quiero una joya personalizada.',
-    extracted.occasion ? `La ocasion es ${extracted.occasion}.` : '',
+    extracted.occasion ? `La ocasión es ${extracted.occasion}.` : '',
     extracted.style ? `Me interesa un estilo ${extracted.style}.` : '',
     extracted.budget ? `Considera un presupuesto de ${extracted.budget}.` : '',
     extracted.metal ? `Prefiero ${extracted.metal}.` : '',
@@ -341,8 +347,8 @@ function buildSavedDesignAction(accountContext, extracted) {
   }
 
   return buildAction('open_configurator', {
-    label: 'Retomar diseno guardado',
-    reason: 'Ya tienes una propuesta iniciada, asi que conviene retomarla en vez de empezar desde cero.',
+    label: 'Retomar diseño guardado',
+    reason: 'Ya tienes una propuesta iniciada, así que conviene retomarla en vez de empezar desde cero.',
     promptHint:
       savedDesign.prompt ||
       [
@@ -362,7 +368,7 @@ function buildConciergeLead(accountContext, profile) {
   }
 
   if (accountContext.savedDesigns.length) {
-    return `Hola ${name}, ya puedo retomar lo que venias construyendo.`;
+    return `Hola ${name}, ya puedo retomar lo que venías construyendo.`;
   }
 
   if (accountContext.favoriteCollections.length) {
@@ -399,7 +405,7 @@ function mergeQuickReplies(...groups) {
 
 function buildKnownDetails(extracted) {
   return [
-    extracted.occasion ? `Ocasion: ${extracted.occasion}` : '',
+    extracted.occasion ? `Ocasión: ${extracted.occasion}` : '',
     extracted.jewelryType ? `Joya: ${extracted.jewelryType}` : '',
     extracted.style ? `Estilo: ${extracted.style}` : '',
     extracted.metal ? `Metal: ${extracted.metal}` : '',
@@ -453,7 +459,7 @@ function buildGuidanceCard({ suggestedAction, collectionSlug, product, extracted
     return {
       eyebrow: 'Pieza sugerida',
       title: `${product.name} (${product.reference})`,
-      summary: 'Es la referencia mas clara para empezar y luego ajustar detalles sin abrir demasiadas opciones a la vez.',
+      summary: 'Es la referencia más clara para empezar y luego ajustar detalles sin abrir demasiadas opciones a la vez.',
       bullets: [
         extracted.occasion ? `Funciona bien para ${extracted.occasion}.` : '',
         extracted.style ? `Mantiene una lectura ${extracted.style}.` : '',
@@ -470,7 +476,7 @@ function buildGuidanceCard({ suggestedAction, collectionSlug, product, extracted
     }
 
     return {
-      eyebrow: 'Coleccion sugerida',
+      eyebrow: 'Colección sugerida',
       title: collectionCopy.title,
       summary: collectionCopy.shortReason,
       bullets: [
@@ -485,10 +491,10 @@ function buildGuidanceCard({ suggestedAction, collectionSlug, product, extracted
     return {
       eyebrow: 'Ruta sugerida',
       title: 'Configurador',
-      summary: 'Tu idea ya tiene suficiente forma para convertirla en un brief editable y no seguir solo en conversacion.',
+      summary: 'Tu idea ya tiene suficiente forma para convertirla en un brief editable y no seguir solo en conversación.',
       bullets: [
         extracted.jewelryType ? `Pieza base: ${extracted.jewelryType}.` : '',
-        extracted.style ? `Direccion visual: ${extracted.style}.` : '',
+        extracted.style ? `Dirección visual: ${extracted.style}.` : '',
         extracted.budget ? `Presupuesto de referencia: ${extracted.budget}.` : '',
       ].filter(Boolean),
     };
@@ -498,7 +504,7 @@ function buildGuidanceCard({ suggestedAction, collectionSlug, product, extracted
     return {
       eyebrow: 'Ruta sugerida',
       title: 'Cita corta',
-      summary: 'Conviene resolver tiempos, materiales y presupuesto con acompanamiento para no adivinar.',
+      summary: 'Conviene resolver tiempos, materiales y presupuesto con acompañamiento para no adivinar.',
       bullets: [
         extracted.occasion ? `Motivo: ${extracted.occasion}.` : '',
         extracted.deadline ? `Tiempo: ${extracted.deadline}.` : '',
@@ -540,18 +546,18 @@ function recommendProduct(extracted, collectionSlug) {
 
 function buildProductRecommendationMessage(product, extracted, isMothersDayIntent) {
   if (isMothersDayIntent) {
-    return `Para el Dia de las Madres buscaria algo elegante, facil de usar y con brillo delicado. La referencia mas clara para empezar es ${product.name} (${product.reference}); desde ahi podemos ajustar metal, tamano o nivel de protagonismo.`;
+    return `Para el Día de las Madres buscaría algo elegante, fácil de usar y con brillo delicado. Empezaría por ${product.name} (${product.reference}); desde ahí podemos ajustar metal, tamaño o nivel de protagonismo.`;
   }
 
   if (extracted.occasion === 'regalo') {
-    return `Para regalo conviene una pieza bonita pero facil de acertar. Empezaria por ${product.name} (${product.reference}) y luego afinamos estilo, presupuesto o si prefieres algo mas discreto.`;
+    return `Para regalo conviene una pieza bonita, fácil de usar y difícil de fallar. Yo miraría primero ${product.name} (${product.reference}) y luego afinamos si la quieres más discreta, más brillante o más personal.`;
   }
 
   if (extracted.jewelryType === 'anillo') {
-    return `Si buscas un anillo, empezaria por ${product.name} (${product.reference}) porque da una base clara para comparar estilo, metal y protagonismo.`;
+    return `Si buscas un anillo, empezaría por ${product.name} (${product.reference}); da una base clara para comparar estilo, metal y protagonismo sin perderte entre demasiadas opciones.`;
   }
 
-  return `La referencia mas clara para empezar es ${product.name} (${product.reference}). Desde ahi podemos afinar estilo, metal o personalizacion.`;
+  return `La referencia más clara para empezar es ${product.name} (${product.reference}). Desde ahí podemos afinar estilo, metal o personalización.`;
 }
 
 function findReferencedProduct(text) {
@@ -567,10 +573,10 @@ function findReferencedProduct(text) {
 function buildQuickReplies(intent, collectionSlug, suggestedAction, missingDetailKeys, greetingOnly = false, valuation = null) {
   if (intent === 'smalltalk') {
     return mergeQuickReplies([
-      { label: 'Valorar una pieza', message: 'Quiero valorar un anillo en oro 18k de 4 gramos' },
+      { label: 'Valorar una pieza', message: 'Quiero valorar un anillo en oro de 18 quilates de 4 gramos' },
       { label: 'Ver colecciones', message: 'Quiero ver colecciones' },
       { label: 'Quiero un regalo', message: 'Quiero una joya para regalo especial' },
-      { label: 'Diseno a medida', message: 'Quiero una joya personalizada' },
+      { label: 'Diseño a medida', message: 'Quiero una joya personalizada' },
     ]);
   }
 
@@ -587,7 +593,7 @@ function buildQuickReplies(intent, collectionSlug, suggestedAction, missingDetai
       { label: 'Ver colecciones', message: 'Quiero ver colecciones' },
       { label: 'Busco un anillo', message: 'Busco un anillo para compromiso' },
       { label: 'Quiero un regalo', message: 'Quiero una joya para regalo especial' },
-      { label: 'Diseno a medida', message: 'Quiero una joya personalizada' },
+      { label: 'Diseño a medida', message: 'Quiero una joya personalizada' },
     ]);
   }
 
@@ -595,7 +601,7 @@ function buildQuickReplies(intent, collectionSlug, suggestedAction, missingDetai
     return mergeQuickReplies(discoveryReplies, [
       { label: 'Ver esta pieza', message: `Quiero ver la referencia ${suggestedAction.productReference}` },
       { label: 'Personalizar esta idea', message: 'Quiero personalizar esta idea' },
-      { label: 'Agendar asesoria', message: 'Quiero agendar una cita' },
+      { label: 'Agendar asesoría', message: 'Quiero agendar una cita' },
     ]);
   }
 
@@ -611,7 +617,7 @@ function buildQuickReplies(intent, collectionSlug, suggestedAction, missingDetai
     return mergeQuickReplies(discoveryReplies, [
       { label: 'Abrir configurador', message: 'Llevame al configurador' },
       { label: 'Definir estilo', message: 'Quiero ayuda para definir estilo y materiales' },
-      { label: 'Pedir asesoria', message: 'Quiero una asesoria personalizada' },
+      { label: 'Pedir asesoría', message: 'Quiero una asesoría personalizada' },
     ]);
   }
 
@@ -621,7 +627,7 @@ function buildQuickReplies(intent, collectionSlug, suggestedAction, missingDetai
     return mergeQuickReplies(discoveryReplies, [
       { label: `Ver ${collectionTitle}`, message: `Quiero ver ${collectionTitle.toLowerCase()}` },
       { label: 'Personalizar idea', message: 'Quiero una joya personalizada' },
-      { label: 'Agendar asesoria', message: 'Quiero agendar una cita' },
+      { label: 'Agendar asesoría', message: 'Quiero agendar una cita' },
     ]);
   }
 
@@ -629,7 +635,7 @@ function buildQuickReplies(intent, collectionSlug, suggestedAction, missingDetai
     { label: 'Ver colecciones', message: 'Quiero ver colecciones' },
     { label: 'Busco un anillo', message: 'Busco un anillo para compromiso' },
     { label: 'Quiero un regalo', message: 'Quiero una joya para regalo especial' },
-    { label: 'Necesito asesoria', message: 'Necesito ayuda para elegir una joya' },
+    { label: 'Necesito asesoría', message: 'Necesito ayuda para elegir una joya' },
   ]);
 }
 
@@ -683,17 +689,17 @@ function buildReplyFromSignals({ message, conversation, memory, clientContext, a
   });
 
   if (courtesyType) {
-    assistantMessage = buildCourtesyMessage(courtesyType);
+    assistantMessage = buildCourtesyMessage(courtesyType, extracted);
     suggestedAction = buildAction('none', {
       label: 'Seguir conversando',
     });
   } else if (greetingOnly) {
-    assistantMessage = 'Hola. Puedo ayudarte a elegir una joya, ver colecciones, personalizar una idea o agendar una asesoria. Si quieres, empezamos por tipo de joya, ocasion o estilo.';
+    assistantMessage = 'Hola. Puedo ayudarte a elegir una joya, ver colecciones, personalizar una idea o agendar una asesoría. Si quieres, empezamos por tipo de joya, ocasión o estilo.';
     suggestedAction = buildAction('none', {
       label: 'Explorar opciones',
     });
   } else if ((/retomar|mi diseno/.test(currentMessage)) && savedDesignAction) {
-    assistantMessage = 'Lo mas eficiente es retomar tu diseno guardado y afinarlo desde ahi.';
+    assistantMessage = 'Lo más eficiente es retomar tu diseño guardado y afinarlo desde ahí.';
     suggestedAction = savedDesignAction;
   } else if ((/favorit/.test(currentMessage) || /segun mis favoritos/.test(currentMessage)) && favoriteCollectionAction) {
     assistantMessage = 'Tomando como referencia lo que ya guardaste, te conviene seguir por esa familia.';
@@ -705,12 +711,12 @@ function buildReplyFromSignals({ message, conversation, memory, clientContext, a
       reason: 'Continuar con una asesora humana.',
     });
   } else if (intent === 'schedule_appointment' || extracted.deadline === 'urgente') {
-    assistantMessage = 'Lo mejor aqui es abrir una cita corta para aterrizar materiales, tiempos y presupuesto sin adivinar.';
+    assistantMessage = 'Lo mejor aquí es abrir una cita corta para aterrizar materiales, tiempos y presupuesto sin adivinar.';
     suggestedAction = buildAction('open_appointment', {
       label: 'Abrir cita',
       reason: 'Aterrizar el proyecto con acompanamiento.',
       notes: [
-        extracted.occasion ? `Ocasion: ${extracted.occasion}.` : '',
+        extracted.occasion ? `Ocasión: ${extracted.occasion}.` : '',
         extracted.jewelryType ? `Tipo de joya: ${extracted.jewelryType}.` : '',
         extracted.budget ? `Presupuesto: ${extracted.budget}.` : '',
       ]
@@ -719,8 +725,8 @@ function buildReplyFromSignals({ message, conversation, memory, clientContext, a
     });
   } else if (intent === 'quote_request') {
     assistantMessage = buildValuationMessage(valuation) || (product
-      ? `Para cotizar con precision, usemos la referencia ${product.name} (${product.reference}) y llevemos ese contexto a WhatsApp.`
-      : 'Para cotizar bien necesito al menos tipo de joya, material y peso aproximado. Si ya tienes eso, te doy un rango preliminar antes de llevarlo a WhatsApp.');
+          ? `Para cotizar con precisión, usemos la referencia ${product.name} (${product.reference}) y llevemos ese contexto a WhatsApp.`
+          : 'Para cotizar bien necesito al menos tipo de joya, material y peso aproximado. Si ya tienes eso, te doy un rango preliminar antes de llevarlo a WhatsApp.');
     suggestedAction = product
       ? buildAction('open_product', {
           label: `Ver ${product.name}`,
@@ -734,7 +740,7 @@ function buildReplyFromSignals({ message, conversation, memory, clientContext, a
           label: 'Cotizar por WhatsApp',
           reason: 'Enviar la solicitud de precio con contexto.',
           notes: [
-            extracted.occasion ? `Ocasion: ${extracted.occasion}.` : '',
+            extracted.occasion ? `Ocasión: ${extracted.occasion}.` : '',
             extracted.jewelryType ? `Tipo de joya: ${extracted.jewelryType}.` : '',
             extracted.budget ? `Presupuesto: ${extracted.budget}.` : '',
           ]
@@ -742,7 +748,7 @@ function buildReplyFromSignals({ message, conversation, memory, clientContext, a
             .join(' '),
         });
   } else if (intent === 'design_custom') {
-    assistantMessage = 'Tu idea ya pide configurador: ahi podemos convertirla en un brief mucho mas claro.';
+    assistantMessage = 'Tu idea ya pide configurador: ahí podemos convertirla en un brief mucho más claro.';
     suggestedAction = buildAction('open_configurator', {
       label: 'Abrir configurador',
       reason: 'Pasar de idea a propuesta editable.',
@@ -755,7 +761,7 @@ function buildReplyFromSignals({ message, conversation, memory, clientContext, a
       collectionSlug: product.collectionSlug,
       productReference: product.reference,
       productName: product.name,
-      reason: 'Es la referencia que mejor cruza tipo de joya, ocasion y estilo.',
+      reason: 'Es la referencia que mejor cruza tipo de joya, ocasión y estilo.',
       promptHint: buildConfiguratorHint(extracted),
     });
   } else if (favoriteCollectionAction && (intent === 'recommend_jewelry' || intent === 'unknown' || intent === 'browse_collection')) {
@@ -765,17 +771,17 @@ function buildReplyFromSignals({ message, conversation, memory, clientContext, a
     const collectionCopy = COLLECTION_COPY[collectionSlug];
     assistantMessage =
       isMothersDayIntent && extracted.occasion === 'regalo'
-        ? `Para el Dia de las Madres, la mejor familia para empezar es ${collectionCopy.title}. Te ayuda a encontrar algo elegante, facil de regalar y con muy buena salida para esa ocasion.`
+        ? `Para el Día de las Madres, la mejor familia para empezar es ${collectionCopy.title}. Te ayuda a encontrar algo elegante, fácil de regalar y con muy buena salida para esa ocasión.`
         : `La mejor familia para empezar es ${collectionCopy.title}: ${collectionCopy.shortReason}.`;
     suggestedAction = buildAction('open_collection', {
       label: `Ver ${collectionCopy.title}`,
       collectionSlug,
-      reason: 'Es la coleccion mas alineada con lo que contaste.',
+      reason: 'Es la colección más alineada con lo que contaste.',
     });
   } else {
     assistantMessage = extracted.style && !extracted.jewelryType
-      ? `Ya tengo una direccion ${describeStyle(extracted.style)}. Para recomendar mejor, dime si prefieres anillo, aretes, cadena o pulsera.`
-      : 'Para orientarte mejor dime al menos una de estas tres cosas: ocasion, tipo de joya o estilo.';
+      ? `Ya tengo una dirección ${describeStyle(extracted.style)}. Para recomendar mejor, dime si prefieres anillo, aretes, cadena o pulsera.`
+      : 'Para orientarte mejor dime al menos una de estas tres cosas: ocasión, tipo de joya o estilo.';
   }
 
   const conciergeLead = buildConciergeLead(safeAccountContext, profile);

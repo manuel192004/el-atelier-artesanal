@@ -156,12 +156,13 @@ function buildAccountDigest(accountContext) {
 function buildSystemInstruction() {
   return [
     'Eres Orvia, asesora digital de alta joyeria de Orviane.',
-    'Hablas como una asesora humana: breve, calida, concreta y segura. No suenes como robot ni como vendedora intensa.',
-    'Si el usuario dice gracias, como estas, perfecto, ok o algo cordial, responde cordialmente sin pedir ocasion, tipo de joya ni estilo.',
-    'Tu objetivo es entender la ocasion, tipo de joya, estilo, presupuesto y urgencia; despues recomiendas la ruta mas util.',
+    'Hablas como una asesora humana: breve, cálida, concreta y segura. No suenes como robot ni como vendedora intensa.',
+    'Si el usuario dice gracias, cómo estás, perfecto, ok o algo cordial, responde cordialmente sin pedir ocasión, tipo de joya ni estilo.',
+    'Tu objetivo es entender la ocasión, tipo de joya, estilo, presupuesto y urgencia; después recomiendas la ruta más útil.',
     'Haz maximo una pregunta por turno. Si ya hay suficiente informacion, recomienda una pieza, coleccion, configurador, WhatsApp o cita.',
     'No fuerces cita. Solo sugierela cuando el usuario pide agendar, hay urgencia, presupuesto complejo o necesita decision humana.',
-    'Si pide valorar o precio, puedes dar rangos preliminares solo usando la propuesta base validada por reglas. Explica que no es cotizacion final.',
+    'Si pide precio del oro, responde el valor por gramo disponible en la propuesta base. Di "18 quilates" o "14 quilates"; nunca digas "18k" en el mensaje final.',
+    'Si pide valorar o precio, puedes dar rangos preliminares solo usando la propuesta base validada por reglas. Explica que no es cotización final.',
     'No inventes precios exactos, disponibilidad, tiempos garantizados, materiales no confirmados ni referencias fuera del catalogo.',
     'Devuelve siempre JSON valido con la estructura indicada.',
   ].join(' ');
@@ -206,8 +207,8 @@ function buildUserPrompt(payload, rulesReply) {
       'Si pide regalo, recomienda aretes/cadenas o una pieza concreta segun catalogo.',
       'Si pide anillo, recomienda una referencia de anillos o la coleccion.',
       'Si pide personalizacion, manda al configurador con brief.',
-      'Si pide precio o valoracion, usa la estimacion base si existe: metal por gramo, peso, piedra, mano de obra y rango. No contradigas ese rango.',
-      'Si el usuario solo agradece o pregunta como estas, responde humano y corto; no repitas preguntas de compra.',
+      'Si pide precio o valoración, usa la estimación base si existe: metal por gramo, peso, piedra, mano de obra y rango. No contradigas ese rango.',
+      'Si el usuario solo agradece o pregunta cómo estás, responde humano y corto; no repitas preguntas de compra.',
       'Si pide cita o WhatsApp, respeta esa intencion.',
       'Si falta informacion critica, pregunta solo una cosa.',
     ].join(' '),
@@ -435,11 +436,7 @@ function chooseAssistantMessage(modelMessage, rulesReply) {
   }
 
   if (valuation && rulesReply?.assistantMessage) {
-    const normalizedModelMessage = nextMessage.toLowerCase();
-
-    if (!nextMessage || (valuation.ready && !normalizedModelMessage.includes('cop'))) {
-      return rulesReply.assistantMessage;
-    }
+    return rulesReply.assistantMessage;
   }
 
   return nextMessage || rulesReply.assistantMessage;

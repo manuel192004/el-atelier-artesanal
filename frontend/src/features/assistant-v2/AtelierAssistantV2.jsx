@@ -6,8 +6,8 @@ import { getCollectionCatalog, getCollectionInsights } from '../../lib/catalog';
 import '../../styles/_assistant-v2.scss';
 
 const slotOptions = [
-  'Manana entre 9:00 y 11:00',
-  'Mediodia entre 11:00 y 13:00',
+  'Mañana entre 9:00 y 11:00',
+  'Mediodía entre 11:00 y 13:00',
   'Tarde entre 14:00 y 16:00',
   'Tarde entre 16:00 y 18:00',
 ];
@@ -15,10 +15,10 @@ const slotOptions = [
 const starterReplies = [
   { label: 'Busco un anillo', message: 'Busco un anillo para compromiso' },
   { label: 'Quiero un regalo', message: 'Quiero una joya para regalo especial' },
-  { label: 'Diseno a medida', message: 'Quiero una joya personalizada' },
+  { label: 'Diseño a medida', message: 'Quiero una joya personalizada' },
 ];
 
-const defaultWelcomeText = 'Hola, soy Orvia. Te ayudo a elegir coleccion, pieza, configurador o cita sin enredarte.';
+const defaultWelcomeText = 'Hola, soy Orvia. Te ayudo a elegir colección, pieza, configurador o cita sin enredarte.';
 
 const emptyAccountContext = {
   summaryLine: '',
@@ -52,7 +52,7 @@ function createAppointmentState(user) {
     whatsapp: user?.whatsapp || '',
     preferredDate: buildToday(),
     preferredSlot: slotOptions[0],
-    reason: 'Asesoria para elegir una joya',
+    reason: 'Asesoría para elegir una joya',
     notes: '',
     source: 'assistant-v2-widget',
   };
@@ -115,7 +115,7 @@ function buildVoiceAvailabilityLabel(isRealtimeVoice = false) {
   }
 
   if (canListen) {
-    return 'Microfono activo';
+    return 'Micrófono activo';
   }
 
   if (canSpeak) {
@@ -169,7 +169,7 @@ function createRealtimeTextEvent(text) {
 
 function MemoryPills({ memory }) {
   const items = [
-    memory.occasion ? `Ocasion: ${memory.occasion}` : '',
+    memory.occasion ? `Ocasión: ${memory.occasion}` : '',
     memory.jewelryType ? `Joya: ${memory.jewelryType}` : '',
     memory.style ? `Estilo: ${memory.style}` : '',
     memory.metal ? `Metal: ${memory.metal}` : '',
@@ -245,7 +245,7 @@ function buildActionPreview(action) {
       image: '/orviane-collections-hero.png',
       eyebrow: 'Ruta creativa',
       title: 'Configurador Orviane',
-      summary: 'Pasa de una intuicion a una propuesta visual con materiales, estilo y ocasion.',
+      summary: 'Pasa de una intuición a una propuesta visual con materiales, estilo y ocasión.',
       meta: ['Brief visual', 'Variaciones guiadas'],
     };
   }
@@ -350,17 +350,17 @@ function getActionEyebrow(action) {
     return 'Siguiente paso';
   }
 
-  if (action.type === 'open_collection') return 'Coleccion sugerida';
+  if (action.type === 'open_collection') return 'Colección sugerida';
   if (action.type === 'open_product') return 'Pieza sugerida';
   if (action.type === 'open_configurator') return 'Ruta recomendada';
-  if (action.type === 'open_appointment') return 'Acompanamiento sugerido';
+  if (action.type === 'open_appointment') return 'Acompañamiento sugerido';
   if (action.type === 'open_whatsapp') return 'Continuidad humana';
   return 'Siguiente paso';
 }
 
 function getActionCopy(action) {
   if (!action?.type) {
-    return 'Te llevo directo al siguiente paso util.';
+    return 'Te llevo directo al siguiente paso útil.';
   }
 
   if (action.reason) {
@@ -368,7 +368,7 @@ function getActionCopy(action) {
   }
 
   if (action.type === 'open_collection') {
-    return 'Entra directo a la coleccion mas alineada con lo que acabas de pedir.';
+    return 'Entra directo a la colección más alineada con lo que acabas de pedir.';
   }
 
   if (action.type === 'open_product') {
@@ -376,7 +376,7 @@ function getActionCopy(action) {
   }
 
   if (action.type === 'open_configurator') {
-    return 'Convierte tu idea en una propuesta visual mas clara desde el configurador.';
+    return 'Convierte tu idea en una propuesta visual más clara desde el configurador.';
   }
 
   if (action.type === 'open_appointment') {
@@ -384,10 +384,10 @@ function getActionCopy(action) {
   }
 
   if (action.type === 'open_whatsapp') {
-    return 'Continua con una asesora humana sin perder el contexto de esta conversacion.';
+    return 'Continúa con una asesora humana sin perder el contexto de esta conversación.';
   }
 
-  return 'Te llevo directo al siguiente paso util.';
+  return 'Te llevo directo al siguiente paso útil.';
 }
 
 function getActionButtonLabel(action) {
@@ -395,7 +395,7 @@ function getActionButtonLabel(action) {
     return 'Continuar';
   }
 
-  if (action.type === 'open_collection') return 'Abrir coleccion';
+  if (action.type === 'open_collection') return 'Abrir colección';
   if (action.type === 'open_product') return 'Ver pieza';
   if (action.type === 'open_configurator') return 'Abrir configurador';
   if (action.type === 'open_appointment') return 'Ir a cita';
@@ -420,7 +420,7 @@ function buildGuestFallbackReply(message) {
   if (/^(hola|buenas|buenos dias|buen dia|buenas tardes|buenas noches|hey|hello)\b/.test(normalized)) {
     return {
       assistantMessage:
-        'Hola. Puedo ayudarte a elegir una joya, ver colecciones, personalizar una idea o agendar una asesoria. Si quieres, empezamos por tipo de joya, ocasion o estilo.',
+        'Hola. Puedo ayudarte a elegir una joya, ver colecciones, personalizar una idea o agendar una asesoría. Si quieres, empezamos por tipo de joya, ocasión o estilo.',
       quickReplies: [
         { label: 'Ver colecciones', message: 'Quiero ver colecciones' },
         ...starterReplies,
@@ -435,7 +435,7 @@ function buildGuestFallbackReply(message) {
   if (isRingIntent) {
     return {
       assistantMessage:
-        'Perfecto. Si buscas un anillo, la ruta mas clara es empezar por la coleccion de anillos y desde ahi afinar estilo, metal o personalizacion.',
+        'Perfecto. Si buscas un anillo, la ruta más clara es empezar por la colección de anillos y desde ahí afinar estilo, metal o personalización.',
       quickReplies: [
         { label: 'Ver anillos', message: 'Quiero ver anillos' },
         { label: 'Quiero algo sobrio', message: 'Quiero un anillo sobrio' },
@@ -456,8 +456,8 @@ function buildGuestFallbackReply(message) {
     return {
       assistantMessage:
         isMothersDayIntent
-          ? 'Si es para el Dia de las Madres, te conviene empezar por aretes o cadenas delicadas. Son regalos faciles de acertar, elegantes y muy bien recibidos para esa ocasion.'
-          : 'Si es para regalo, la ruta mas clara es empezar por aretes o cadenas y luego afinar estilo, presupuesto o nivel de protagonismo.',
+          ? 'Si es para el Día de las Madres, te conviene empezar por aretes o cadenas delicadas. Son regalos fáciles de acertar, elegantes y muy bien recibidos para esa ocasión.'
+          : 'Si es para regalo, la ruta más clara es empezar por aretes o cadenas y luego afinar estilo, presupuesto o nivel de protagonismo.',
       quickReplies: [
         { label: 'Ver aretes', message: 'Quiero ver aretes' },
         { label: 'Ver cadenas', message: 'Quiero ver cadenas' },
@@ -479,11 +479,11 @@ function buildGuestFallbackReply(message) {
   if (isCustomIntent) {
     return {
       assistantMessage:
-        'Tu idea ya suena a personalizacion. Te conviene pasar al configurador para convertirla en un brief mas claro y luego decidir si necesitas cita.',
+        'Tu idea ya suena a personalización. Te conviene pasar al configurador para convertirla en un brief más claro y luego decidir si necesitas cita.',
       quickReplies: [
-        { label: 'Abrir configurador', message: 'Llevame al configurador' },
+        { label: 'Abrir configurador', message: 'Llévame al configurador' },
         { label: 'Definir estilo', message: 'Quiero ayuda para definir estilo y materiales' },
-        { label: 'Agendar asesoria', message: 'Quiero agendar una cita' },
+        { label: 'Agendar asesoría', message: 'Quiero agendar una cita' },
       ],
       suggestedAction: {
         type: 'open_configurator',
@@ -513,7 +513,7 @@ function buildGuestFallbackReply(message) {
 
   return {
     assistantMessage:
-      'Puedo ayudarte mejor si me dices una de estas cosas: si buscas un anillo, un regalo, una pieza personalizada o una asesoria. Con eso ya te llevo por una ruta mucho mas clara.',
+      'Puedo ayudarte mejor si me dices una de estas cosas: si buscas un anillo, un regalo, una pieza personalizada o una asesoría. Con eso ya te llevo por una ruta mucho más clara.',
     quickReplies: [
       { label: 'Ver colecciones', message: 'Quiero ver colecciones' },
       ...starterReplies,
@@ -579,7 +579,7 @@ const AtelierAssistantV2 = () => {
   }, [location.pathname]);
 
   const whatsappHref = useMemo(
-    () => buildWhatsappHref('Hola, quiero continuar con una asesoria de Orviane.'),
+    () => buildWhatsappHref('Hola, quiero continuar con una asesoría de Orviane.'),
     [],
   );
 
@@ -735,7 +735,7 @@ const AtelierAssistantV2 = () => {
 
     if (event.type === 'input_audio_buffer.speech_stopped') {
       setIsListening(false);
-      setVoiceStatus('Orvia esta entendiendo tu idea.');
+      setVoiceStatus('Orvia está entendiendo tu idea.');
       return;
     }
 
@@ -762,7 +762,7 @@ const AtelierAssistantV2 = () => {
     if (event.type === 'response.created') {
       realtimeAssistantTextRef.current = '';
       setIsSpeaking(true);
-      setVoiceStatus('Orvia esta respondiendo.');
+      setVoiceStatus('Orvia está respondiendo.');
       return;
     }
 
@@ -858,7 +858,7 @@ const AtelierAssistantV2 = () => {
       throw new Error('No se recibio token temporal de OpenAI Realtime.');
     }
 
-    setVoiceStatus('Activa el permiso de microfono para hablar con Orvia.');
+    setVoiceStatus('Activa el permiso de micrófono para hablar con Orvia.');
 
     const stream = await navigator.mediaDevices.getUserMedia({
       audio: {
@@ -886,7 +886,7 @@ const AtelierAssistantV2 = () => {
       audioElement.srcObject = event.streams[0];
       audioElement.play().catch((error) => {
         console.error(error);
-        setVoiceStatus('La llamada esta conectada; toca la pantalla si el audio no se reproduce.');
+        setVoiceStatus('La llamada está conectada; toca la pantalla si el audio no se reproduce.');
       });
     };
 
@@ -908,7 +908,7 @@ const AtelierAssistantV2 = () => {
       sendRealtimeEvent({
         type: 'response.create',
         response: {
-          instructions: 'Saluda en una frase como Orvia y di que puedes ayudar a elegir regalo, anillo, coleccion o diseno a medida. Luego espera al cliente.',
+          instructions: 'Saluda en una frase como Orvia y di que puedes ayudar a elegir regalo, anillo, colección o diseño a medida. Luego espera al cliente.',
         },
       });
     });
@@ -1009,7 +1009,7 @@ const AtelierAssistantV2 = () => {
     }
 
     if (!isSpeechSynthesisAvailable()) {
-      setVoiceStatus('Tu navegador permite leer el chat, pero no reproducir voz en esta sesion.');
+      setVoiceStatus('Tu navegador permite leer el chat, pero no reproducir voz en esta sesión.');
       return;
     }
 
@@ -1029,7 +1029,7 @@ const AtelierAssistantV2 = () => {
 
     utterance.onstart = () => {
       setIsSpeaking(true);
-      setVoiceStatus('Orvia esta respondiendo.');
+      setVoiceStatus('Orvia está respondiendo.');
     };
 
     utterance.onend = () => {
@@ -1050,7 +1050,7 @@ const AtelierAssistantV2 = () => {
 
     utterance.onerror = () => {
       setIsSpeaking(false);
-      setVoiceStatus('No pude reproducir la voz, pero la respuesta quedo escrita en el chat.');
+      setVoiceStatus('No pude reproducir la voz, pero la respuesta quedó escrita en el chat.');
     };
 
     window.speechSynthesis.speak(utterance);
@@ -1062,7 +1062,7 @@ const AtelierAssistantV2 = () => {
     }
 
     if (realtimeIsActiveRef.current) {
-      setVoiceStatus('La llamada en vivo ya esta escuchando. Habla normal, sin pulsar Hablar.');
+      setVoiceStatus('La llamada en vivo ya está escuchando. Habla normal, sin pulsar Hablar.');
       return;
     }
 
@@ -1122,7 +1122,7 @@ const AtelierAssistantV2 = () => {
       voiceRecognitionHadErrorRef.current = true;
 
       if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
-        setVoiceStatus('Activa el permiso de microfono para usar la llamada. El chat escrito sigue disponible.');
+        setVoiceStatus('Activa el permiso de micrófono para usar la llamada. El chat escrito sigue disponible.');
         return;
       }
 
@@ -1164,7 +1164,7 @@ const AtelierAssistantV2 = () => {
     } catch (error) {
       console.error(error);
       setIsListening(false);
-      setVoiceStatus('El microfono ya estaba ocupado. Espera un segundo y vuelve a intentar.');
+      setVoiceStatus('El micrófono ya estaba ocupado. Espera un segundo y vuelve a intentar.');
     }
   };
 
@@ -1198,7 +1198,7 @@ const AtelierAssistantV2 = () => {
       });
     }
 
-    const intro = 'Hola, soy Orvia. Te escucho para ayudarte a elegir una joya, una coleccion, una cita o una pieza personalizada.';
+    const intro = 'Hola, soy Orvia. Te escucho para ayudarte a elegir una joya, una colección, una cita o una pieza personalizada.';
 
     window.setTimeout(() => {
       if (isSpeechSynthesisAvailable()) {
@@ -1255,7 +1255,7 @@ const AtelierAssistantV2 = () => {
     });
 
     window.open(
-      buildWhatsappHref(`Hola, quiero revisar la cotizacion ${quote.quoteId} de mi cuenta.`),
+      buildWhatsappHref(`Hola, quiero revisar la cotización ${quote.quoteId} de mi cuenta.`),
       '_blank',
       'noopener,noreferrer',
     );
@@ -1320,7 +1320,7 @@ const AtelierAssistantV2 = () => {
   };
 
   const applyAssistantReply = (data) => {
-    const assistantMessage = data.assistantMessage || 'Puedo seguir orientandote por coleccion, pieza, configurador o cita.';
+    const assistantMessage = data.assistantMessage || 'Puedo seguir orientándote por colección, pieza, configurador o cita.';
 
     appendMessages([{ id: `${Date.now()}-assistant`, role: 'assistant', text: assistantMessage }]);
     setQuickReplies(Array.isArray(data.quickReplies) && data.quickReplies.length ? data.quickReplies : starterReplies);
@@ -1388,7 +1388,7 @@ const AtelierAssistantV2 = () => {
     setSuccessMessage('');
 
     if (metadata.speak) {
-      setVoiceStatus('Orvia esta pensando la respuesta.');
+      setVoiceStatus('Orvia está pensando la respuesta.');
     }
 
     try {
@@ -1453,7 +1453,7 @@ const AtelierAssistantV2 = () => {
         {
           id: `${Date.now()}-assistant`,
           role: 'assistant',
-          text: `Perfecto. Tu solicitud quedo registrada con la referencia ${data.appointmentId}.`,
+          text: `Perfecto. Tu solicitud quedó registrada con la referencia ${data.appointmentId}.`,
         },
       ]);
       setMode('chat');
@@ -1529,7 +1529,7 @@ const AtelierAssistantV2 = () => {
                       {isRealtimeVoice ? 'Llamada en vivo' : isListening ? 'Te estoy escuchando' : isSpeaking ? 'Orvia responde' : 'Llamada lista'}
                     </strong>
                     <p>{voiceStatus}</p>
-                    {voiceTranscript ? <small>Escuche: {voiceTranscript}</small> : null}
+                    {voiceTranscript ? <small>Escuché: {voiceTranscript}</small> : null}
                   </div>
                 </div>
               ) : null}

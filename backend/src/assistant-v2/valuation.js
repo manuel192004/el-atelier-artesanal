@@ -70,7 +70,7 @@ function roundMoney(value) {
 
 function formatCop(value) {
   const rounded = roundMoney(value);
-  return `$${rounded.toLocaleString('es-CO')} COP`;
+  return `$${rounded.toLocaleString('es-CO')} pesos colombianos`;
 }
 
 function readMetalPriceOverrides() {
@@ -109,10 +109,17 @@ function getMetalPriceTable() {
 function detectPurity(text) {
   const normalized = normalizeText(text);
 
-  if (/(18k|18 k|18 quilates|750\b)/.test(normalized)) return '18k';
-  if (/(14k|14 k|14 quilates|585\b)/.test(normalized)) return '14k';
+  if (/(18k|18 k|18 quilates|18 kilates|750\b)/.test(normalized)) return '18k';
+  if (/(14k|14 k|14 quilates|14 kilates|585\b)/.test(normalized)) return '14k';
   if (/(plata 925|925\b|sterling)/.test(normalized)) return '925';
   return '';
+}
+
+function formatPurityForSpeech(purity) {
+  if (purity === '18k') return '18 quilates';
+  if (purity === '14k') return '14 quilates';
+  if (purity === '925') return 'ley 925';
+  return purity;
 }
 
 function detectMetalFromText(text, fallbackMetal = '') {
@@ -145,19 +152,32 @@ function detectGrams(text) {
 
 function detectStoneCarats(text) {
   const normalized = normalizeText(text);
-  const match = normalized.match(/(\d+(?:[\.,]\d+)?)\s*(?:ct|cts|quilate|quilates)\b/);
+  const matches = Array.from(normalized.matchAll(/(\d+(?:[\.,]\d+)?)\s*(?:ct|cts|quilate|quilates|kilate|kilates)\b/g));
 
-  if (!match) {
+  if (!matches.length) {
     return 0;
   }
 
-  const nearby = normalized.slice(Math.max(0, match.index - 28), match.index + 44);
+  for (const match of matches) {
+    const before = normalized.slice(Math.max(0, match.index - 30), match.index);
+    const after = normalized.slice(match.index, match.index + 46);
+    const nearby = `${before} ${after}`;
+    const value = parseNumber(match[1]);
 
-  if (/(oro|18k|14k|750|585)/.test(nearby) && !/(diamante|esmeralda|zafiro|rubi|perla)/.test(nearby)) {
-    return 0;
+    if (!value) {
+      continue;
+    }
+
+    if (/(oro|18k|14k|750|585)/.test(before) && !/(diamante|esmeralda|zafiro|rubi|perla)/.test(before)) {
+      continue;
+    }
+
+    if (/(diamante|esmeralda|zafiro|rubi|perla)/.test(nearby)) {
+      return value;
+    }
   }
 
-  return parseNumber(match[1]);
+  return 0;
 }
 
 function getMetalPriceKey(metal, purity) {
@@ -257,11 +277,15 @@ function buildValuationEstimate({ message, extracted, product }) {
   const metalPriceKey = getMetalPriceKey(metal, purity);
   const priceTable = getMetalPriceTable();
   const pricePerGram = priceTable[normalizeText(metalPriceKey)] || 0;
-  const hasValuationSignal = /(precio|cotiz|cuanto cuesta|cuanto vale|valor|valora|avalu|avaluo|estimar|estimacion|calcular|mineral|gramo|gramos|quilate|quilates|\bct\b|\bcts\b|material)/.test(normalizedMessage);
+  const hasValuationSignal = /(precio|cotiz|cuanto cuesta|cuanto vale|valor|valora|avalu|avaluo|estimar|estimacion|calcular|mineral|gramo|gramos|quilate|quilates|kilate|kilates|\bct\b|\bcts\b|material)/.test(normalizedMessage);
 
   if (!hasValuationSignal) {
     return null;
   }
+
+  const isMetalPriceOnly = /(precio|valor|cuanto esta|cuanto vale|gramo|mineral)/.test(normalizedMessage) &&
+    /(oro|plata|platino)/.test(normalizedMessage) &&
+    !/(anillo|arete|aretes|cadena|collar|pulsera|brazalete|joya|pieza)/.test(normalizedMessage);
 
   const missing = [];
 
@@ -269,7 +293,7 @@ function buildValuationEstimate({ message, extracted, product }) {
     missing.push('metal');
   }
 
-  if (!jewelryType && !product) {
+  if (!jewelryType && !product && !isMetalPriceOnly) {
     missing.push('tipo de joya');
   }
 
@@ -292,10 +316,12 @@ function buildValuationEstimate({ message, extracted, product }) {
 
   return {
     ready: missing.length === 0,
+    isMetalPriceOnly,
     missing,
-    type: jewelryType || 'joya',
+    type: isMetalPriceOnly ? 'metal' : jewelryType || 'joya',
     metal,
     purity,
+    purityLabel: formatPurityForSpeech(purity),
     metalPriceKey,
     pricePerGram,
     grams,
@@ -310,9 +336,9 @@ function buildValuationEstimate({ message, extracted, product }) {
     highFormatted: formatCop(totalRange[1]),
     pricePerGramFormatted: pricePerGram ? formatCop(pricePerGram) : '',
     basis: [
-      metalPriceKey && pricePerGram ? `${metalPriceKey}: ${formatCop(pricePerGram)} por gramo de referencia interna` : '',
+      metalPriceKey && pricePerGram ? `${metalPriceKey.replace('18k', '18 quilates').replace('14k', '14 quilates')}: ${formatCop(pricePerGram)} por gramo de referencia interna` : '',
       grams ? `peso indicado: ${grams} g` : `peso estimado: ${weightRange[0]}-${weightRange[1]} g`,
-      gemstone ? `${gemstone}${stoneCarats ? ` aprox. ${stoneCarats} ct` : ''}` : 'sin piedra confirmada',
+      gemstone ? `${gemstone}${stoneCarats ? ` aprox. ${stoneCarats} quilates` : ''}` : 'sin piedra confirmada',
       'mano de obra, merma, engaste, acabado y complejidad',
     ].filter(Boolean),
   };
@@ -324,24 +350,32 @@ function buildValuationMessage(valuation) {
   }
 
   if (!valuation.ready) {
-    return `Puedo hacer una valoracion preliminar, pero me falta ${valuation.missing.join(' y ')}. Dime algo como: "anillo en oro 18k, 4 gramos, con diamante de 0.20 ct" y te doy un rango mucho mas aterrizado.`;
+    return `Puedo hacer una valoración preliminar, pero me falta ${valuation.missing.join(' y ')}. Dime algo como: "anillo en oro de 18 quilates, 4 gramos, con diamante de 0.20 quilates" y te doy un rango mucho más aterrizado.`;
+  }
+
+  if (valuation.isMetalPriceOnly) {
+    return [
+      `Como referencia interna, el ${valuation.metal} de ${valuation.purityLabel} está en ${valuation.pricePerGramFormatted} por gramo.`,
+      'Ese es solo el punto de partida del material: una joya terminada también suma merma, aleación, engaste, acabado, complejidad y mano de obra.',
+      'Si me dices qué pieza quieres y cuántos gramos tendría, te calculo un rango más realista.',
+    ].join(' ');
   }
 
   const article = valuation.type === 'anillo' ? 'un' : 'una';
 
   return [
-    `Como estimacion preliminar, ${article} ${valuation.type} en ${valuation.metal} ${valuation.purity} estaria entre ${valuation.lowFormatted} y ${valuation.highFormatted}.`,
+    `Como estimación preliminar, ${article} ${valuation.type} en ${valuation.metal} de ${valuation.purityLabel} estaría entre ${valuation.lowFormatted} y ${valuation.highFormatted}.`,
     `Lo calculo con ${valuation.basis.join('; ')}.`,
-    'No lo tomaria como precio final todavia: para cerrar cotizacion faltan peso real, ley del metal, calidad de piedra y acabado elegido.',
+    'No lo tomaría como precio final todavía: para cerrar cotización faltan peso real, ley del metal, calidad de piedra y acabado elegido.',
   ].join(' ');
 }
 
 function buildValuationQuickReplies(valuation) {
   if (!valuation?.ready) {
     return [
-      { label: 'Es oro 18k', message: 'Es oro 18k' },
+      { label: 'Es oro 18 quilates', message: 'Es oro de 18 quilates' },
       { label: 'Tengo el peso', message: 'La joya pesa 4 gramos' },
-      { label: 'Con diamante', message: 'La quiero con diamante de 0.20 ct' },
+      { label: 'Con diamante', message: 'La quiero con diamante de 0.20 quilates' },
     ];
   }
 
