@@ -67,6 +67,11 @@ function createMemory() {
     metal: '',
     gemstone: '',
     deadline: '',
+    budgetRange: '',
+    valuationSummary: '',
+    lastIntent: '',
+    lastCollectionSlug: '',
+    lastProductReference: '',
   };
 }
 
@@ -165,6 +170,22 @@ function createRealtimeTextEvent(text) {
       ],
     },
   };
+}
+
+function buildRealtimeMemoryInstruction(memory) {
+  const details = [
+    memory.occasion ? `ocasión ${memory.occasion}` : '',
+    memory.jewelryType ? `joya ${memory.jewelryType}` : '',
+    memory.style ? `estilo ${memory.style}` : '',
+    memory.metal ? `metal ${memory.metal}` : '',
+    memory.gemstone ? `piedra ${memory.gemstone}` : '',
+    memory.budget ? `presupuesto ${memory.budget}` : '',
+    memory.valuationSummary ? `última valoración: ${memory.valuationSummary}` : '',
+  ].filter(Boolean);
+
+  return details.length
+    ? `Ten presente este contexto del cliente: ${details.join('; ')}.`
+    : 'No hay contexto firme todavía; escucha y pregunta solo lo indispensable.';
 }
 
 function MemoryPills({ memory }) {
@@ -832,7 +853,7 @@ const AtelierAssistantV2 = () => {
     const sentResponse = sendRealtimeEvent({
       type: 'response.create',
       response: {
-        instructions: 'Responde como Orvia con voz natural, breve y concreta. Reconoce el mensaje del cliente y avanza un paso util.',
+        instructions: `${buildRealtimeMemoryInstruction(memory)} Responde como Orvia con voz natural, breve y concreta. Reconoce el mensaje del cliente y avanza un paso útil.`,
       },
     });
 
@@ -850,6 +871,12 @@ const AtelierAssistantV2 = () => {
       method: 'POST',
       body: {
         currentPath: location.pathname,
+        clientContext,
+        memory,
+        conversation: messages.slice(-8).map((entry) => ({
+          role: entry.role,
+          text: entry.text,
+        })),
       },
     });
     const ephemeralKey = tokenData.clientSecret || tokenData.value;
@@ -908,7 +935,7 @@ const AtelierAssistantV2 = () => {
       sendRealtimeEvent({
         type: 'response.create',
         response: {
-          instructions: 'Saluda en una frase como Orvia y di que puedes ayudar a elegir regalo, anillo, colección o diseño a medida. Luego espera al cliente.',
+          instructions: `${buildRealtimeMemoryInstruction(memory)} Saluda en una frase como Orvia. Si ya hay contexto, menciona que lo tienes presente; si no, di que puedes ayudar a elegir regalo, anillo, colección o diseño a medida. Luego espera al cliente.`,
         },
       });
     });

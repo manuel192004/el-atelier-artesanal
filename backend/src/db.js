@@ -129,6 +129,7 @@ const schemaStatements = [
   "ALTER TABLE assistant_memories ADD COLUMN IF NOT EXISTS deadline TEXT NOT NULL DEFAULT '';",
   "ALTER TABLE assistant_memories ADD COLUMN IF NOT EXISTS budget_range TEXT NOT NULL DEFAULT '';",
   "ALTER TABLE assistant_memories ADD COLUMN IF NOT EXISTS last_product_reference TEXT NOT NULL DEFAULT '';",
+  "ALTER TABLE assistant_memories ADD COLUMN IF NOT EXISTS valuation_summary TEXT NOT NULL DEFAULT '';",
   'CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email_lower ON users ((LOWER(email)));',
   "CREATE UNIQUE INDEX IF NOT EXISTS idx_users_google_sub ON users(google_sub) WHERE google_sub IS NOT NULL AND google_sub <> '';",
   'CREATE INDEX IF NOT EXISTS idx_registrants_email ON registrants(email);',
@@ -621,6 +622,7 @@ function mapAssistantMemoryRow(row) {
     recipient: row.recipient || '',
     deadline: row.deadline || '',
     budgetRange: row.budget_range || '',
+    valuationSummary: row.valuation_summary || '',
     lastIntent: row.last_intent || '',
     lastCollectionSlug: row.last_collection_slug || '',
     lastProductReference: row.last_product_reference || '',
@@ -702,7 +704,7 @@ async function getAssistantMemoryByUserId(userId) {
     `
       SELECT
         user_id, occasion, jewelry_type, budget, style, metal, gemstone, ring_size, recipient,
-        deadline, budget_range, last_intent, last_collection_slug, last_product_reference, updated_at
+        deadline, budget_range, valuation_summary, last_intent, last_collection_slug, last_product_reference, updated_at
       FROM assistant_memories
       WHERE user_id = $1
       LIMIT 1
@@ -732,12 +734,13 @@ async function upsertAssistantMemory(record) {
         recipient,
         deadline,
         budget_range,
+        valuation_summary,
         last_intent,
         last_collection_slug,
         last_product_reference,
         updated_at
       )
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
       ON CONFLICT (user_id) DO UPDATE SET
         occasion = EXCLUDED.occasion,
         jewelry_type = EXCLUDED.jewelry_type,
@@ -749,13 +752,14 @@ async function upsertAssistantMemory(record) {
         recipient = EXCLUDED.recipient,
         deadline = EXCLUDED.deadline,
         budget_range = EXCLUDED.budget_range,
+        valuation_summary = EXCLUDED.valuation_summary,
         last_intent = EXCLUDED.last_intent,
         last_collection_slug = EXCLUDED.last_collection_slug,
         last_product_reference = EXCLUDED.last_product_reference,
         updated_at = EXCLUDED.updated_at
       RETURNING
         user_id, occasion, jewelry_type, budget, style, metal, gemstone, ring_size, recipient,
-        deadline, budget_range, last_intent, last_collection_slug, last_product_reference, updated_at
+        deadline, budget_range, valuation_summary, last_intent, last_collection_slug, last_product_reference, updated_at
     `,
     [
       record.userId,
@@ -769,6 +773,7 @@ async function upsertAssistantMemory(record) {
       record.recipient || '',
       record.deadline || '',
       record.budgetRange || '',
+      record.valuationSummary || '',
       record.lastIntent || '',
       record.lastCollectionSlug || '',
       record.lastProductReference || '',

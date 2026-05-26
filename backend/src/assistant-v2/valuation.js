@@ -621,8 +621,18 @@ function buildValuationQuickReplies(valuation) {
   ];
 }
 
+function buildValuationKnowledgePrompt() {
+  return [
+    `Referencia interna de mercado para Orvia (${MARKET_REFERENCE.asOf}, TRM ${MARKET_REFERENCE.usdCop.toLocaleString('es-CO')} COP/USD).`,
+    'Metales aproximados por gramo en COP: oro amarillo 18 quilates 399.000; oro blanco 18 quilates 419.000; oro rosado 18 quilates 399.000; oro amarillo 14 quilates 310.000; oro blanco 14 quilates 325.000; oro rosado 14 quilates 310.000; oro 24 quilates 532.000; plata 925 8.200; plata pura 8.900; platino 227.000; paladio 159.000; cobre 50; aluminio 15.',
+    'Piedras aproximadas: diamante fino 9.000.000 a 30.000.000 COP/quilate; diamante laboratorio 900.000 a 4.500.000 COP/quilate; esmeralda fina 2.900.000 a 18.300.000 COP/quilate; esmeralda Muzo o extra fina 22.000.000 a 183.000.000 COP/quilate; zafiro fino 5.500.000 a 18.300.000 COP/quilate; rubí fino 7.300.000 a 36.700.000 COP/quilate; perla agua dulce 80.000 a 750.000 COP/pieza; perla Akoya 450.000 a 3.300.000 COP/pieza; perla Mar del Sur 1.200.000 a 66.000.000 COP/pieza.',
+    'Siempre di que son referencias aproximadas: el precio final depende de peso real, merma, aleación, engaste, mano de obra, certificado, tratamiento, origen, medidas y calidad visible.',
+  ].join(' ');
+}
+
 module.exports = {
   buildValuationEstimate,
+  buildValuationKnowledgePrompt,
   buildValuationMessage,
   buildValuationQuickReplies,
 };

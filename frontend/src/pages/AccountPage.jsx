@@ -6,8 +6,8 @@ import '../styles/_accountpage.scss';
 import AtelierConversionSection from '../components/common/AtelierConversionSection';
 import PageMeta from '../components/common/PageMeta';
 
-const DEFAULT_GOOGLE_CLIENT_ID = '99865942569-8no1fd17kohm1c8ao80vbgon4gekmgf0.apps.googleusercontent.com';
-const GOOGLE_CLIENT_ID_BUILD = import.meta.env.VITE_GOOGLE_CLIENT_ID || DEFAULT_GOOGLE_CLIENT_ID;
+const GOOGLE_CLIENT_ID_BUILD = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+const GOOGLE_SIGN_IN_ENABLED_BUILD = import.meta.env.VITE_GOOGLE_SIGN_IN_ENABLED === 'true';
 
 const createRegisterState = () => ({
   fullName: '',
@@ -191,8 +191,12 @@ const AccountPage = () => {
   const [actionMessage, setActionMessage] = useState('');
   const [actionError, setActionError] = useState('');
   const [actionLoadingKey, setActionLoadingKey] = useState('');
-  const [googleClientId, setGoogleClientId] = useState(GOOGLE_CLIENT_ID_BUILD);
-  const [googleAvailabilityMessage, setGoogleAvailabilityMessage] = useState('');
+  const [googleClientId, setGoogleClientId] = useState(
+    GOOGLE_SIGN_IN_ENABLED_BUILD ? GOOGLE_CLIENT_ID_BUILD : '',
+  );
+  const [googleSignInEnabled, setGoogleSignInEnabled] = useState(
+    GOOGLE_SIGN_IN_ENABLED_BUILD && Boolean(GOOGLE_CLIENT_ID_BUILD),
+  );
   const googleButtonRef = useRef(null);
 
   useEffect(() => {
@@ -229,10 +233,6 @@ const AccountPage = () => {
   }, [isAuthenticated, token]);
 
   useEffect(() => {
-    if (GOOGLE_CLIENT_ID_BUILD) {
-      return;
-    }
-
     let cancelled = false;
 
     apiFetch('/api/public-config')
@@ -242,18 +242,21 @@ const AccountPage = () => {
         }
 
         const resolvedClientId = String(data?.googleClientId || '').trim();
+        const isEnabled = Boolean(data?.googleSignInEnabled && resolvedClientId);
 
-        if (resolvedClientId) {
+        if (isEnabled) {
+          setGoogleSignInEnabled(true);
           setGoogleClientId(resolvedClientId);
-          setGoogleAvailabilityMessage('');
           return;
         }
 
-        setGoogleAvailabilityMessage('El acceso con Google no esta disponible temporalmente.');
+        setGoogleSignInEnabled(false);
+        setGoogleClientId('');
       })
       .catch(() => {
         if (!cancelled) {
-          setGoogleAvailabilityMessage('El acceso con Google no esta disponible temporalmente.');
+          setGoogleSignInEnabled(false);
+          setGoogleClientId('');
         }
       });
 
@@ -263,7 +266,7 @@ const AccountPage = () => {
   }, []);
 
   useEffect(() => {
-    if (isAuthenticated || !googleClientId || !googleButtonRef.current) {
+    if (isAuthenticated || !googleSignInEnabled || !googleClientId || !googleButtonRef.current) {
       return;
     }
 
@@ -324,7 +327,7 @@ const AccountPage = () => {
       isMounted = false;
       window.clearInterval(intervalId);
     };
-  }, [googleClientId, isAuthenticated, loginWithGoogleCredential]);
+  }, [googleClientId, googleSignInEnabled, isAuthenticated, loginWithGoogleCredential]);
 
   const reloadOverview = async () => {
     if (!token) {
@@ -532,17 +535,14 @@ const AccountPage = () => {
                 </button>
               </form>
 
-              <div className="account-divider">
-                <span>o entra con Google</span>
-              </div>
-
-              {googleClientId ? (
-                <div className="account-google-button" ref={googleButtonRef}></div>
-              ) : (
-                <p className="account-helper-copy">
-                  {googleAvailabilityMessage || 'El acceso con Google no esta disponible temporalmente.'}
-                </p>
-              )}
+              {googleSignInEnabled && googleClientId ? (
+                <>
+                  <div className="account-divider">
+                    <span>o entra con Google</span>
+                  </div>
+                  <div className="account-google-button" ref={googleButtonRef}></div>
+                </>
+              ) : null}
             </div>
           </div>
 

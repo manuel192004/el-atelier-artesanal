@@ -78,6 +78,10 @@ function sanitizeMemory(memory) {
       metal: '',
       gemstone: '',
       deadline: '',
+      valuationSummary: '',
+      lastIntent: '',
+      lastCollectionSlug: '',
+      lastProductReference: '',
     };
   }
 
@@ -89,6 +93,10 @@ function sanitizeMemory(memory) {
     metal: sanitizeText(memory.metal, 80),
     gemstone: sanitizeText(memory.gemstone, 80),
     deadline: sanitizeText(memory.deadline, 80),
+    valuationSummary: sanitizeText(memory.valuationSummary, 240),
+    lastIntent: sanitizeText(memory.lastIntent, 80),
+    lastCollectionSlug: sanitizeText(memory.lastCollectionSlug, 80),
+    lastProductReference: sanitizeText(memory.lastProductReference, 80),
   };
 }
 
@@ -211,6 +219,7 @@ function detectMetal(text) {
   if (/(oro blanco)/.test(text)) return 'oro blanco';
   if (/(oro amarillo|dorado)/.test(text)) return 'oro amarillo';
   if (/(oro rosado)/.test(text)) return 'oro rosado';
+  if (/(oro)/.test(text)) return 'oro amarillo';
   if (/(plata)/.test(text)) return 'plata';
   return '';
 }
@@ -258,6 +267,8 @@ function getCourtesyType(text) {
 function buildCourtesyMessage(courtesyType, extracted = {}) {
   const memoryHint = extracted.jewelryType
     ? ` Tengo presente lo del ${extracted.jewelryType}; cuando quieras lo retomamos sin empezar de cero.`
+    : extracted.valuationSummary
+    ? ` Tengo presente la última valoración: ${extracted.valuationSummary}.`
     : '';
 
   if (courtesyType === 'thanks') {
@@ -416,6 +427,24 @@ function buildKnownDetails(extracted) {
     extracted.gemstone ? `Piedra: ${extracted.gemstone}` : '',
     extracted.budget ? `Presupuesto: ${extracted.budget}` : '',
   ].filter(Boolean);
+}
+
+function buildValuationMemorySummary(valuation) {
+  if (!valuation?.ready) {
+    return '';
+  }
+
+  if (valuation.isMetalPriceOnly) {
+    return `${valuation.materialSubject} a ${valuation.pricePerGramFormatted} por gramo`;
+  }
+
+  if (valuation.isGemstonePriceOnly && valuation.gemstoneValuation) {
+    const gem = valuation.gemstoneValuation;
+    const unitCopy = gem.unit === 'pieza' ? 'pieza' : 'quilate';
+    return `${gem.label} nivel ${gem.tierLabel}, referencia ${gem.perUnitRange.map((value) => `$${value.toLocaleString('es-CO')}`).join(' a ')} COP por ${unitCopy}`;
+  }
+
+  return `${valuation.type} en ${valuation.materialDescriptor}, rango ${valuation.lowFormatted} a ${valuation.highFormatted}`;
 }
 
 function describeStyle(style) {
@@ -683,11 +712,13 @@ function buildReplyFromSignals({ message, conversation, memory, clientContext, a
   const referencedProduct = findReferencedProduct(message);
   const product = referencedProduct || recommendProduct(extracted, collectionSlug);
   const valuation = buildValuationEstimate({ message, extracted, product });
+  const valuationSummary = buildValuationMemorySummary(valuation) || safeMemory.valuationSummary;
   const favoriteCollectionAction = buildFavoriteCollectionAction(safeAccountContext);
   const savedDesignAction = buildSavedDesignAction(safeAccountContext, extracted);
   const missingDetailKeys = buildMissingDetailKeys(extracted, intent, product, collectionSlug);
   const greetingOnly = isGreetingOnly(message);
   const courtesyType = getCourtesyType(message);
+  const wantsMemoryResume = /(retomar|lo anterior|eso|sigamos|sigue|continuemos|continua|donde ibamos|en que ibamos)/.test(currentMessage);
 
   let assistantMessage = 'Puedo ayudarte a aterrizar la mejor ruta entre colecciones, configurador y cita.';
   let suggestedAction = buildAction('none', {
@@ -707,6 +738,11 @@ function buildReplyFromSignals({ message, conversation, memory, clientContext, a
   } else if ((/retomar|mi diseno/.test(currentMessage)) && savedDesignAction) {
     assistantMessage = 'Lo más eficiente es retomar tu diseño guardado y afinarlo desde ahí.';
     suggestedAction = savedDesignAction;
+  } else if (wantsMemoryResume && valuationSummary) {
+    assistantMessage = `Tengo presente esto: ${valuationSummary}. Podemos ajustar peso, metal, piedra o llevarlo a una cotización más exacta.`;
+    suggestedAction = buildAction('none', {
+      label: 'Seguir afinando',
+    });
   } else if ((/favorit/.test(currentMessage) || /segun mis favoritos/.test(currentMessage)) && favoriteCollectionAction) {
     assistantMessage = 'Tomando como referencia lo que ya guardaste, te conviene seguir por esa familia.';
     suggestedAction = favoriteCollectionAction;
@@ -799,6 +835,7 @@ function buildReplyFromSignals({ message, conversation, memory, clientContext, a
   const shouldAskMissingDetails =
     !greetingOnly &&
     !courtesyType &&
+    !wantsMemoryResume &&
     !valuation &&
     missingDetailKeys.length &&
     suggestedAction.type === 'none' &&
@@ -808,7 +845,7 @@ function buildReplyFromSignals({ message, conversation, memory, clientContext, a
     assistantMessage = `${assistantMessage} Si quieres, afinamos ${missingDetailKeys
       .map((key) => DETAIL_LABELS[key])
       .filter(Boolean)
-      .join(', ')} para recomendar con mas precision.`;
+      .join(', ')} para recomendar con más precisión.`;
   }
 
   const guidanceCard = buildGuidanceCard({
@@ -823,7 +860,13 @@ function buildReplyFromSignals({ message, conversation, memory, clientContext, a
     detectedIntent: courtesyType ? 'smalltalk' : intent,
     suggestedAction,
     quickReplies: buildQuickReplies(courtesyType ? 'smalltalk' : intent, collectionSlug, suggestedAction, missingDetailKeys, greetingOnly, valuation),
-    memory: extracted,
+    memory: {
+      ...extracted,
+      valuationSummary,
+      lastIntent: courtesyType ? 'smalltalk' : intent,
+      lastCollectionSlug: suggestedAction.collectionSlug || safeMemory.lastCollectionSlug,
+      lastProductReference: suggestedAction.productReference || safeMemory.lastProductReference,
+    },
     guidanceCard,
     diagnostics: {
       knownDetails: buildKnownDetails(extracted),
@@ -837,6 +880,7 @@ function buildReplyFromSignals({ message, conversation, memory, clientContext, a
             purity: valuation.purity,
             estimatedRange: valuation.ready ? `${valuation.lowFormatted} - ${valuation.highFormatted}` : '',
             missing: valuation.missing,
+            summary: valuationSummary,
           }
         : null,
       phraseBank: {

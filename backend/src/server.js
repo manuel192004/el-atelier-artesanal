@@ -43,6 +43,7 @@ const {
   getUserStoreStatus,
 } = require('./userStore');
 const { createAssistantV2RulesReply } = require('./assistant-v2/service');
+const { buildValuationKnowledgePrompt } = require('./assistant-v2/valuation');
 const {
   createAssistantV2OpenAIReply,
   isAssistantV2OpenAIConfigured,
@@ -115,6 +116,7 @@ const OPENAI_TRANSCRIPTION_MODEL = sanitizeText(process.env.OPENAI_TRANSCRIPTION
 const GOOGLE_APPLICATION_CREDENTIALS = sanitizeText(resolveGoogleApplicationCredentials(), 400);
 const AUTH_JWT_SECRET = sanitizeText(process.env.AUTH_JWT_SECRET, 200) || 'orviane-local-dev-secret';
 const GOOGLE_CLIENT_ID = sanitizeText(process.env.GOOGLE_CLIENT_ID, 200);
+const GOOGLE_SIGN_IN_ENABLED = sanitizeText(process.env.GOOGLE_SIGN_IN_ENABLED, 20) === 'true' && Boolean(GOOGLE_CLIENT_ID);
 const STATIC_FRONTEND_ORIGINS = [
   'https://venerable-pie-81d20e.netlify.app',
   'https://el-atelier-artesanal.netlify.app',
@@ -346,6 +348,7 @@ function buildAssistantMemory(baseMemory, reply) {
     recipient: sanitizeText(baseMemory?.recipient, 80),
     deadline: sanitizeText(baseMemory?.deadline, 80),
     budgetRange: sanitizeText(baseMemory?.budgetRange, 120),
+    valuationSummary: sanitizeText(baseMemory?.valuationSummary, 240),
     lastIntent: sanitizeText(baseMemory?.lastIntent, 80),
     lastCollectionSlug: sanitizeText(baseMemory?.lastCollectionSlug, 80),
     lastProductReference: sanitizeText(baseMemory?.lastProductReference, 80),
@@ -362,6 +365,10 @@ function buildAssistantMemory(baseMemory, reply) {
     recipient: sanitizeText(reply?.memory?.recipient, 80) || seed.recipient,
     deadline: sanitizeText(reply?.memory?.deadline, 80) || seed.deadline,
     budgetRange: sanitizeText(reply?.memory?.budgetRange, 120) || sanitizeText(reply?.memory?.budget, 120) || seed.budgetRange,
+    valuationSummary:
+      sanitizeText(reply?.memory?.valuationSummary, 240)
+      || sanitizeText(reply?.diagnostics?.valuation?.summary, 240)
+      || seed.valuationSummary,
     lastIntent: sanitizeText(reply?.memory?.lastIntent, 80) || sanitizeText(reply?.detectedIntent, 80) || seed.lastIntent,
     lastCollectionSlug:
       sanitizeText(reply?.memory?.lastCollectionSlug, 80)
@@ -420,7 +427,34 @@ function isAssistantV2Configured() {
   );
 }
 
-function buildOrviaRealtimeInstructions() {
+function buildRealtimeMemoryContext(payload = {}) {
+  const memory = buildAssistantV2DefaultMemory(payload.memory || {});
+  const memoryDetails = [
+    memory.occasion ? `ocasión=${memory.occasion}` : '',
+    memory.jewelryType ? `joya=${memory.jewelryType}` : '',
+    memory.style ? `estilo=${memory.style}` : '',
+    memory.metal ? `metal=${memory.metal}` : '',
+    memory.gemstone ? `piedra=${memory.gemstone}` : '',
+    memory.budget ? `presupuesto=${memory.budget}` : '',
+    memory.deadline ? `fecha=${memory.deadline}` : '',
+    memory.valuationSummary ? `última valoración=${memory.valuationSummary}` : '',
+    memory.lastProductReference ? `última referencia=${memory.lastProductReference}` : '',
+  ].filter(Boolean);
+  const conversation = Array.isArray(payload.conversation)
+    ? payload.conversation.slice(-6).map((entry) => {
+        const role = entry?.role === 'assistant' ? 'Orvia' : 'Cliente';
+        return `${role}: ${sanitizeText(entry?.text, 180)}`;
+      }).filter(Boolean)
+    : [];
+
+  return [
+    memoryDetails.length ? `Memoria actual del cliente: ${memoryDetails.join('; ')}.` : 'Memoria actual del cliente: sin datos firmes todavía.',
+    conversation.length ? `Historial reciente: ${conversation.join(' | ')}` : '',
+    payload.clientContext?.currentPath ? `Página actual: ${sanitizeText(payload.clientContext.currentPath, 160)}.` : '',
+  ].filter(Boolean).join(' ');
+}
+
+function buildOrviaRealtimeInstructions(payload = {}) {
   return [
     'Eres Orvia, asesora de voz de Orviane.',
     'Habla en español natural, cálido y humano, como una asesora por llamada. Máximo dos frases por turno salvo que el cliente pida detalle.',
@@ -436,6 +470,8 @@ function buildOrviaRealtimeInstructions() {
     'Si pregunta precio de oro, plata, platino, paladio, cobre o aluminio, da valor aproximado por gramo si lo tienes. Di "24 quilates", "18 quilates" o "14 quilates"; nunca digas "18k" en voz.',
     'Si pregunta precio de diamante, esmeralda, zafiro, rubí o perla, habla de rango por quilate o por pieza y aclara que certificado, tratamiento, origen y calidad cambian mucho el valor.',
     'Si pide valorar una joya, explica que el rango depende de metal por gramo, peso, piedra, engaste, merma y mano de obra. Pide solo el dato más importante que falte.',
+    buildValuationKnowledgePrompt(),
+    buildRealtimeMemoryContext(payload),
     'Evita repetir la misma frase. Reconoce lo que dijo el cliente y avanza un paso concreto.',
   ].join(' ');
 }
@@ -585,7 +621,7 @@ function validateGoogleAuthPayload(body) {
     throw new Error('No recibimos la credencial de Google.');
   }
 
-  if (!googleOAuthClient || !GOOGLE_CLIENT_ID) {
+  if (!GOOGLE_SIGN_IN_ENABLED || !googleOAuthClient || !GOOGLE_CLIENT_ID) {
     throw new Error('Google login no esta configurado todavia en el servidor.');
   }
 
@@ -699,6 +735,29 @@ function validateAssistantV2Payload(body) {
   };
 }
 
+function validateAssistantV2RealtimePayload(body) {
+  const payload = body && typeof body === 'object' ? body : {};
+  const conversation = Array.isArray(payload.conversation)
+    ? payload.conversation
+        .slice(-8)
+        .map((entry) => ({
+          role: entry?.role === 'assistant' ? 'assistant' : 'user',
+          text: sanitizeText(entry?.text, 240),
+        }))
+        .filter((entry) => entry.text)
+    : [];
+
+  return {
+    conversation,
+    memory: buildAssistantV2DefaultMemory(payload.memory || {}),
+    clientContext: {
+      currentPath: sanitizeText(payload.currentPath || payload.clientContext?.currentPath, 160),
+      currentCollectionSlug: sanitizeText(payload.clientContext?.currentCollectionSlug, 80),
+      sessionType: payload.clientContext?.sessionType === 'registered' ? 'registered' : 'guest',
+    },
+  };
+}
+
 function validateAssistantV2EventPayload(body) {
   return {
     eventName: sanitizeText(body.eventName, 80),
@@ -724,6 +783,11 @@ function buildAssistantV2DefaultMemory(memory) {
     metal: sanitizeText(memory?.metal, 80),
     gemstone: sanitizeText(memory?.gemstone, 80),
     deadline: sanitizeText(memory?.deadline, 80),
+    budgetRange: sanitizeText(memory?.budgetRange, 120),
+    valuationSummary: sanitizeText(memory?.valuationSummary, 240),
+    lastIntent: sanitizeText(memory?.lastIntent, 80),
+    lastCollectionSlug: sanitizeText(memory?.lastCollectionSlug, 80),
+    lastProductReference: sanitizeText(memory?.lastProductReference, 80),
   };
 }
 
@@ -1238,8 +1302,8 @@ app.get('/', (request, response) => {
 
 app.get('/api/public-config', (request, response) => {
   response.json({
-    googleClientId: GOOGLE_CLIENT_ID || '',
-    googleSignInEnabled: Boolean(GOOGLE_CLIENT_ID),
+    googleClientId: GOOGLE_SIGN_IN_ENABLED ? GOOGLE_CLIENT_ID : '',
+    googleSignInEnabled: GOOGLE_SIGN_IN_ENABLED,
   });
 });
 
@@ -1328,6 +1392,8 @@ app.post('/api/assistant-v2/realtime-client-secret', createRateLimiter(10 * 60 *
       });
     }
 
+    const realtimePayload = validateAssistantV2RealtimePayload(request.body);
+
     const openAIResponse = await fetch('https://api.openai.com/v1/realtime/client_secrets', {
       method: 'POST',
       headers: {
@@ -1343,7 +1409,7 @@ app.post('/api/assistant-v2/realtime-client-secret', createRateLimiter(10 * 60 *
         session: {
           type: 'realtime',
           model: OPENAI_REALTIME_MODEL,
-          instructions: buildOrviaRealtimeInstructions(),
+          instructions: buildOrviaRealtimeInstructions(realtimePayload),
           output_modalities: ['audio'],
           audio: {
             input: {
@@ -1353,7 +1419,7 @@ app.post('/api/assistant-v2/realtime-client-secret', createRateLimiter(10 * 60 *
               transcription: {
                 model: OPENAI_TRANSCRIPTION_MODEL,
                 language: 'es',
-                prompt: 'Orviane, Orvia, joyeria, anillos, aretes, cadenas, pulseras, regalo, mama, Dia de las Madres, compromiso, oro, plata, perlas, diamantes.',
+                prompt: 'Orviane, Orvia, joyería, anillos, aretes, cadenas, pulseras, regalo, mamá, Día de las Madres, compromiso, oro, oro 18 quilates, oro 24 quilates, plata 925, platino, paladio, esmeralda, zafiro, rubí, perlas, diamantes.',
               },
               turn_detection: {
                 type: 'semantic_vad',
@@ -1404,6 +1470,7 @@ app.post('/api/assistant-v2/reset', authenticateRequest, async (request, respons
       recipient: '',
       deadline: '',
       budgetRange: '',
+      valuationSummary: '',
       lastIntent: '',
       lastCollectionSlug: '',
       lastProductReference: '',
