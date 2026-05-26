@@ -124,9 +124,13 @@ function buildPhraseBank() {
     { text: 'en oro blanco', metal: 'oro blanco' },
     { text: 'en oro rosado', metal: 'oro rosado' },
     { text: 'en plata', metal: 'plata' },
+    { text: 'en platino', metal: 'platino' },
+    { text: 'en paladio', metal: 'paladio' },
     { text: 'con diamantes', gemstone: 'diamante' },
     { text: 'con perlas', gemstone: 'perla' },
     { text: 'con esmeralda', gemstone: 'esmeralda' },
+    { text: 'con zafiro', gemstone: 'zafiro' },
+    { text: 'con rubí', gemstone: 'rubi' },
   ];
 
   for (const opening of openings) {
@@ -190,6 +194,14 @@ function buildPhraseBank() {
     'cuanto vale una cadena de oro 18k',
     'precio de oro por gramo para una joya',
     'valora una pulsera en plata 925',
+    'precio del oro de 24 quilates',
+    'precio del platino por gramo',
+    'precio del paladio por gramo',
+    'precio del diamante por quilate',
+    'cuanto vale una esmeralda colombiana',
+    'precio de un zafiro natural',
+    'precio de un rubi natural',
+    'cuanto vale una perla akoya',
   ]) {
     addPhrase(bank, phrase, 'quote_request');
   }

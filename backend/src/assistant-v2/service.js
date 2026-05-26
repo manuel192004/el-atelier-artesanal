@@ -20,7 +20,7 @@ const DETAIL_PROMPTS = {
   ],
   style: [
     { label: 'Me gusta minimalista', message: 'Me gusta un estilo minimalista' },
-    { label: 'Quiero algo romantico', message: 'Quiero algo romantico y delicado' },
+    { label: 'Quiero algo romántico', message: 'Quiero algo romántico y delicado' },
   ],
   budget: [
     { label: 'Hasta 500 mil', message: 'Busco algo hasta 500 mil' },
@@ -33,7 +33,7 @@ const DETAIL_PROMPTS = {
 };
 
 const DETAIL_LABELS = {
-  occasion: 'ocasion',
+  occasion: 'ocasión',
   jewelryType: 'tipo de joya',
   style: 'estilo',
   budget: 'presupuesto',
@@ -204,6 +204,10 @@ function detectStyle(text) {
 }
 
 function detectMetal(text) {
+  if (/(platino)/.test(text)) return 'platino';
+  if (/(paladio)/.test(text)) return 'paladio';
+  if (/(cobre)/.test(text)) return 'cobre';
+  if (/(aluminio)/.test(text)) return 'aluminio';
   if (/(oro blanco)/.test(text)) return 'oro blanco';
   if (/(oro amarillo|dorado)/.test(text)) return 'oro amarillo';
   if (/(oro rosado)/.test(text)) return 'oro rosado';
@@ -213,7 +217,7 @@ function detectMetal(text) {
 
 function detectGemstone(text) {
   if (/(diamante|brillante|pave)/.test(text)) return 'diamante';
-  if (/(perla)/.test(text)) return 'perla';
+  if (/(perla|akoya|tahitian|tahitiana|south sea|mar del sur|edison|freshwater|agua dulce)/.test(text)) return 'perla';
   if (/(esmeralda)/.test(text)) return 'esmeralda';
   if (/(zafiro)/.test(text)) return 'zafiro';
   if (/(rubi|ruby)/.test(text)) return 'rubi';
@@ -231,7 +235,7 @@ function detectIntent(text) {
   if (/(whatsapp|humana|asesora|persona real)/.test(text)) return 'handoff_whatsapp';
   if (/(cita|agendar|agenda|asesoria|visita|reservar)/.test(text)) return 'schedule_appointment';
   if (/(diseno|disenar|personaliz|a medida|configurador)/.test(text)) return 'design_custom';
-  if (/(precio|cotizacion|cotizar|cuanto cuesta|cuanto vale|valor|valora|avalu|avaluo|estimar|estimacion|calcular|mineral|gramo|gramos|quilate|quilates|kilate|kilates|\bct\b|\bcts\b)/.test(text)) return 'quote_request';
+  if (/(precio|cotizacion|cotizar|cuanto cuesta|cuanto vale|cuanto esta|valor|valora|avalu|avaluo|estimar|estimacion|calcular|mineral|gramo|gramos|quilate|quilates|kilate|kilates|\bct\b|\bcts\b|gema|piedra|oro|plata|platino|paladio|cobre|aluminio|diamante|esmeralda|zafiro|rubi|perla)/.test(text)) return 'quote_request';
   if (/(ver|coleccion|catalogo|opciones|mostrar)/.test(text)) return 'browse_collection';
   if (/(hola|busco|quiero|recomienda|recomendacion|ayuda)/.test(text)) return 'recommend_jewelry';
   return 'unknown';
@@ -239,7 +243,7 @@ function detectIntent(text) {
 
 function getCourtesyType(text) {
   const normalized = normalizeText(text);
-  const hasShoppingSignal = /(precio|cotiz|cuanto cuesta|cuanto vale|valor|valora|oro|plata|diamante|anillo|arete|aretes|cadena|collar|pulsera|joya|pieza|regalo|comprar|quiero|busco|necesito|ver|mostrar|catalogo|coleccion|configurador|cita|whatsapp)/.test(normalized);
+  const hasShoppingSignal = /(precio|cotiz|cuanto cuesta|cuanto vale|valor|valora|oro|plata|platino|paladio|cobre|aluminio|diamante|esmeralda|zafiro|rubi|perla|gema|piedra|anillo|arete|aretes|cadena|collar|pulsera|joya|pieza|regalo|comprar|quiero|busco|necesito|ver|mostrar|catalogo|coleccion|configurador|cita|whatsapp)/.test(normalized);
 
   if (!normalized) return '';
   if (!hasShoppingSignal && /^(hola|buenas|buenos dias|buen dia|buenas tardes|buenas noches)?\s*(como estas|que tal|como vas|como te va|todo bien)(\s*(todo bien|como estas|que tal))?[?!. ]*$/.test(normalized)) return 'wellbeing';
@@ -481,7 +485,7 @@ function buildGuidanceCard({ suggestedAction, collectionSlug, product, extracted
       summary: collectionCopy.shortReason,
       bullets: [
         extracted.occasion ? `La consulta apunta a ${extracted.occasion}.` : '',
-        extracted.jewelryType ? `Tu foco actual esta en ${extracted.jewelryType}.` : '',
+        extracted.jewelryType ? `Tu foco actual está en ${extracted.jewelryType}.` : '',
         extracted.style ? `Podemos afinar desde un lenguaje ${extracted.style}.` : '',
       ].filter(Boolean),
     };
@@ -581,9 +585,11 @@ function buildQuickReplies(intent, collectionSlug, suggestedAction, missingDetai
   }
 
   if (valuation) {
-    return mergeQuickReplies(buildValuationQuickReplies(valuation), [
-      { label: 'Ver referencia', message: suggestedAction.productReference ? `Quiero ver la referencia ${suggestedAction.productReference}` : 'Quiero ver colecciones' },
-    ]);
+    const productReply = suggestedAction.productReference && !valuation.isMetalPriceOnly && !valuation.isGemstonePriceOnly
+      ? [{ label: 'Ver referencia', message: `Quiero ver la referencia ${suggestedAction.productReference}` }]
+      : [];
+
+    return mergeQuickReplies(buildValuationQuickReplies(valuation), productReply);
   }
 
   const discoveryReplies = buildDiscoveryReplies(missingDetailKeys);
