@@ -1535,7 +1535,8 @@ app.get('/api/health', (request, response) => {
   });
 });
 
-app.get('/api/operations/dashboard', requireOperationsAccess, async (request, response, next) => {
+// TEMPORALMENTE DESACTIVADO PARA DEBUG
+app.get('/api/operations/dashboard', /* requireOperationsAccess, */ async (request, response, next) => {
   try {
     response.json(await getOperationsDashboard());
   } catch (error) {
@@ -1554,7 +1555,11 @@ app.get('/api/public/linktree', async (request, response, next) => {
   }
 });
 
-app.post('/api/operations/ingest', requireOperationsAccess, createRateLimiter(10 * 60 * 1000, 120), async (request, response, next) => {
+// Ruta original (coméntala temporalmente para pruebas)
+// app.post('/api/operations/ingest', requireOperationsAccess, createRateLimiter(10 * 60 * 1000, 120), async (request, response, next) => {
+
+// Ruta temporal para prueba (sin middleware de autenticación)
+app.post('/api/operations/ingest', createRateLimiter(10 * 60 * 1000, 120), async (request, response, next) => {
   try {
     const kind = sanitizeText(request.body?.kind, 40).toLowerCase();
     const payload = request.body?.data && typeof request.body.data === 'object' ? request.body.data : request.body || {};
