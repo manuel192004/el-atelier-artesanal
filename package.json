@@ -13,7 +13,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/manuel192004/el-atelier-artesanal.git"
+    "url": "git+https://github.com/manuel192004/orbia.git"  // TODO: Actualizar con el repo real de Orbia
   },
   "keywords": [
     "jewelry",
@@ -26,7 +26,7 @@
   "author": "Orviane",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/manuel192004/el-atelier-artesanal/issues"
+    "url": "https://github.com/manuel192004/orbia/issues"  // TODO: Actualizar con el repo real de Orbia
   },
-  "homepage": "https://github.com/manuel192004/el-atelier-artesanal#readme"
+  "homepage": "https://github.com/manuel192004/orbia#readme"  // TODO: Actualizar con el repo real de Orbia
 }

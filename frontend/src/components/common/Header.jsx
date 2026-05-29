@@ -11,7 +11,7 @@ const Header = () => {
     logout();
     closeMenu();
   };
-  const accountLabel = isAuthenticated ? `Mi Cuenta - ${String(user?.fullName || '').split(' ')[0] || 'Orviane'}` : 'Mi Cuenta';
+  const accountLabel = 'Mi Cuenta';
 
   return (
     <header className="header">

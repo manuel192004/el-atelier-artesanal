@@ -280,7 +280,7 @@ function buildActionPreview(action) {
 
   if (action.type === 'open_appointment') {
     return {
-      image: '/orviane-story-atelier.png',
+      image: '/orviane-story-atelier.png', // TODO: Renombrar imagen sin 'atelier'
       eyebrow: 'Asesoria guiada',
       title: 'Cita corta',
       summary: 'Aterriza materiales, tiempos y presupuesto con acompanamiento humano.',
@@ -553,7 +553,7 @@ function buildGuestFallbackReply(message) {
   };
 }
 
-const AtelierAssistantV2 = () => {
+const OrbiaAssistantV2 = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
@@ -1751,4 +1751,4 @@ const AtelierAssistantV2 = () => {
   );
 };
 
-export default AtelierAssistantV2;
+export default OrbiaAssistantV2;

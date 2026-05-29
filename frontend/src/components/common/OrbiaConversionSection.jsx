@@ -53,7 +53,7 @@ function renderAction(action, className) {
   );
 }
 
-const AtelierConversionSection = ({
+const OrbiaConversionSection = ({
   kicker = 'Asesoria Orviane',
   title,
   copy,
@@ -258,4 +258,4 @@ const AtelierConversionSection = ({
   );
 };
 
-export default AtelierConversionSection;
+export default OrbiaConversionSection;

@@ -1,4 +1,4 @@
-.atelier-page {
+.orbia-page {
   padding: 60px 20px 90px;
   background:
     radial-gradient(circle at top left, rgba(193, 169, 126, 0.12), transparent 28%),
@@ -6,12 +6,12 @@
   color: #fff;
 }
 
-.atelier-container {
+.orbia-container {
   width: min(1180px, 100%);
   margin: 0 auto;
 }
 
-.atelier-title {
+.orbia-title {
   font-size: clamp(2.3rem, 5vw, 3.5rem);
   text-align: center;
   margin-bottom: 46px;
@@ -21,7 +21,7 @@
   line-height: 1.12;
 }
 
-.atelier-content {
+.orbia-content {
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) minmax(300px, 0.8fr);
   gap: 34px;
@@ -29,20 +29,20 @@
   margin-bottom: 80px;
 }
 
-.atelier-text,
-.atelier-image,
+.orbia-text,
+.orbia-image,
 .value-card {
   min-width: 0;
 }
 
-.atelier-text {
+.orbia-text {
   padding: 30px;
   border: 1px solid rgba(193, 169, 126, 0.16);
   border-radius: 20px;
   background: linear-gradient(180deg, rgba(193, 169, 126, 0.08), rgba(255, 255, 255, 0.02));
 }
 
-.atelier-text h2 {
+.orbia-text h2 {
   color: #d5be95;
   margin-bottom: 15px;
   font-size: 1.8rem;
@@ -50,7 +50,7 @@
   line-height: 1.2;
 }
 
-.atelier-text p {
+.orbia-text p {
   font-family: 'Lato', sans-serif;
   font-size: 1.05rem;
   line-height: 1.9;
@@ -58,11 +58,11 @@
   color: #ded5c7;
 }
 
-.atelier-text p:last-child {
+.orbia-text p:last-child {
   margin-bottom: 0;
 }
 
-.atelier-image {
+.orbia-image {
   position: sticky;
   top: 118px;
   border-radius: 20px;
@@ -71,13 +71,13 @@
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.24);
 }
 
-.atelier-image img {
+.orbia-image img {
   width: 100%;
   display: block;
   border-radius: 20px;
 }
 
-.atelier-values {
+.orbia-values {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 22px;
@@ -184,7 +184,7 @@
   background: rgba(193, 169, 126, 0.14);
 }
 
-.atelier-conversion-section {
+.orbia-conversion-section {
   padding-top: 28px;
 }
 
@@ -196,41 +196,41 @@
 }
 
 @media (max-width: 900px) {
-  .atelier-content {
+  .orbia-content {
     grid-template-columns: 1fr;
     margin-bottom: 50px;
   }
 
-  .atelier-image {
+  .orbia-image {
     position: static;
   }
 
-  .atelier-values {
+  .orbia-values {
     grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 640px) {
-  .atelier-page {
+  .orbia-page {
     padding: 28px 14px 62px;
   }
 
-  .atelier-title {
+  .orbia-title {
     margin-bottom: 32px;
     padding-bottom: 14px;
     font-size: clamp(1.95rem, 8vw, 2.6rem);
   }
 
-  .atelier-text,
+  .orbia-text,
   .value-card {
     padding: 22px 18px;
   }
 
-  .atelier-text h2 {
+  .orbia-text h2 {
     font-size: 1.45rem;
   }
 
-  .atelier-text p,
+  .orbia-text p,
   .cta-subtitle,
   .value-card p {
     font-size: 0.98rem;

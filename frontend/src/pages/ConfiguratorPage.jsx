@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import './../styles/_configuratorpage.scss';
 import PromptDesigner from '../components/configurator/PromptDesigner';
-import AtelierConversionSection from '../components/common/AtelierConversionSection';
+import OrbiaConversionSection from '../components/common/OrbiaConversionSection';
 import PageMeta from '../components/common/PageMeta';
 
 const ConfiguratorPage = () => {
@@ -84,7 +84,7 @@ const ConfiguratorPage = () => {
         />
 
         <div ref={conversionRef}>
-          <AtelierConversionSection
+          <OrbiaConversionSection
             className="configurator-conversion-section"
           kicker="Prefieres una ruta asistida"
           title="Si el configurador te ayuda a imaginar, la cita ayuda a decidir mejor"

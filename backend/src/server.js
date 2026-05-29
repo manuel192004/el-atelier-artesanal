@@ -141,7 +141,7 @@ const OPERATIONS_ADMIN_SEED_FULL_NAME = sanitizeText(process.env.OPERATIONS_ADMI
 const OPERATIONS_ADMIN_SEED_WHATSAPP = sanitizeText(process.env.OPERATIONS_ADMIN_SEED_WHATSAPP, 40);
 const STATIC_FRONTEND_ORIGINS = [
   'https://venerable-pie-81d20e.netlify.app',
-  'https://el-atelier-artesanal.netlify.app',
+  'https://orbia.netlify.app', // TODO: Actualizar con el dominio real de Orbia
   'https://www.orviane.com',
   'https://orviane.com',
 ];

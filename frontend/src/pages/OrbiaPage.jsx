@@ -1,23 +1,23 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import '../styles/_atelierpage.scss';
-import AtelierConversionSection from '../components/common/AtelierConversionSection';
+import '../styles/_orbiapage.scss';
+import OrbiaConversionSection from '../components/common/OrbiaConversionSection';
 import PageMeta from '../components/common/PageMeta';
 
-const AtelierPage = () => {
+const OrbiaPage = () => {
   return (
-    <div className="atelier-page fade-in-section">
+    <div className="orbia-page fade-in-section">
       <PageMeta
-        title="Orviane | Historia, proceso y alta joyeria personalizada"
-        description="Conoce la historia, el proceso creativo y la fusion entre artesania y tecnologia que define a Orviane."
-        path="/orviane"
-        image="/orviane-story-atelier.png"
+        title="Orbia | Historia, proceso y alta joyeria personalizada"
+        description="Conoce la historia, el proceso creativo y la fusion entre artesania y tecnologia que define a Orbia."
+        path="/orbia"
+        image="/orviane-story-atelier.png"  // TODO: Renombrar imagen a algo sin 'atelier'
       />
-      <div className="atelier-container">
-        <h1 className="atelier-title">La Casa Orviane</h1>
+      <div className="orbia-container">
+        <h1 className="orbia-title">La Casa Orbia</h1>
 
-        <div className="atelier-content">
-          <div className="atelier-text">
+        <div className="orbia-content">
+          <div className="orbia-text">
             <h2>Nuestra Historia</h2>
             <p>
               Orviane nace del eco de un martillo sobre plata, en el pequeno
@@ -42,12 +42,12 @@ const AtelierPage = () => {
             </p>
           </div>
 
-          <div className="atelier-image">
-            <img src="/orviane-story-atelier.png" alt="Proceso artesanal de Orviane en el taller" loading="lazy" decoding="async" />
+          <div className="orbia-image">
+            <img src="/orviane-story-atelier.png" alt="Proceso artesanal de Orbia" loading="lazy" decoding="async" />  // TODO: Renombrar imagen
           </div>
         </div>
 
-        <div className="atelier-values">
+        <div className="orbia-values">
           <div className="value-card">
             <div className="value-icon">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
@@ -87,8 +87,8 @@ const AtelierPage = () => {
           </div>
         </div>
 
-        <AtelierConversionSection
-          className="atelier-conversion-section"
+        <OrbiaConversionSection
+          className="orbia-conversion-section"
           kicker="Atencion mas personal"
           title="Cuando la pieza tiene peso emocional, conviene hablarla bien"
           copy="Compromisos, aniversarios, regalos simbolicos o ideas aun borrosas suelen resolverse mejor con una conversacion corta que ordene referencias, materiales y siguiente paso."
@@ -102,11 +102,11 @@ const AtelierPage = () => {
           formTitle="Pide una cita para hablar tu idea"
           formCopy="Deja tu preferencia y retomamos contigo con una conversacion mas enfocada en ocasion, estilo y viabilidad real."
           defaultReason="Asesoria sobre una joya personalizada"
-          source="atelier-page"
+          source="orbia-page"
         />
       </div>
     </div>
   );
 };
 
-export default AtelierPage;
+export default OrbiaPage;
