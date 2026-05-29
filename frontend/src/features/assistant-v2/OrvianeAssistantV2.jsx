@@ -553,7 +553,7 @@ function buildGuestFallbackReply(message) {
   };
 }
 
-const OrbiaAssistantV2 = () => {
+const OrvianeAssistantV2 = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
@@ -1751,4 +1751,4 @@ const OrbiaAssistantV2 = () => {
   );
 };
 
-export default OrbiaAssistantV2;
+export default OrvianeAssistantV2;

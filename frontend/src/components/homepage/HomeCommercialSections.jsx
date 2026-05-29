@@ -63,7 +63,7 @@ const materialNotes = [
   },
 ];
 
-const orbiaStories = [
+const orvianeStories = [
   {
     occasion: 'Compromiso',
     client: 'Decision simbolica',
@@ -216,7 +216,7 @@ const HomeCommercialSections = () => {
           </div>
 
           <div className="home-story-grid">
-            {orbiaStories.map((story) => (
+            {orvianeStories.map((story) => (
               <article key={story.occasion} className="home-story-card">
                 <div className="home-story-image-wrap">
                   <img src={story.image} alt={story.piece} className="home-story-image" />

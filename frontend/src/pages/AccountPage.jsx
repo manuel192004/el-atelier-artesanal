@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { apiFetch } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import '../styles/_accountpage.scss';
-import OrbiaConversionSection from '../components/common/OrbiaConversionSection';
+import OrvianeConversionSection from '../components/common/OrvianeConversionSection';
 import PageMeta from '../components/common/PageMeta';
 
 const GOOGLE_CLIENT_ID_BUILD = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
@@ -546,7 +546,7 @@ const AccountPage = () => {
             </div>
           </div>
 
-          <OrbiaConversionSection
+          <OrvianeConversionSection
             className="account-conversion-section"
             kicker="Prefieres hablar primero"
             title="Tambien puedes entrar a Orviane sin crear cuenta de inmediato"
@@ -977,7 +977,7 @@ const AccountPage = () => {
 
         </div>
 
-        <OrbiaConversionSection
+        <OrvianeConversionSection
           className="account-conversion-section"
           kicker="Siguiente paso"
           title="Tu cuenta ya organiza tus gustos; ahora podemos llevarlos a una conversacion real"

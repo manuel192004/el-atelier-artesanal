@@ -1,9 +1,9 @@
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Header from './components/common/Header';
 import Footer from './components/common/Footer';
-import OrbiaAssistantV2 from './features/assistant-v2/OrbiaAssistantV2';
+import OrvianeAssistantV2 from './features/assistant-v2/OrvianeAssistantV2';
 import HomePage from './pages/HomePage';
-import OrbiaPage from './pages/OrbiaPage';
+import OrvianePage from './pages/OrvianePage';
 import ConfiguratorPage from './pages/ConfiguratorPage';
 import ColeccionesPage from './pages/ColeccionesPage';
 import AccountPage from './pages/AccountPage';
@@ -21,7 +21,7 @@ function App() {
         <main id="main-content">
           <Routes>
             <Route path="/" element={<HomePage />} />
-            <Route path="/orbia" element={<OrbiaPage />} />
+            <Route path="/orviane" element={<OrvianePage />} />
             <Route path="/configurador" element={<ConfiguratorPage />} />
             <Route path="/colecciones" element={<ColeccionesPage />} />
             <Route path="/colecciones/:categoria" element={<ColeccionesPage />} />
@@ -31,7 +31,7 @@ function App() {
           </Routes>
         </main>
         <Footer />
-        <OrbiaAssistantV2 />
+        <OrvianeAssistantV2 />
       </div>
     </Router>
   );

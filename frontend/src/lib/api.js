@@ -1,6 +1,6 @@
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
-  (import.meta.env.DEV ? 'http://localhost:3001' : 'https://orbia-backend.onrender.com');  // TODO: Actualizar con la URL real del backend de Orbia
+  (import.meta.env.DEV ? 'http://localhost:3001' : 'https://orviane-backend.onrender.com');  // TODO: Actualizar con la URL real del backend de Orviane
 
 export async function apiFetch(path, options = {}) {
   const { token, headers = {}, body, ...rest } = options;

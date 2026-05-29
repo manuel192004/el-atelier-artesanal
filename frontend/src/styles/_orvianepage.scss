@@ -1,4 +1,4 @@
-.orbia-page {
+.orviane-page {
   padding: 60px 20px 90px;
   background:
     radial-gradient(circle at top left, rgba(193, 169, 126, 0.12), transparent 28%),
@@ -6,12 +6,12 @@
   color: #fff;
 }
 
-.orbia-container {
+.orviane-container {
   width: min(1180px, 100%);
   margin: 0 auto;
 }
 
-.orbia-title {
+.orviane-title {
   font-size: clamp(2.3rem, 5vw, 3.5rem);
   text-align: center;
   margin-bottom: 46px;
@@ -21,7 +21,7 @@
   line-height: 1.12;
 }
 
-.orbia-content {
+.orviane-content {
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) minmax(300px, 0.8fr);
   gap: 34px;
@@ -29,20 +29,20 @@
   margin-bottom: 80px;
 }
 
-.orbia-text,
-.orbia-image,
+.orviane-text,
+.orviane-image,
 .value-card {
   min-width: 0;
 }
 
-.orbia-text {
+.orviane-text {
   padding: 30px;
   border: 1px solid rgba(193, 169, 126, 0.16);
   border-radius: 20px;
   background: linear-gradient(180deg, rgba(193, 169, 126, 0.08), rgba(255, 255, 255, 0.02));
 }
 
-.orbia-text h2 {
+.orviane-text h2 {
   color: #d5be95;
   margin-bottom: 15px;
   font-size: 1.8rem;
@@ -50,7 +50,7 @@
   line-height: 1.2;
 }
 
-.orbia-text p {
+.orviane-text p {
   font-family: 'Lato', sans-serif;
   font-size: 1.05rem;
   line-height: 1.9;
@@ -58,11 +58,11 @@
   color: #ded5c7;
 }
 
-.orbia-text p:last-child {
+.orviane-text p:last-child {
   margin-bottom: 0;
 }
 
-.orbia-image {
+.orviane-image {
   position: sticky;
   top: 118px;
   border-radius: 20px;
@@ -71,13 +71,13 @@
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.24);
 }
 
-.orbia-image img {
+.orviane-image img {
   width: 100%;
   display: block;
   border-radius: 20px;
 }
 
-.orbia-values {
+.orviane-values {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 22px;
@@ -184,7 +184,7 @@
   background: rgba(193, 169, 126, 0.14);
 }
 
-.orbia-conversion-section {
+.orviane-conversion-section {
   padding-top: 28px;
 }
 
@@ -196,41 +196,41 @@
 }
 
 @media (max-width: 900px) {
-  .orbia-content {
+  .orviane-content {
     grid-template-columns: 1fr;
     margin-bottom: 50px;
   }
 
-  .orbia-image {
+  .orviane-image {
     position: static;
   }
 
-  .orbia-values {
+  .orviane-values {
     grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 640px) {
-  .orbia-page {
+  .orviane-page {
     padding: 28px 14px 62px;
   }
 
-  .orbia-title {
+  .orviane-title {
     margin-bottom: 32px;
     padding-bottom: 14px;
     font-size: clamp(1.95rem, 8vw, 2.6rem);
   }
 
-  .orbia-text,
+  .orviane-text,
   .value-card {
     padding: 22px 18px;
   }
 
-  .orbia-text h2 {
+  .orviane-text h2 {
     font-size: 1.45rem;
   }
 
-  .orbia-text p,
+  .orviane-text p,
   .cta-subtitle,
   .value-card p {
     font-size: 0.98rem;

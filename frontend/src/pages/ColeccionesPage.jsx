@@ -3,7 +3,7 @@ import { Link, useLocation, useParams } from 'react-router-dom';
 import '../styles/_coleccionespage.scss';
 import { apiFetch } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
-import OrbiaConversionSection from '../components/common/OrbiaConversionSection';
+import OrvianeConversionSection from '../components/common/OrvianeConversionSection';
 import PageMeta from '../components/common/PageMeta';
 import {
   buildProductQuoteMessage,
@@ -140,7 +140,7 @@ const CollectionsOverview = () => (
       </div>
     </div>
 
-    <OrbiaConversionSection
+    <OrvianeConversionSection
       className="collections-conversion-section"
       kicker="Compra con criterio"
       title="Si ya viste una familia que te gusta, el siguiente paso puede ser mucho mas claro"
@@ -857,7 +857,7 @@ const ColeccionesPage = () => {
         <CrossCollectionSuggestions currentSlug={categoria} />
       </div>
 
-      <OrbiaConversionSection
+      <OrvianeConversionSection
         className="collections-conversion-section"
         kicker={`${currentCollection.title} con acompanamiento`}
         title={`Convierte ${currentCollection.title.toLowerCase()} en una decision mas segura`}
