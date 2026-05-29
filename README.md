@@ -9,6 +9,7 @@ Experiencia web para joyeria personalizada con catalogo editorial, configurador,
 - `Frontend` en React + Vite con experiencia optimizada para colecciones, configurador y cuenta.
 - `Backend` en Express con autenticacion, citas, cotizaciones, favoritos y memoria del asistente.
 - `PostgreSQL` como almacenamiento principal para usuarios, citas, cotizaciones y contexto del bot.
+- Una base operativa para clientes, ventas, gastos, tareas y accesos rapidos.
 - `Docker Compose` para levantar todo el stack local en una sola orden.
 - Registro e inicio de sesion con Google.
 - Integracion de IA para `Orvia` usando Azure OpenAI u OpenAI directa, segun variables.
@@ -70,13 +71,15 @@ docker compose up --build
 
 - `PORT`
 - `DATABASE_URL`
+- `DATABASE_SSL`
+- `AUTH_JWT_SECRET`
 - `GOOGLE_CLIENT_ID`
-- `JWT_SECRET`
-- `AZURE_OPENAI_ENDPOINT`
-- `AZURE_OPENAI_API_KEY`
-- `AZURE_OPENAI_DEPLOYMENT`
+- `GOOGLE_SIGN_IN_ENABLED`
+- `OPERATIONS_ACCESS_TOKEN`
 - `OPENAI_API_KEY`
 - `OPENAI_ASSISTANT_MODEL`
+- `ASSISTANT_V2_MODEL`
+- `GOOGLE_SERVICE_ACCOUNT_JSON_BASE64` (o GOOGLE_APPLICATION_CREDENTIALS)
 
 ## Registro con Google
 
@@ -106,10 +109,56 @@ Despues pega el `client id` en:
 
 `Orvia` puede funcionar de dos maneras:
 
-- Con `Azure OpenAI`, si defines `AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_API_KEY` y `AZURE_OPENAI_DEPLOYMENT`.
 - Con `OpenAI` directa, si defines `OPENAI_API_KEY` y `OPENAI_ASSISTANT_MODEL`.
+- Con `Vertex AI / Gemini`, si configuras credenciales de Google Cloud (recomendado para generación de imágenes también).
 
-Si ninguna esta activa, el asistente usa un modo de reglas como respaldo.
+Si ninguna está activa, el asistente usa un modo de reglas local como respaldo.
+
+## Centro operativo
+
+El proyecto ahora incluye una capa pensada para automatizacion real con `Make`:
+
+- `POST /api/operations/ingest` recibe clientes, interacciones, ventas, gastos, tareas y links.
+- `GET /api/operations/dashboard` devuelve resumen, actividad reciente y balance.
+- `GET /api/public/linktree` publica accesos rapidos para una ventana tipo `Linktree`.
+
+Para proteger los datos internos, define `OPERATIONS_ACCESS_TOKEN` en el backend. Make debe enviar ese valor en el header:
+
+```http
+x-orviane-operations-token: tu_token_operativo
+```
+
+El panel `/operaciones` ya no usa ese token en la interfaz pública: ahora exige una cuenta autenticada con rol `admin`. Para habilitar tu correo como administrador define `OPERATIONS_ADMIN_EMAILS` y, si quieres que el backend cree o actualice esa cuenta al iniciar, agrega también:
+
+```env
+OPERATIONS_ADMIN_EMAILS=tu_correo_admin@orviane.com
+OPERATIONS_ADMIN_SEED_EMAIL=tu_correo_admin@orviane.com
+OPERATIONS_ADMIN_SEED_PASSWORD=una_contrasena_segura
+```
+
+La pantalla de acceso del centro operativo vive solo en `/operaciones`.
+
+### Tipos de dato que puede recibir Make
+
+- `contact` o `lead` para clientes potenciales.
+- `interaction` o `message` para conversaciones y seguimiento.
+- `sale`, `expense` o `refund` para movimientos financieros.
+- `task` o `trello` para tareas y responsables.
+- `linktree` para actualizar accesos publicos.
+
+### Flujo recomendado
+
+1. Make recibe el formulario, WhatsApp o un formulario interno.
+2. Make llama a `POST /api/operations/ingest`.
+3. Make envia el header `x-orviane-operations-token`.
+4. PostgreSQL guarda el dato en una tabla especifica.
+5. El panel interno muestra el dato y recalcula el balance.
+6. Power BI puede leer desde PostgreSQL para informes ejecutivos.
+
+## Rutas nuevas
+
+- `/operaciones` para el panel interno, visible solo para cuentas admin.
+- `/linktree` para la ventana publica de accesos rapidos.
 
 ## Credenciales de Google Cloud en Docker
 
@@ -166,8 +215,8 @@ Archivos incluidos para eso:
 3. Completa las variables sensibles en el dashboard:
    - `FRONTEND_ORIGINS`
    - `GOOGLE_CLIENT_ID`
-   - `AZURE_OPENAI_API_KEY` y compañia, o `OPENAI_API_KEY`
-   - `GOOGLE_SERVICE_ACCOUNT_JSON_BASE64` si quieres generacion visual en cloud
+   - `OPENAI_API_KEY` (o credenciales de Google Cloud para Vertex AI)
+   - `GOOGLE_SERVICE_ACCOUNT_JSON_BASE64` si quieres generación de imágenes con IA en cloud
 
 ### Nota de Google Cloud para produccion
 

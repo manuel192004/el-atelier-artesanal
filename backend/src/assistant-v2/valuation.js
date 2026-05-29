@@ -541,7 +541,41 @@ function buildValuationEstimate({ message, extracted, product }) {
   };
 }
 
-function buildValuationMessage(valuation) {
+function parseBudgetToMaxCop(budgetText) {
+  if (!budgetText) return null;
+  const normalized = normalizeText(budgetText);
+
+  // Patrones más robustos
+  const m = normalized.match(/(?:hasta|menos de|alrededor de|maximo|max|digamos hasta)\s*(\d+)[.,]?(\d*)\s*(mil|millon|millones?)/);
+  if (m) {
+    let num = parseNumber(m[1] + (m[2] ? '.' + m[2] : ''));
+    if (m[3].includes('millon')) num = num * 1000000;
+    else num = num * 1000;
+    return Math.floor(num);
+  }
+
+  // Rango tipo "500 mil a 1.5 millones"
+  const range = normalized.match(/(\d+)[.,]?(\d*)\s*(mil|millones?)\s*(a|alrededor|hasta)\s*(\d+)[.,]?(\d*)\s*(mil|millones?)/);
+  if (range) {
+    let highNum = parseNumber(range[5] + (range[6] ? '.' + range[6] : ''));
+    if (range[7].includes('millon')) highNum = highNum * 1000000;
+    else highNum = highNum * 1000;
+    return Math.floor(highNum);
+  }
+
+  // "350 mil", "1.2 millones"
+  const simple = normalized.match(/(\d+)[.,]?(\d*)\s*(mil|millones?)/);
+  if (simple) {
+    let num = parseNumber(simple[1] + (simple[2] ? '.' + simple[2] : ''));
+    if (simple[3].includes('millon')) num = num * 1000000;
+    else num = num * 1000;
+    return Math.floor(num);
+  }
+
+  return null;
+}
+
+function buildValuationMessage(valuation, budgetHint = '') {
   if (!valuation) {
     return '';
   }
@@ -550,11 +584,20 @@ function buildValuationMessage(valuation) {
     return `Puedo hacer una valoración preliminar, pero me falta ${valuation.missing.join(' y ')}. Dime algo como: "anillo en oro de 18 quilates, 4 gramos, con diamante de 0.20 quilates" y te doy un rango mucho más aterrizado.`;
   }
 
+  const maxBudget = parseBudgetToMaxCop(budgetHint);
+  const budgetNote = maxBudget
+    ? (valuation.totalRange[0] > maxBudget
+        ? ' Este rango está por encima del presupuesto que mencionaste.'
+        : valuation.totalRange[1] < maxBudget * 0.6
+          ? ' Este rango queda holgado dentro de lo que mencionaste.'
+          : ' Este rango está dentro del presupuesto que diste.')
+    : '';
+
   if (valuation.isMetalPriceOnly) {
     return [
       `Como referencia interna, ${valuation.materialSubject} está en ${valuation.pricePerGramFormatted} por gramo.`,
       'Ese es solo el punto de partida del material: una joya terminada también suma merma, aleación, engaste, acabado, complejidad y mano de obra.',
-      `Referencia de mercado: ${valuation.marketReference.asOf}, TRM ${valuation.marketReference.usdCop.toLocaleString('es-CO')} pesos por dólar.`,
+      `Referencia de mercado: ${valuation.marketReference.asOf}. La TRM de referencia es aproximadamente ${valuation.marketReference.usdCop.toLocaleString('es-CO')} pesos colombianos por un dólar estadounidense.`,
       'Si me dices qué pieza quieres y cuántos gramos tendría, te calculo un rango más realista.',
     ].join(' ');
   }
@@ -582,7 +625,7 @@ function buildValuationMessage(valuation) {
 
   return [
     `Como estimación preliminar, ${article} ${valuation.type} en ${valuation.materialDescriptor} estaría entre ${valuation.lowFormatted} y ${valuation.highFormatted}.`,
-    `Lo calculo con ${valuation.basis.join('; ')}.`,
+    `Lo calculo con ${valuation.basis.join('; ')}.${budgetNote}`,
     'No lo tomaría como precio final todavía: para cerrar cotización faltan peso real, ley del metal, calidad de piedra y acabado elegido.',
   ].join(' ');
 }
@@ -623,10 +666,24 @@ function buildValuationQuickReplies(valuation) {
 
 function buildValuationKnowledgePrompt() {
   return [
-    `Referencia interna de mercado para Orvia (${MARKET_REFERENCE.asOf}, TRM ${MARKET_REFERENCE.usdCop.toLocaleString('es-CO')} COP/USD).`,
-    'Metales aproximados por gramo en COP: oro amarillo 18 quilates 399.000; oro blanco 18 quilates 419.000; oro rosado 18 quilates 399.000; oro amarillo 14 quilates 310.000; oro blanco 14 quilates 325.000; oro rosado 14 quilates 310.000; oro 24 quilates 532.000; plata 925 8.200; plata pura 8.900; platino 227.000; paladio 159.000; cobre 50; aluminio 15.',
-    'Piedras aproximadas: diamante fino 9.000.000 a 30.000.000 COP/quilate; diamante laboratorio 900.000 a 4.500.000 COP/quilate; esmeralda fina 2.900.000 a 18.300.000 COP/quilate; esmeralda Muzo o extra fina 22.000.000 a 183.000.000 COP/quilate; zafiro fino 5.500.000 a 18.300.000 COP/quilate; rubí fino 7.300.000 a 36.700.000 COP/quilate; perla agua dulce 80.000 a 750.000 COP/pieza; perla Akoya 450.000 a 3.300.000 COP/pieza; perla Mar del Sur 1.200.000 a 66.000.000 COP/pieza.',
-    'Siempre di que son referencias aproximadas: el precio final depende de peso real, merma, aleación, engaste, mano de obra, certificado, tratamiento, origen, medidas y calidad visible.',
+    `REFERENCIA OBLIGATORIA DE MONEDA: Todos los precios y valores que menciones DEBEN estar expresados EXCLUSIVAMENTE en PESOS COLOMBIANOS (COP). Nunca uses la palabra "dólares", "USD", "dólar americano" ni el símbolo $ de forma ambigua. Si usas el símbolo $, aclara inmediatamente "pesos colombianos" o "COP".`,
+    `TRM de referencia: ${MARKET_REFERENCE.usdCop.toLocaleString('es-CO')} pesos colombianos por 1 dólar estadounidense (dato solo para contexto interno, no lo menciones a menos que te pregunten explícitamente por la TRM).`,
+    `Metales por gramo SIEMPRE en pesos colombianos: oro amarillo 18 quilates 399.000 COP; oro blanco 18 quilates 419.000 COP; oro rosado 18 quilates 399.000 COP; oro amarillo 14 quilates 310.000 COP; oro blanco 14 quilates 325.000 COP; oro rosado 14 quilates 310.000 COP; oro 24 quilates 532.000 COP; plata 925 8.200 COP; plata pura 8.900 COP; platino 227.000 COP; paladio 159.000 COP; cobre 50 COP; aluminio 15 COP.`,
+    `Piedras SIEMPRE en pesos colombianos: diamante fino 9.000.000 a 30.000.000 COP por quilate; diamante de laboratorio 900.000 a 4.500.000 COP por quilate; esmeralda fina 2.900.000 a 18.300.000 COP por quilate; esmeralda Muzo o extra fina 22.000.000 a 183.000.000 COP por quilate; zafiro fino 5.500.000 a 18.300.000 COP por quilate; rubí fino 7.300.000 a 36.700.000 COP por quilate; perla agua dulce 80.000 a 750.000 COP por pieza; perla Akoya 450.000 a 3.300.000 COP por pieza; perla Mar del Sur 1.200.000 a 66.000.000 COP por pieza.`,
+    'REGLA INQUEBRANTABLE: Cuando des cualquier rango de precio o valor de material, di explícitamente "pesos colombianos" o "COP" al menos una vez en la respuesta. Nunca des por sentado que el cliente entiende que son pesos. Ejemplo correcto: "el oro amarillo de 18 quilates está aproximadamente en 399.000 pesos colombianos por gramo".',
+    'Siempre aclara que son referencias aproximadas internas de Orviane: el precio final real depende de peso exacto medido, ley real del metal, calidad certificada de la piedra, merma, engaste, mano de obra y acabados. Nunca presentes estos valores como cotización oficial o precio de venta final.',
+  ].join(' ');
+}
+
+function buildCurrencySafetyBlock() {
+  return [
+    'SEGURIDAD DE MONEDA (OBLIGATORIO CUMPLIR):',
+    '- Hablas exclusivamente en el contexto de Orviane en Colombia. Todos los precios son en PESOS COLOMBIANOS.',
+    '- NUNCA digas "dólares", "USD", "dólar", "dólares americanos" ni uses "$" sin aclarar de inmediato que son pesos colombianos.',
+    '- Cuando menciones cualquier número de precio (material, piedra o pieza terminada), debes decir al menos una vez en la respuesta "pesos colombianos" o "COP".',
+    '- Ejemplos de lenguaje correcto: "399.000 pesos colombianos por gramo", "entre 2.8 y 4.1 millones de pesos colombianos", "aproximadamente 18 millones de COP por quilate".',
+    '- Si el usuario pregunta por precio internacional o compara con el exterior, puedes mencionar la TRM solo como dato de referencia, pero el valor que des siempre debe estar convertido y expresado en pesos colombianos.',
+    '- Esta regla es más importante que sonar elegante. Prefiere ser explícito y repetitivo con la moneda antes que dar un número solo con el símbolo $.',
   ].join(' ');
 }
 
@@ -635,4 +692,6 @@ module.exports = {
   buildValuationKnowledgePrompt,
   buildValuationMessage,
   buildValuationQuickReplies,
+  buildCurrencySafetyBlock,
+  parseBudgetToMaxCop,
 };

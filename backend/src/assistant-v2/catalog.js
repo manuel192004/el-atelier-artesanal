@@ -12,18 +12,18 @@ const rawCollectionConfig = {
     description:
       'Cada anillo es el inicio de una historia de amor unica, el reflejo de un compromiso eterno.',
     items: [
-      { id: 1, name: 'Solitario Oro Amarillo', image: '/anillos/anillos-01-solitario-oro-amarillo.png', category: 'Oro Amarillo' },
-      { id: 2, name: 'Bisel Bicolor', image: '/anillos/anillos-02-bisel-bicolor.png', category: 'Bicolor' },
-      { id: 3, name: 'Solitario Oro Blanco', image: '/anillos/anillos-03-solitario-oro-blanco.png', category: 'Oro Blanco' },
-      { id: 4, name: 'Media Eternidad Oro Blanco', image: '/anillos/anillos-04-media-eternidad-oro-blanco.png', category: 'Oro Blanco' },
-      { id: 5, name: 'Cluster Floral', image: '/anillos/anillos-05-cluster-floral.png', category: 'Oro Blanco' },
-      { id: 6, name: 'Banda Pave Ancha', image: '/anillos/anillos-06-banda-pave-ancha.png', category: 'Oro Blanco' },
-      { id: 7, name: 'Eternidad Oro Amarillo', image: '/anillos/anillos-07-eternidad-oro-amarillo.png', category: 'Oro Amarillo' },
+      { id: 1, name: 'Solitario Oro Amarillo', image: '/anillos/anillos-01-solitario-oro-amarillo.png', category: 'Oro Amarillo', priceLevel: 'mid' },
+      { id: 2, name: 'Bisel Bicolor', image: '/anillos/anillos-02-bisel-bicolor.png', category: 'Bicolor', priceLevel: 'mid' },
+      { id: 3, name: 'Solitario Oro Blanco', image: '/anillos/anillos-03-solitario-oro-blanco.png', category: 'Oro Blanco', priceLevel: 'mid' },
+      { id: 4, name: 'Media Eternidad Oro Blanco', image: '/anillos/anillos-04-media-eternidad-oro-blanco.png', category: 'Oro Blanco', priceLevel: 'premium' },
+      { id: 5, name: 'Cluster Floral', image: '/anillos/anillos-05-cluster-floral.png', category: 'Oro Blanco', priceLevel: 'premium' },
+      { id: 6, name: 'Banda Pave Ancha', image: '/anillos/anillos-06-banda-pave-ancha.png', category: 'Oro Blanco', priceLevel: 'premium' },
+      { id: 7, name: 'Eternidad Oro Amarillo', image: '/anillos/anillos-07-eternidad-oro-amarillo.png', category: 'Oro Amarillo', priceLevel: 'premium' },
       { id: 8, name: 'Eternidad Oro Blanco', image: '/anillos/anillos-08-eternidad-oro-blanco.png', category: 'Oro Blanco' },
       { id: 9, name: 'Banda Oro Amarillo', image: '/anillos/anillos-09-banda-oro-amarillo.png', category: 'Oro Amarillo' },
       { id: 10, name: 'Eternidad Redonda', image: '/anillos/anillos-10-eternidad-redonda.png', category: 'Oro Blanco' },
       { id: 11, name: 'Media Eternidad Redonda', image: '/anillos/anillos-11-media-eternidad-redonda.png', category: 'Oro Blanco' },
-      { id: 12, name: 'Halo Oro Amarillo', image: '/anillos/anillos-12-halo-oro-amarillo.png', category: 'Oro Amarillo' },
+      { id: 12, name: 'Halo Oro Amarillo', image: '/anillos/anillos-12-halo-oro-amarillo.png', category: 'Oro Amarillo', priceLevel: 'high' },
     ],
   },
   [COLLECTIONS.aretes]: {
@@ -35,12 +35,12 @@ const rawCollectionConfig = {
       { id: 1, name: 'Aretes Argollas Lisas', image: '/aretes/aretes-01-argollas-lisas.png', category: 'Todos' },
       { id: 2, name: 'Topos Redondos', image: '/aretes/aretes-02-topos-redondos.png', category: 'Todos' },
       { id: 3, name: 'Aretes Gota Colgante', image: '/aretes/aretes-03-gotas-colgantes.png', category: 'Todos' },
-      { id: 4, name: 'Flores con Brillo', image: '/aretes/aretes-04-flores-diamante.png', category: 'Todos' },
+      { id: 4, name: 'Flores con Brillo', image: '/aretes/aretes-04-flores-diamante.png', category: 'Todos', priceLevel: 'premium' },
       { id: 5, name: 'Cadenas Colgantes', image: '/aretes/aretes-05-cadenas-colgantes.png', category: 'Todos' },
       { id: 6, name: 'Argollas Trenzadas', image: '/aretes/aretes-06-argollas-trenzadas.png', category: 'Todos' },
-      { id: 7, name: 'Argollas Pave', image: '/aretes/aretes-07-argollas-pave.png', category: 'Todos' },
-      { id: 8, name: 'Doble Aro Colgante', image: '/aretes/aretes-08-doble-aro-colgante.png', category: 'Todos' },
-      { id: 9, name: 'Perla Colgante', image: '/aretes/aretes-09-perla-colgante.png', category: 'Todos' },
+      { id: 7, name: 'Argollas Pave', image: '/aretes/aretes-07-argollas-pave.png', category: 'Todos', priceLevel: 'premium' },
+      { id: 8, name: 'Doble Aro Colgante', image: '/aretes/aretes-08-doble-aro-colgante.png', category: 'Todos', priceLevel: 'mid' },
+      { id: 9, name: 'Perla Colgante', image: '/aretes/aretes-09-perla-colgante.png', category: 'Todos', priceLevel: 'entry' },
       { id: 10, name: 'Cuff con Cadena y Estrella', image: '/aretes/aretes-10-cuff-cadena-estrella.png', category: 'Todos' },
     ],
   },
@@ -50,12 +50,12 @@ const rawCollectionConfig = {
     description:
       'Nuestra linea de cadenas reune presencia, caida y detalles delicados para complementar momentos especiales y looks cotidianos.',
     items: [
-      { id: 1, name: 'Eslabon Ovalado', image: '/cadenas/cadenas-01-eslabon-ovalado.png', category: 'Todos' },
+      { id: 1, name: 'Eslabon Ovalado', image: '/cadenas/cadenas-01-eslabon-ovalado.png', category: 'Todos', priceLevel: 'mid' },
       { id: 2, name: 'Cordon Delgado', image: '/cadenas/cadenas-02-cordon-delgado.png', category: 'Todos' },
       { id: 3, name: 'Eslabon Trenzado', image: '/cadenas/cadenas-03-eslabon-trenzado.png', category: 'Todos' },
-      { id: 4, name: 'Eslabon Abierto', image: '/cadenas/cadenas-04-eslabon-abierto.png', category: 'Todos' },
+      { id: 4, name: 'Eslabon Abierto', image: '/cadenas/cadenas-04-eslabon-abierto.png', category: 'Todos', priceLevel: 'entry' },
       { id: 5, name: 'Eslabon Fino', image: '/cadenas/cadenas-05-eslabon-fino.png', category: 'Todos' },
-      { id: 6, name: 'Cadena Mixta', image: '/cadenas/cadenas-06-cadena-mixta.png', category: 'Todos' },
+      { id: 6, name: 'Cadena Mixta', image: '/cadenas/cadenas-06-cadena-mixta.png', category: 'Todos', priceLevel: 'entry' },
       { id: 7, name: 'Cadena Plana', image: '/cadenas/cadenas-07-cadena-plana.png', category: 'Todos' },
       { id: 8, name: 'Eslabon Pulido', image: '/cadenas/cadenas-08-eslabon-pulido.png', category: 'Todos' },
       { id: 9, name: 'Cadena Delicada', image: '/cadenas/cadenas-09-cadena-delicada.png', category: 'Todos' },
@@ -70,13 +70,13 @@ const rawCollectionConfig = {
     description:
       'La categoria de pulseras muestra cada diseno de forma independiente y con lectura mas clara para asesorar mejor.',
     items: [
-      { id: 1, name: 'Eslabon Pave Doble', image: '/pulseras/pulseras-01-eslabon-pave-doble.png', category: 'Todos' },
+      { id: 1, name: 'Eslabon Pave Doble', image: '/pulseras/pulseras-01-eslabon-pave-doble.png', category: 'Todos', priceLevel: 'premium' },
       { id: 2, name: 'Cordon Clasico', image: '/pulseras/pulseras-02-cordon-clasico.png', category: 'Todos' },
       { id: 3, name: 'Media Eternidad Rigida', image: '/pulseras/pulseras-03-media-eternidad-rigida.png', category: 'Todos' },
       { id: 4, name: 'Cordon Brillante', image: '/pulseras/pulseras-04-cordon-brillante.png', category: 'Todos' },
       { id: 5, name: 'Eslabon Redondo', image: '/pulseras/pulseras-05-eslabon-redondo.png', category: 'Todos' },
       { id: 6, name: 'Cadena Gruesa', image: '/pulseras/pulseras-06-cadena-gruesa.png', category: 'Todos' },
-      { id: 7, name: 'Brazalete Rigido', image: '/pulseras/pulseras-07-brazalete-rigido.png', category: 'Todos' },
+      { id: 7, name: 'Brazalete Rigido', image: '/pulseras/pulseras-07-brazalete-rigido.png', category: 'Todos', priceLevel: 'premium' },
       { id: 8, name: 'Cordon Pave con Cierre', image: '/pulseras/pulseras-08-cordon-pave-cierre.png', category: 'Todos' },
       { id: 9, name: 'Pulsera de Esferas', image: '/pulseras/pulseras-09-pulsera-esferas.png', category: 'Todos' },
     ],
@@ -322,6 +322,41 @@ function inferGemstones(itemName) {
   return Array.from(new Set(gemstones));
 }
 
+function inferPriceLevel(itemName, protagonism, gemstones) {
+  const name = itemName.toLowerCase();
+  let level = 'mid';
+
+  // Piezas con muchas piedras o pave suelen ser más caras
+  if (name.includes('pave') || name.includes('halo') || name.includes('cluster')) level = 'premium';
+  if (name.includes('eternidad') || name.includes('media eternidad')) level = 'premium';
+
+  // Piezas statement o grandes
+  if (protagonism === 'Alto') level = level === 'premium' ? 'high' : 'premium';
+
+  // Piezas muy simples o delicadas
+  if (name.includes('lisas') || name.includes('delicada') || name.includes('topos') || name.includes('bolitas')) {
+    level = 'entry';
+  }
+
+  // Si tiene diamante o esmeralda de buena calidad, subir
+  if (gemstones.includes('diamante') || gemstones.includes('esmeralda')) {
+    if (level === 'entry') level = 'mid';
+    if (level === 'mid') level = 'premium';
+  }
+
+  // Piezas con perla suelen ser más accesibles
+  if (gemstones.includes('perla') && !name.includes('statement')) {
+    if (level === 'premium') level = 'mid';
+  }
+
+  // Piezas muy básicas de cadena/arete
+  if ((name.includes('eslabon') || name.includes('cordon')) && protagonism !== 'Alto') {
+    level = 'entry';
+  }
+
+  return level;
+}
+
 function buildSummary(collection, itemName, idealFor) {
   return `${itemName} pertenece a la coleccion ${collection.title.toLowerCase()} y mantiene un lenguaje elegante, artesanal y de joyeria fina. ${idealFor}`;
 }
@@ -346,6 +381,7 @@ function enrichItem(collectionSlug, collection, item) {
   const gemstones = inferGemstones(item.name);
   const reference = createReference(collectionSlug, item.id);
   const summary = buildSummary(collection, item.name, idealFor);
+  const priceLevel = inferPriceLevel(item.name, protagonism, gemstones);
 
   return {
     ...item,
@@ -367,6 +403,7 @@ function enrichItem(collectionSlug, collection, item) {
     combinesWith,
     summary,
     prompt: buildConfiguratorPrompt(collection, item.name),
+    priceLevel, // entry | mid | premium | high
   };
 }
 

@@ -72,6 +72,9 @@ function createMemory() {
     lastIntent: '',
     lastCollectionSlug: '',
     lastProductReference: '',
+    // Nuevos campos para restricciones fuertes
+    avoidedFeatures: [],
+    budgetMaxCop: null,
   };
 }
 
@@ -197,6 +200,10 @@ function MemoryPills({ memory }) {
     memory.gemstone ? `Detalle: ${memory.gemstone}` : '',
     memory.budget ? `Presupuesto: ${memory.budget}` : '',
   ].filter(Boolean);
+
+  if (Array.isArray(memory.avoidedFeatures) && memory.avoidedFeatures.length > 0) {
+    items.push(`Evita: ${memory.avoidedFeatures.join(', ')}`);
+  }
 
   if (!items.length) {
     return null;
@@ -1545,6 +1552,27 @@ const AtelierAssistantV2 = () => {
             </header>
 
             <div className="assistant-v2-body">
+              {memory && (memory.avoidedFeatures?.length > 0 || memory.budget || memory.budgetMaxCop) && (
+                <div style={{
+                  background: '#f8f1e9',
+                  border: '1px solid #d4b89e',
+                  borderRadius: '6px',
+                  padding: '8px 12px',
+                  fontSize: '12px',
+                  color: '#5c4636',
+                  marginBottom: '12px',
+                  lineHeight: '1.4'
+                }}>
+                  <strong>Lo que recuerdo de ti:</strong><br />
+                  {memory.budget ? `• Presupuesto: ${memory.budget}.` : ''}
+                  {memory.avoidedFeatures?.length > 0 ? ` • Evitas: ${memory.avoidedFeatures.join(', ')}.` : ''}
+                  {memory.budgetMaxCop ? ` (Máximo aprox. ${memory.budgetMaxCop.toLocaleString('es-CO')} COP)` : ''}
+                  <div style={{ fontSize: '10px', marginTop: '4px', opacity: 0.7 }}>
+                    (Puedes decir "olvídate de lo anterior" si quieres empezar de nuevo)
+                  </div>
+                </div>
+              )}
+
               {isVoiceMode ? (
                 <div className={`assistant-v2-call-card ${isListening ? 'is-listening' : ''} ${isSpeaking ? 'is-speaking' : ''} ${isRealtimeVoice ? 'is-realtime' : ''}`}>
                   <div className="assistant-v2-call-orb" aria-hidden="true">

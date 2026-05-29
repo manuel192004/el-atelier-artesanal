@@ -7,6 +7,7 @@ const {
   buildValuationEstimate,
   buildValuationMessage,
   buildValuationQuickReplies,
+  parseBudgetToMaxCop,
 } = require('./valuation');
 
 const DETAIL_PROMPTS = {
@@ -82,8 +83,15 @@ function sanitizeMemory(memory) {
       lastIntent: '',
       lastCollectionSlug: '',
       lastProductReference: '',
+      // Nuevos campos para restricciones
+      avoidedFeatures: [],
+      budgetMaxCop: null,
     };
   }
+
+  const avoided = Array.isArray(memory.avoidedFeatures)
+    ? memory.avoidedFeatures.map((f) => sanitizeText(f, 60)).filter(Boolean)
+    : [];
 
   return {
     occasion: sanitizeText(memory.occasion, 80),
@@ -97,6 +105,8 @@ function sanitizeMemory(memory) {
     lastIntent: sanitizeText(memory.lastIntent, 80),
     lastCollectionSlug: sanitizeText(memory.lastCollectionSlug, 80),
     lastProductReference: sanitizeText(memory.lastProductReference, 80),
+    avoidedFeatures: avoided,
+    budgetMaxCop: Number.isFinite(memory.budgetMaxCop) ? memory.budgetMaxCop : null,
   };
 }
 
@@ -202,6 +212,25 @@ function detectBudget(text) {
   return '';
 }
 
+function detectAvoidedFeatures(text) {
+  const normalized = normalizeText(text);
+  const avoided = [];
+
+  if (/(no.*(pave|brillante|mucho brillo|statement|llamativo))/i.test(normalized)) avoided.push('pave');
+  if (/(no.*(diamante|brillantes grandes|muchos diamantes))/i.test(normalized)) avoided.push('diamantes grandes');
+  if (/(no.*(amarillo|dorado))/i.test(normalized) && !normalized.includes('oro amarillo')) avoided.push('oro amarillo');
+  if (/(prefiero.*(discreto|delicado|minimal|sobrio|simple))/i.test(normalized)) avoided.push('estilo llamativo');
+  if (/(no.*(grueso|gruesa|pesado|pesada|voluminoso))/i.test(normalized)) avoided.push('piezas pesadas');
+  if (/(no.*(moderno|contemporaneo|geometrico))/i.test(normalized)) avoided.push('estilo moderno');
+  if (/(evito|evitar|odio|no quiero|nada de|sin|rechazo).*(pave|diamante|brillo|amarillo|grueso)/i.test(normalized)) {
+    // Captura genérica adicional
+    if (normalized.includes('pave')) avoided.push('pave');
+    if (normalized.includes('diamante')) avoided.push('diamantes grandes');
+  }
+
+  return Array.from(new Set(avoided));
+}
+
 function detectStyle(text) {
   if (/(minimalista|limpio|sobrio|sencillo|discreto)/.test(text)) return 'minimalista';
   if (/(romantico|romantica|romanticos|romanticas|delicado|delicada|delicados|delicadas|floral|perla|femenino|femenina)/.test(text)) return 'romantico';
@@ -240,6 +269,28 @@ function detectDeadline(text) {
   return '';
 }
 
+function detectRefinement(text) {
+  const normalized = normalizeText(text);
+
+  if (/(mas grande|mas grande|agrandar|mas grande|mas amplio|mas pesado|mas grueso|mas voluminoso)/.test(normalized)) return 'larger';
+  if (/(mas pequeno|mas chico|mas delgado|mas fino|mas delicado|mas ligero)/.test(normalized)) return 'smaller';
+  if (/(mas discreto|mas sobrio|menos brillante|mas minimal|mas sencillo)/.test(normalized)) return 'more_discreet';
+  if (/(mas brillante|mas llamativo|mas grande|con mas brillo|con pave)/.test(normalized)) return 'more_shiny';
+  if (/(mas barato|mas economico|opcion mas baja|menos presupuesto)/.test(normalized)) return 'cheaper';
+  if (/(otra version|otra opcion|algo diferente|otra pieza|otro estilo|en otro metal)/.test(normalized)) return 'different_version';
+  if (/(mas elegante|mas fino|mas premium|mas refinado)/.test(normalized)) return 'more_elegant';
+
+  return '';
+}
+
+function detectStrongReset(text) {
+  const normalized = normalizeText(text);
+  if (/(olvida|olvidate|borra|borrar|empecemos de nuevo|nuevo|reset|deja lo anterior|no lo anterior)/.test(normalized)) {
+    return true;
+  }
+  return false;
+}
+
 function detectIntent(text) {
   if (/(whatsapp|humana|asesora|persona real)/.test(text)) return 'handoff_whatsapp';
   if (/(cita|agendar|agenda|asesoria|visita|reservar)/.test(text)) return 'schedule_appointment';
@@ -252,43 +303,70 @@ function detectIntent(text) {
 
 function getCourtesyType(text) {
   const normalized = normalizeText(text);
-  const hasShoppingSignal = /(precio|cotiz|cuanto cuesta|cuanto vale|valor|valora|oro|plata|platino|paladio|cobre|aluminio|diamante|esmeralda|zafiro|rubi|perla|gema|piedra|anillo|arete|aretes|cadena|collar|pulsera|joya|pieza|regalo|comprar|quiero|busco|necesito|ver|mostrar|catalogo|coleccion|configurador|cita|whatsapp)/.test(normalized);
 
-  if (!normalized) return '';
-  if (!hasShoppingSignal && /^(hola|buenas|buenos dias|buen dia|buenas tardes|buenas noches)?\s*(como estas|que tal|como vas|como te va|todo bien)(\s*(todo bien|como estas|que tal))?[?!. ]*$/.test(normalized)) return 'wellbeing';
-  if (/^(gracias|muchas gracias|mil gracias|super gracias|te agradezco|ok gracias|listo gracias|perfecto gracias|vale gracias)[!. ]*$/.test(normalized)) return 'thanks';
-  if (/^(como estas|como estas orvia|que tal|como vas|como te va|todo bien|que cuentas)[?!. ]*$/.test(normalized)) return 'wellbeing';
-  if (/^(perfecto|listo|ok|okay|vale|de acuerdo|me parece bien|super|excelente|esta bien)[!. ]*$/.test(normalized)) return 'acknowledge';
-  if (/^(adios|chao|hasta luego|nos vemos|bye)[!. ]*$/.test(normalized)) return 'goodbye';
-  if (/^(me gusta|me encanto|muy bonito|que bonito|esta hermoso|esta linda|esta precioso)[!. ]*$/.test(normalized)) return 'compliment';
+  // Saludos puros o con pregunta cordial
+  if (/^(hola|hola hola|buenos dias|buen dia|buenas tardes|buenas noches|hey|hello|buenas)\b[!. ]*$/.test(normalized)) return 'greeting';
+  if (/^(buenos dias|buen dia|buenas tardes|buenas noches)?\s*(como estas|que tal|como vas|como te va|todo bien|como andas)(\s*(tu|orvia|todo bien|como estas))?/.test(normalized)) return 'wellbeing';
+
+  // Agradecimientos
+  if (/^(gracias|muchas gracias|mil gracias|super gracias|te agradezco|ok gracias|listo gracias|perfecto gracias|vale gracias|gracias por todo)[!. ]*$/.test(normalized)) return 'thanks';
+
+  // Reconocimientos
+  if (/^(perfecto|listo|ok|okay|vale|de acuerdo|me parece bien|super|excelente|esta bien|genial|me gusta|bueno)[!. ]*$/.test(normalized)) return 'acknowledge';
+
+  // Despedidas
+  if (/^(adios|chao|hasta luego|nos vemos|bye|cuídate|que te vaya bien)[!. ]*$/.test(normalized)) return 'goodbye';
+
+  // Elogios
+  if (/(me gusta|me encanto|muy bonito|que bonito|esta hermoso|esta linda|esta precioso|me fascina|queda precioso|es hermoso)/.test(normalized)) return 'compliment';
+
+  // Preguntas sobre ella misma o conversación ligera
+  if (/(como estas|que tal|como vas|todo bien|que cuentas|que haces|como te llamas)/.test(normalized)) return 'wellbeing';
+
   return '';
 }
 
 function buildCourtesyMessage(courtesyType, extracted = {}) {
   const memoryHint = extracted.jewelryType
-    ? ` Tengo presente lo del ${extracted.jewelryType}; cuando quieras lo retomamos sin empezar de cero.`
+    ? ` Tengo presente lo del ${extracted.jewelryType}.`
     : extracted.valuationSummary
-    ? ` Tengo presente la última valoración: ${extracted.valuationSummary}.`
+    ? ` Recuerdo la última valoración que hicimos.`
     : '';
 
+  const hasContext = extracted.jewelryType || extracted.valuationSummary || extracted.metal || extracted.style;
+
+  if (courtesyType === 'greeting') {
+    const greetings = [
+      `Hola. Qué gusto saludarte. ¿En qué te puedo ayudar hoy?${hasContext ? ' Si quieres retomamos lo que veníamos hablando.' : ''}`,
+      `Buenos días. Estoy aquí para ayudarte con gusto. ¿Buscas algo en particular o solo quieres explorar?`,
+      `Hola, ¿qué tal? Me alegra que estés aquí. Cuéntame, ¿qué te trae por Orviane hoy?`
+    ];
+    return greetings[Math.floor(Math.random() * greetings.length)];
+  }
+
   if (courtesyType === 'thanks') {
-    return `Con mucho gusto. Estoy aquí para ayudarte a decidir con calma, no para llenarte de opciones.${memoryHint}`;
+    return `Con mucho gusto. Me alegra poder ayudarte.${memoryHint} Estoy aquí cuando quieras seguir mirando opciones, ajustar algo o agendar una cita.`;
   }
 
   if (courtesyType === 'wellbeing') {
-    return `Estoy muy bien, gracias por preguntar. Lista para ayudarte a elegir algo bonito, comparar materiales o aterrizar una idea sin enredarte.${memoryHint}`;
+    const wellbeingReplies = [
+      `Muy bien, gracias por preguntar. Lista y con ganas de ayudarte a encontrar algo bonito.${memoryHint}`,
+      `Estoy excelente, gracias. ¿Y tú cómo estás? Cuéntame, ¿en qué te puedo orientar hoy con las joyas?`,
+      `Muy bien, por aquí todo en orden. Me encanta poder conversar contigo. ¿Qué te gustaría ver o ajustar hoy?`
+    ];
+    return wellbeingReplies[Math.floor(Math.random() * wellbeingReplies.length)];
   }
 
   if (courtesyType === 'acknowledge') {
-    return `Perfecto. Seguimos con calma; cuando quieras puedo comparar opciones, valorar una pieza o llevarte a una referencia concreta.${memoryHint}`;
+    return `Perfecto. ${memoryHint} Cuando quieras seguimos. ¿Quieres que comparemos opciones, miremos otra pieza o afinemos algo de lo que ya vimos?`;
   }
 
   if (courtesyType === 'goodbye') {
-    return 'Gracias por pasar por Orviane. Cuando quieras retomamos desde joya, ocasión, material o presupuesto.';
+    return `Gracias por tu tiempo. Fue un gusto hablar contigo. Cuando quieras, aquí estoy para seguir ayudándote con tu joya. Que tengas un excelente día.`;
   }
 
   if (courtesyType === 'compliment') {
-    return 'Qué bueno que te gustó. Si quieres, puedo ayudarte a buscar algo con esa misma lectura o comparar una versión más discreta, más brillante o más personalizada.';
+    return `¡Qué alegría que te haya gustado! ${memoryHint} Si quieres, podemos buscar algo similar pero en otro metal, más discreto, más brillante o totalmente diferente. ¿Qué te parece?`;
   }
 
   return '';
@@ -419,7 +497,7 @@ function mergeQuickReplies(...groups) {
 }
 
 function buildKnownDetails(extracted) {
-  return [
+  const base = [
     extracted.occasion ? `Ocasión: ${extracted.occasion}` : '',
     extracted.jewelryType ? `Joya: ${extracted.jewelryType}` : '',
     extracted.style ? `Estilo: ${extracted.style}` : '',
@@ -427,6 +505,12 @@ function buildKnownDetails(extracted) {
     extracted.gemstone ? `Piedra: ${extracted.gemstone}` : '',
     extracted.budget ? `Presupuesto: ${extracted.budget}` : '',
   ].filter(Boolean);
+
+  if (Array.isArray(extracted.avoidedFeatures) && extracted.avoidedFeatures.length > 0) {
+    base.push(`Evita: ${extracted.avoidedFeatures.join(', ')}`);
+  }
+
+  return base;
 }
 
 function buildValuationMemorySummary(valuation) {
@@ -559,6 +643,17 @@ function buildGuidanceCard({ suggestedAction, collectionSlug, product, extracted
 }
 
 function recommendProduct(extracted, collectionSlug) {
+  const avoided = Array.isArray(extracted.avoidedFeatures) ? extracted.avoidedFeatures : [];
+  const budgetMax = extracted.budgetMaxCop || null;
+
+  // Mapeo aproximado de priceLevel a rangos en COP
+  const priceRange = {
+    entry: [250000, 650000],
+    mid: [550000, 1200000],
+    premium: [950000, 2500000],
+    high: [2200000, 5500000],
+  };
+
   const scored = PRODUCT_CATALOG
     .map((product) => {
       let score = 0;
@@ -570,11 +665,44 @@ function recommendProduct(extracted, collectionSlug) {
       if (extracted.metal && product.metal === extracted.metal) score += 2;
       if (extracted.gemstone && product.gemstones.includes(extracted.gemstone)) score += 1;
 
+      // Penalización fuerte por restricciones negativas
+      const productText = `${product.name} ${product.displayType || ''} ${product.styleLabel || ''}`.toLowerCase();
+      let penalty = 0;
+
+      avoided.forEach((feature) => {
+        if (feature.includes('pave') && (productText.includes('pave') || productText.includes('brillante'))) penalty += 8;
+        if (feature.includes('diamante') && product.gemstones.includes('diamante')) penalty += 7;
+        if (feature.includes('amarillo') && product.metal.includes('amarillo')) penalty += 5;
+        if (feature.includes('llamativo') && (product.protagonism === 'Alto' || productText.includes('statement'))) penalty += 6;
+        if (feature.includes('pesado') && (product.protagonism === 'Alto' || productText.includes('grues'))) penalty += 4;
+      });
+
+      score -= penalty;
+
+      // Enforcement real de presupuesto usando priceLevel
+      if (budgetMax && product.priceLevel) {
+        const [low, high] = priceRange[product.priceLevel] || priceRange.mid;
+
+        if (high > budgetMax * 1.4) {
+          penalty += 15; // Fuertemente penalizar si excede bastante el presupuesto
+        } else if (high > budgetMax) {
+          penalty += 9;
+        }
+
+        // Si el presupuesto es muy bajo, penalizar todo lo que no sea entry
+        if (budgetMax < 600000 && product.priceLevel !== 'entry') {
+          penalty += 12;
+        }
+      }
+
+      score -= penalty;
+
       return { product, score };
     })
     .sort((left, right) => right.score - left.score);
 
-  return scored[0]?.score > 2 ? scored[0].product : null;
+  // Solo devolver producto si el score es positivo después de penalizaciones
+  return scored[0] && scored[0].score > 0 ? scored[0].product : null;
 }
 
 function buildProductRecommendationMessage(product, extracted, isMothersDayIntent) {
@@ -676,7 +804,26 @@ function buildQuickReplies(intent, collectionSlug, suggestedAction, missingDetai
 
 function buildReplyFromSignals({ message, conversation, memory, clientContext, accountContext, profile }) {
   const safeConversation = sanitizeConversation(conversation);
-  const safeMemory = sanitizeMemory(memory);
+  let safeMemory = sanitizeMemory(memory);
+
+  const isStrongReset = detectStrongReset(message);
+
+  // Si el usuario dice algo como "olvídate de lo anterior", limpiamos bastante memoria
+  if (isStrongReset) {
+    safeMemory = {
+      ...safeMemory,
+      avoidedFeatures: [],
+      budget: '',
+      budgetMaxCop: null,
+      lastProductReference: '',
+      refinement: '',
+      jewelryType: '',
+      metal: '',
+      style: '',
+      gemstone: '',
+    };
+  }
+
   const safeClientContext = sanitizeClientContext(clientContext);
   const safeAccountContext = sanitizeAccountContext(accountContext);
   const currentMessage = normalizeText(message);
@@ -688,14 +835,26 @@ function buildReplyFromSignals({ message, conversation, memory, clientContext, a
   );
   const phraseMatch = classifyWithPhraseBank(message);
   const phraseSignals = phraseMatch.score >= 0.78 ? phraseMatch.signals || {} : {};
+  const newAvoided = detectAvoidedFeatures(userSignalText);
+  const mergedAvoided = Array.from(new Set([
+    ...(safeMemory.avoidedFeatures || []),
+    ...newAvoided,
+  ]));
+
+  const rawBudget = detectBudget(userSignalText) || safeMemory.budget;
+  const parsedBudgetMax = parseBudgetToMaxCop(rawBudget) || safeMemory.budgetMaxCop || null;
+
   const extracted = {
     occasion: detectOccasion(userSignalText) || phraseSignals.occasion || safeMemory.occasion,
     jewelryType: detectJewelryType(userSignalText) || phraseSignals.jewelryType || safeMemory.jewelryType,
-    budget: detectBudget(userSignalText) || safeMemory.budget,
+    budget: rawBudget,
     style: detectStyle(userSignalText) || phraseSignals.style || safeMemory.style,
     metal: detectMetal(userSignalText) || phraseSignals.metal || safeMemory.metal,
     gemstone: detectGemstone(userSignalText) || phraseSignals.gemstone || safeMemory.gemstone,
     deadline: detectDeadline(userSignalText) || safeMemory.deadline,
+    refinement: detectRefinement(userSignalText),
+    avoidedFeatures: mergedAvoided,
+    budgetMaxCop: parsedBudgetMax,
   };
   const ruleIntent = detectIntent(currentMessage);
   const intent = ruleIntent !== 'unknown'
@@ -725,13 +884,19 @@ function buildReplyFromSignals({ message, conversation, memory, clientContext, a
     label: 'Seguir conversando',
   });
 
+  // Manejo especial de reset fuerte (debe ir después de declarar las variables)
+  if (isStrongReset) {
+    assistantMessage = 'Entendido, borramos lo anterior. ¿Qué estás buscando ahora? Puedo ayudarte desde cero.';
+    suggestedAction = buildAction('none', { label: 'Empezar de nuevo' });
+  }
+
   if (courtesyType) {
     assistantMessage = buildCourtesyMessage(courtesyType, extracted);
     suggestedAction = buildAction('none', {
       label: 'Seguir conversando',
     });
   } else if (greetingOnly) {
-    assistantMessage = 'Hola. Puedo ayudarte a elegir una joya, ver colecciones, personalizar una idea o agendar una asesoría. Si quieres, empezamos por tipo de joya, ocasión o estilo.';
+    assistantMessage = 'Hola. Qué gusto que estés aquí. Puedo ayudarte a elegir una joya, ver colecciones, crear algo personalizado en el configurador o agendar una asesoría. ¿Qué te llama más la atención hoy?';
     suggestedAction = buildAction('none', {
       label: 'Explorar opciones',
     });
@@ -766,7 +931,7 @@ function buildReplyFromSignals({ message, conversation, memory, clientContext, a
         .join(' '),
     });
   } else if (intent === 'quote_request') {
-    assistantMessage = buildValuationMessage(valuation) || (product
+    assistantMessage = buildValuationMessage(valuation, extracted.budget) || (product
           ? `Para cotizar con precisión, usemos la referencia ${product.name} (${product.reference}) y llevemos ese contexto a WhatsApp.`
           : 'Para cotizar bien necesito al menos tipo de joya, material y peso aproximado. Si ya tienes eso, te doy un rango preliminar antes de llevarlo a WhatsApp.');
     suggestedAction = product
@@ -796,6 +961,30 @@ function buildReplyFromSignals({ message, conversation, memory, clientContext, a
       reason: 'Pasar de idea a propuesta editable.',
       promptHint: buildConfiguratorHint(extracted),
     });
+
+  // Manejo de refinamientos (más grande, más discreto, otra versión, etc.)
+  } else if (extracted.refinement) {
+    const refinementMap = {
+      larger: 'entiendo que quieres algo más grande o con más presencia',
+      smaller: 'entiendo que prefieres algo más delicado o ligero',
+      more_discreet: 'entiendo que buscas algo más discreto y sobrio',
+      more_shiny: 'entiendo que te gustaría más brillo o protagonismo',
+      cheaper: 'entiendo que buscas una opción más accesible',
+      different_version: 'entiendo que quieres ver otra versión o estilo',
+      more_elegant: 'entiendo que buscas algo más refinado y elegante',
+    };
+
+    const refinementText = refinementMap[extracted.refinement] || 'entiendo el ajuste que quieres hacer';
+
+    const previousRef = safeMemory.lastProductReference;
+
+    assistantMessage = `${refinementText}. Puedo mostrarte opciones diferentes a ${previousRef || 'la anterior'}, abrir el configurador para ajustar el diseño, o sugerirte alternativas concretas. ¿Qué prefieres?`;
+    suggestedAction = buildAction('open_configurator', {
+      label: 'Abrir configurador para ajustar',
+      reason: previousRef ? `Cambio respecto a ${previousRef}` : 'Ajustar según lo pedido',
+      promptHint: buildConfiguratorHint(extracted),
+    });
+
   } else if (product) {
     assistantMessage = buildProductRecommendationMessage(product, extracted, isMothersDayIntent);
     suggestedAction = buildAction('open_product', {
@@ -821,9 +1010,19 @@ function buildReplyFromSignals({ message, conversation, memory, clientContext, a
       reason: 'Es la colección más alineada con lo que contaste.',
     });
   } else {
-    assistantMessage = extracted.style && !extracted.jewelryType
-      ? `Ya tengo una dirección ${describeStyle(extracted.style)}. Para recomendar mejor, dime si prefieres anillo, aretes, cadena o pulsera.`
-      : 'Para orientarte mejor dime al menos una de estas tres cosas: ocasión, tipo de joya o estilo.';
+    // Respuesta más inteligente y proactiva cuando falta información
+    if (extracted.style && !extracted.jewelryType) {
+      assistantMessage = `Ya tengo una dirección ${describeStyle(extracted.style)}. Para recomendar mejor, dime si prefieres anillo, aretes, cadena o pulsera.`;
+    } else if (extracted.jewelryType) {
+      assistantMessage = `Para un ${extracted.jewelryType}, puedo orientarte mejor si me dices la ocasión (compromiso, regalo, uso diario...) o el estilo que buscas. ¿Quieres que te muestre opciones de la colección o prefieres que vayamos al configurador?`;
+    } else if (extracted.occasion) {
+      assistantMessage = `Para ${extracted.occasion}, las piezas más recomendadas suelen ser anillos o aretes. ¿Quieres que te muestre las colecciones más adecuadas o prefieres describir más cómo te la imaginas?`;
+    } else if (extracted.budget || extracted.metal || extracted.gemstone) {
+      assistantMessage = `Con lo que me has contado ya tengo una idea. ¿Quieres que te proponga algunas referencias concretas o prefieres que afinemos más detalles primero?`;
+    } else {
+      // Último recurso - más cálido que antes
+      assistantMessage = 'Con gusto te ayudo. Para darte recomendaciones más precisas, ¿buscas algo para una ocasión especial, para uso diario, o prefieres que te muestre las colecciones para que explores?';
+    }
   }
 
   const conciergeLead = buildConciergeLead(safeAccountContext, profile);

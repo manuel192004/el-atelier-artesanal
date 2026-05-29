@@ -36,8 +36,9 @@ services:
     volumes:
       - ./backend:/app
       - backend_node_modules:/app/node_modules
-      - ${GOOGLE_APPLICATION_CREDENTIALS_HOST}:/app/secrets/gcp-service-account.json:ro
-    command: npm run dev
+      # Google credentials volume temporarily disabled (caused path errors on Mac)
+      # - ${GOOGLE_APPLICATION_CREDENTIALS_HOST}:/app/secrets/gcp-service-account.json:ro
+    command: node src/server.js
 
   frontend:
     build:

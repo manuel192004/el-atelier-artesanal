@@ -31,3 +31,17 @@ backend/db/*.db
 tmp-*.png
 Thumbs.db
 Desktop.ini
+
+# macOS
+.DS_Store
+**/.DS_Store
+
+# IDE / Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Misc
+*.log
+npm-debug.log*

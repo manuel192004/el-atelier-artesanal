@@ -76,6 +76,7 @@ export default function PageMeta({
   path = '/',
   image = DEFAULT_IMAGE,
   type = 'website',
+  noIndex = false,
 }) {
   useEffect(() => {
     if (typeof document === 'undefined' || typeof window === 'undefined') {
@@ -101,7 +102,8 @@ export default function PageMeta({
     upsertMetaByProperty('og:image', imageUrl);
     upsertMetaByProperty('og:type', type);
     upsertLink('canonical', canonicalUrl);
-  }, [description, image, path, title, type]);
+    upsertMetaByName('robots', noIndex ? 'noindex,nofollow' : 'index,follow');
+  }, [description, image, noIndex, path, title, type]);
 
   return null;
 }

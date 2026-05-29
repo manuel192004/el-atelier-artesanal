@@ -31,6 +31,7 @@ function normalizeUser(record) {
     whatsapp: String(record.whatsapp || '').trim(),
     passwordHash: String(record.passwordHash || ''),
     googleSub: String(record.googleSub || '').trim(),
+    role: String(record.role || 'customer').trim() || 'customer',
   };
 }
 
@@ -44,7 +45,7 @@ async function mirrorUserToFile(user) {
 
 async function migrateLegacyUserIfNeeded(legacyUser) {
   if (!legacyUser || !isDatabaseReady()) {
-    return legacyUser || null;
+    return legacyUser ? normalizeUser(legacyUser) : null;
   }
 
   const migrated = await upsertUserInDatabase(normalizeUser(legacyUser));
@@ -67,7 +68,8 @@ async function findUserByEmail(email) {
     return null;
   }
 
-  return findUserByEmailInFile(email);
+  const fileUser = await findUserByEmailInFile(email);
+  return fileUser ? normalizeUser(fileUser) : null;
 }
 
 async function findUserByGoogleSub(googleSub) {
@@ -85,7 +87,8 @@ async function findUserByGoogleSub(googleSub) {
     return null;
   }
 
-  return findUserByGoogleSubInFile(googleSub);
+  const fileUser = await findUserByGoogleSubInFile(googleSub);
+  return fileUser ? normalizeUser(fileUser) : null;
 }
 
 async function findUserById(userId) {
@@ -103,7 +106,8 @@ async function findUserById(userId) {
     return null;
   }
 
-  return findUserByIdInFile(userId);
+  const fileUser = await findUserByIdInFile(userId);
+  return fileUser ? normalizeUser(fileUser) : null;
 }
 
 async function createUser(record) {

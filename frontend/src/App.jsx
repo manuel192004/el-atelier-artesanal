@@ -7,6 +7,8 @@ import AtelierPage from './pages/AtelierPage';
 import ConfiguratorPage from './pages/ConfiguratorPage';
 import ColeccionesPage from './pages/ColeccionesPage';
 import AccountPage from './pages/AccountPage';
+import OperationsPage from './pages/OperationsPage';
+import LinktreePage from './pages/LinktreePage';
 
 function App() {
   return (
@@ -25,6 +27,8 @@ function App() {
             <Route path="/colecciones" element={<ColeccionesPage />} />
             <Route path="/colecciones/:categoria" element={<ColeccionesPage />} />
             <Route path="/cuenta" element={<AccountPage />} />
+            <Route path="/operaciones" element={<OperationsPage />} />
+            <Route path="/linktree" element={<LinktreePage />} />
           </Routes>
         </main>
         <Footer />

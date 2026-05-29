@@ -1,5 +1,6 @@
 const { COLLECTION_COPY, PRODUCT_CATALOG } = require('./catalog');
 const { createAssistantV2RulesReply } = require('./service');
+const { buildCurrencySafetyBlock } = require('./valuation');
 
 const ALLOWED_ACTION_TYPES = new Set([
   'none',
@@ -78,18 +79,16 @@ function extractCandidateText(payload) {
 
 function buildSystemInstruction() {
   return [
-    'Eres Orvia, asesora digital de Orviane.',
-    'Tu unico dominio es joyeria fina, asesorias de Orviane, colecciones, configurador, citas, WhatsApp y piezas del catalogo dado.',
-    'No respondas como asistente general. Si el usuario pide algo ajeno a joyeria o a Orviane, redirigelo con amabilidad al contexto de joyas.',
-    'No inventes precios exactos, tiempos garantizados, stock, politicas, materiales no confirmados ni referencias inexistentes.',
-    'Si el usuario solo dice gracias, cómo estás, perfecto u otra cortesía, responde cordialmente sin pedir ocasión, tipo de joya ni estilo.',
-    'Si pide precio de oro, plata, platino, paladio, cobre o aluminio, responde el valor por gramo disponible en la propuesta base. Di "24 quilates", "18 quilates" o "14 quilates"; nunca digas "18k" en el mensaje final.',
-    'Si pide precio de diamante, esmeralda, zafiro, rubí o perla, usa la propuesta base por quilate o por pieza y explica que calidad, certificado, tratamiento y origen cambian mucho el rango.',
-    'Si la propuesta base trae una valoración preliminar, úsala como base y no inventes rangos distintos.',
-    'Solo puedes sugerir colecciones, productos y acciones permitidas en el contexto recibido.',
-    'La respuesta debe ser breve, comercial, clara y util, en espanol neutro.',
-    'Debes devolver un JSON valido y nada mas.',
-  ].join(' ');
+    'Eres Orvia, asesora digital de alta joyería de Orviane. Hablas como una mujer cálida, elegante y experta.',
+    'Tu tono es natural y humano. Evita respuestas cortas, genéricas o repetitivas.',
+    'Sé proactivo: usa el contexto que ya tienes del usuario en vez de siempre pedir "ocasión, tipo o estilo".',
+    'Si el usuario pide un ajuste (más grande, más discreto, etc.), reconoce el cambio y ofrece opciones concretas.',
+    'Mantén el contexto de turnos anteriores (joya mencionada, metal, presupuesto, restricciones).',
+    'Respeta siempre avoidedFeatures y presupuesto.',
+    'Nunca inventes precios exactos.',
+    'Tu dominio es joyería fina de Orviane.',
+    'Devuelve siempre JSON válido.',
+  ].join('\n');
 }
 
 function buildCatalogDigest() {
@@ -122,10 +121,22 @@ function buildConversationDigest(conversation) {
     return 'Sin historial previo.';
   }
 
-  return conversation
-    .slice(-6)
-    .map((entry) => `${entry.role === 'assistant' ? 'Orvia' : 'Cliente'}: ${sanitizeText(entry.text, 220)}`)
+  const recent = conversation.slice(-10);
+  let digest = recent
+    .map((entry) => `${entry.role === 'assistant' ? 'Orvia' : 'Cliente'}: ${sanitizeText(entry.text, 280)}`)
     .join('\n');
+
+  const lastUserMessages = recent
+    .filter(e => e.role === 'user')
+    .slice(-3)
+    .map(e => sanitizeText(e.text, 120))
+    .join(' | ');
+
+  if (lastUserMessages) {
+    digest += `\n\n[Resumen de lo que el cliente ha pedido recientemente]: ${lastUserMessages}`;
+  }
+
+  return digest;
 }
 
 function buildAccountDigest(accountContext) {
@@ -184,8 +195,16 @@ function buildUserPrompt(payload, rulesReply) {
           }
         : null,
     }),
-    'Historial reciente:',
+    'Historial reciente (recuerda todo esto para mantener coherencia):',
     buildConversationDigest(payload.conversation),
+    'RESUMEN DE RESTRICCIONES Y CONTEXTO ACTUAL DEL CLIENTE (nunca las contradigas):',
+    JSON.stringify({
+      avoidedFeatures: sanitizeMemory(payload.memory).avoidedFeatures || [],
+      budgetMaxCop: sanitizeMemory(payload.memory).budgetMaxCop || null,
+      currentBudgetText: sanitizeMemory(payload.memory).budget || null,
+      lastJewelryType: sanitizeMemory(payload.memory).jewelryType || null,
+      lastRefinement: sanitizeMemory(payload.memory).refinement || null,
+    }),
     'Contexto de cuenta:',
     buildAccountDigest(payload.accountContext),
     'Catalogo permitido:',
@@ -200,6 +219,13 @@ function buildUserPrompt(payload, rulesReply) {
       diagnostics: rulesReply.diagnostics,
       guidanceCard: rulesReply.guidanceCard,
     }),
+    'RESTRICCIONES ACTIVAS DEL USUARIO (CUMPLE ESTO OBLIGATORIAMENTE):',
+    JSON.stringify({
+      avoidedFeatures: sanitizeMemory(payload.memory).avoidedFeatures || [],
+      budgetMaxCop: sanitizeMemory(payload.memory).budgetMaxCop || null,
+      budgetText: sanitizeMemory(payload.memory).budget || '',
+    }),
+    'REGLA CRÍTICA: Nunca recomiendes algo que esté en avoidedFeatures. Si hay budgetMaxCop, respétalo o avisa claramente cuando algo lo supere.',
     'Devuelve SIEMPRE JSON con esta estructura exacta:',
     JSON.stringify({
       assistantMessage: 'string breve',
@@ -393,6 +419,34 @@ function sanitizeAssistantMessage(message, fallbackMessage, detectedIntent) {
   return nextMessage || fallbackMessage;
 }
 
+function forceColombianPesos(text) {
+  if (!text) return text;
+  let fixed = text;
+  fixed = fixed.replace(/\b(dólares|dolares|dólar|dolar|USD|US\s*dollars?)\b/gi, 'pesos colombianos');
+  fixed = fixed.replace(/\b(dólar americano|dolar americano)\b/gi, 'peso colombiano');
+  if (/\$\s*[\d.,]/.test(fixed) && !/pesos colombianos|COP|pesos colombianos/i.test(fixed)) {
+    fixed = fixed.replace(/(\$\s*[\d.,]+(?:\s*[\d.,]+)?)/g, '$1 pesos colombianos');
+  }
+  return fixed;
+}
+
+function enforceUserRestrictions(text, rulesReply) {
+  if (!text) return text;
+  const restrictions = rulesReply?.memory || {};
+  const avoided = Array.isArray(restrictions.avoidedFeatures) ? restrictions.avoidedFeatures : [];
+  let result = text;
+
+  if (avoided.length > 0) {
+    const lower = result.toLowerCase();
+    avoided.forEach(feature => {
+      if (feature.includes('pave') && (lower.includes('pave') || lower.includes('brillante'))) {
+        result += ' (Nota: el cliente prefirió evitar estilos muy brillantes).';
+      }
+    });
+  }
+  return result;
+}
+
 function chooseAssistantMessage(message, rulesReply, detectedIntent) {
   if (rulesReply?.detectedIntent === 'smalltalk') {
     return rulesReply.assistantMessage;
@@ -405,7 +459,7 @@ function chooseAssistantMessage(message, rulesReply, detectedIntent) {
     return rulesReply.assistantMessage;
   }
 
-  return sanitizeAssistantMessage(nextMessage, rulesReply.assistantMessage, detectedIntent);
+  return forceColombianPesos(sanitizeAssistantMessage(nextMessage, rulesReply.assistantMessage, detectedIntent));
 }
 
 function sanitizeDetectedIntent(intent, fallbackIntent) {
@@ -480,12 +534,16 @@ function sanitizeModelReply(modelReply, rulesReply) {
   const detectedIntent = sanitizeDetectedIntent(modelReply?.detectedIntent, rulesReply.detectedIntent);
   const suggestedAction = sanitizeSuggestedAction(modelReply?.suggestedAction, rulesReply.suggestedAction);
 
+  let finalMessage = chooseAssistantMessage(
+    modelReply?.assistantMessage,
+    rulesReply,
+    detectedIntent,
+  );
+  finalMessage = forceColombianPesos(finalMessage);
+  finalMessage = enforceUserRestrictions(finalMessage, rulesReply);
+
   return {
-    assistantMessage: chooseAssistantMessage(
-      modelReply?.assistantMessage,
-      rulesReply,
-      detectedIntent,
-    ),
+    assistantMessage: finalMessage,
     detectedIntent,
     suggestedAction,
     quickReplies: sanitizeQuickReplies(modelReply?.quickReplies, rulesReply.quickReplies),

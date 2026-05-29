@@ -20,6 +20,14 @@ const {
   listAppointmentsByEmail,
   getAssistantMemoryByUserId,
   upsertAssistantMemory,
+  upsertCrmContact,
+  persistInteractionToDatabase,
+  persistTransactionToDatabase,
+  persistTaskToDatabase,
+  persistAutomationEventToDatabase,
+  upsertLinktreeLink,
+  listLinktreeLinks,
+  getOperationsDashboard,
 } = require('./db');
 const {
   ensureAccountStore,
@@ -43,7 +51,10 @@ const {
   getUserStoreStatus,
 } = require('./userStore');
 const { createAssistantV2RulesReply } = require('./assistant-v2/service');
-const { buildValuationKnowledgePrompt } = require('./assistant-v2/valuation');
+const {
+  buildValuationKnowledgePrompt,
+  buildCurrencySafetyBlock,
+} = require('./assistant-v2/valuation');
 const {
   createAssistantV2OpenAIReply,
   isAssistantV2OpenAIConfigured,
@@ -117,6 +128,17 @@ const GOOGLE_APPLICATION_CREDENTIALS = sanitizeText(resolveGoogleApplicationCred
 const AUTH_JWT_SECRET = sanitizeText(process.env.AUTH_JWT_SECRET, 200) || 'orviane-local-dev-secret';
 const GOOGLE_CLIENT_ID = sanitizeText(process.env.GOOGLE_CLIENT_ID, 200);
 const GOOGLE_SIGN_IN_ENABLED = sanitizeText(process.env.GOOGLE_SIGN_IN_ENABLED, 20) === 'true' && Boolean(GOOGLE_CLIENT_ID);
+const OPERATIONS_ACCESS_TOKEN = sanitizeText(process.env.OPERATIONS_ACCESS_TOKEN, 240);
+const OPERATIONS_ADMIN_EMAILS = new Set(
+  sanitizeText(process.env.OPERATIONS_ADMIN_EMAILS, 500)
+    .split(',')
+    .map((value) => value.trim().toLowerCase())
+    .filter(Boolean),
+);
+const OPERATIONS_ADMIN_SEED_EMAIL = sanitizeText(process.env.OPERATIONS_ADMIN_SEED_EMAIL, 200);
+const OPERATIONS_ADMIN_SEED_PASSWORD = String(process.env.OPERATIONS_ADMIN_SEED_PASSWORD || '').trim();
+const OPERATIONS_ADMIN_SEED_FULL_NAME = sanitizeText(process.env.OPERATIONS_ADMIN_SEED_FULL_NAME, 200) || 'Administrador Orviane';
+const OPERATIONS_ADMIN_SEED_WHATSAPP = sanitizeText(process.env.OPERATIONS_ADMIN_SEED_WHATSAPP, 40);
 const STATIC_FRONTEND_ORIGINS = [
   'https://venerable-pie-81d20e.netlify.app',
   'https://el-atelier-artesanal.netlify.app',
@@ -140,6 +162,59 @@ const googleAuth = new GoogleAuth({
   ...(GOOGLE_APPLICATION_CREDENTIALS ? { keyFilename: GOOGLE_APPLICATION_CREDENTIALS } : {}),
 });
 const googleOAuthClient = GOOGLE_CLIENT_ID ? new OAuth2Client(GOOGLE_CLIENT_ID) : null;
+
+function timingSafeTextEqual(leftValue, rightValue) {
+  const left = Buffer.from(String(leftValue || ''), 'utf8');
+  const right = Buffer.from(String(rightValue || ''), 'utf8');
+
+  return left.length === right.length && crypto.timingSafeEqual(left, right);
+}
+
+function readOperationsToken(request) {
+  const headerToken = request.headers['x-orviane-operations-token'];
+  const authorization = String(request.headers.authorization || '').trim();
+
+  if (typeof headerToken === 'string' && headerToken.trim()) {
+    return headerToken.trim();
+  }
+
+  if (authorization.toLowerCase().startsWith('bearer ')) {
+    return authorization.slice(7).trim();
+  }
+
+  return sanitizeText(request.query?.operationsToken, 240);
+}
+
+function requireOperationsAccess(request, response, next) {
+  const token = readOperationsToken(request);
+
+  if (OPERATIONS_ACCESS_TOKEN && token && timingSafeTextEqual(token, OPERATIONS_ACCESS_TOKEN)) {
+    return next();
+  }
+
+  return getAuthenticatedUserFromRequest(request)
+    .then((user) => {
+      if (!user) {
+        return response.status(401).json({
+          error: 'Acceso restringido al centro de operaciones.',
+        });
+      }
+
+      if ((user.role || 'customer') !== 'admin') {
+        return response.status(403).json({
+          error: 'Acceso restringido a cuentas administrativas.',
+        });
+      }
+
+      request.user = user;
+      return next();
+    })
+    .catch(() =>
+      response.status(401).json({
+        error: 'Acceso restringido al centro de operaciones.',
+      }),
+    );
+}
 
 function isLocalFrontendOrigin(origin) {
   return /^http:\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\])(?::\d+)?$/i.test(String(origin || '').trim());
@@ -237,6 +312,66 @@ function getTopValue(values) {
   });
 
   return [...counts.entries()].sort((left, right) => right[1] - left[1])[0]?.[0] || '';
+}
+
+function buildDefaultLinktreeLinks() {
+  return [
+    {
+      linkId: 'LNK-DEFAULT-WHATSAPP',
+      linkKey: 'whatsapp',
+      label: 'WhatsApp principal',
+      url: 'https://wa.me/573156347878?text=Hola,%20quiero%20una%20asesoria%20con%20Orviane.',
+      description: 'Atencion rapida para nuevas consultas, pedidos y seguimientos.',
+      category: 'Contacto',
+      icon: 'chat',
+      sortOrder: 1,
+      active: true,
+    },
+    {
+      linkId: 'LNK-DEFAULT-CATALOGO',
+      linkKey: 'catalogo',
+      label: 'Ver colecciones',
+      url: '/colecciones',
+      description: 'Explora anillos, aretes, cadenas y pulseras.',
+      category: 'Catalogo',
+      icon: 'sparkle',
+      sortOrder: 2,
+      active: true,
+    },
+    {
+      linkId: 'LNK-DEFAULT-CONFIGURADOR',
+      linkKey: 'configurador',
+      label: 'Disenar una joya',
+      url: '/configurador',
+      description: 'Crea una propuesta personalizada con apoyo de IA.',
+      category: 'CRM',
+      icon: 'design',
+      sortOrder: 3,
+      active: true,
+    },
+    {
+      linkId: 'LNK-DEFAULT-CUENTA',
+      linkKey: 'cuenta',
+      label: 'Mi cuenta',
+      url: '/cuenta',
+      description: 'Revisa cotizaciones, citas y favoritos.',
+      category: 'Cliente',
+      icon: 'account',
+      sortOrder: 4,
+      active: true,
+    },
+    {
+      linkId: 'LNK-DEFAULT-OPERACIONES',
+      linkKey: 'operaciones',
+      label: 'Panel de operaciones',
+      url: '/operaciones',
+      description: 'Vista interna de CRM, tareas y balance.',
+      category: 'Operaciones',
+      icon: 'dashboard',
+      sortOrder: 5,
+      active: true,
+    },
+  ];
 }
 
 function inferCollectionSlugFromText(value) {
@@ -456,24 +591,19 @@ function buildRealtimeMemoryContext(payload = {}) {
 
 function buildOrviaRealtimeInstructions(payload = {}) {
   return [
-    'Eres Orvia, asesora de voz de Orviane.',
-    'Habla en español natural, cálido y humano, como una asesora por llamada. Máximo dos frases por turno salvo que el cliente pida detalle.',
-    'Tu trabajo es ayudar a elegir joyas, colecciones, configurador, WhatsApp o cita.',
+    'Eres Orvia, asesora de voz de Orviane. Hablas como una mujer cálida, elegante y experta por teléfono.',
+    'Tu tono es natural, humano y cordial. Puedes responder saludos y "¿cómo estás?" con calidez y naturalidad.',
+    'Responde de forma fluida y humana. No suenes como un robot que solo quiere vender.',
+    'Si el cliente saluda o pregunta cómo estás, responde con amabilidad antes de ofrecer ayuda comercial.',
+    'Habla en español natural y cálido. La mayoría del tiempo usa 2-3 frases máximo.',
     'No inventes precios exactos, stock, fechas garantizadas ni materiales no confirmados.',
-    'No fuerces cita. Solo sugierela si el cliente la pide, hay urgencia o la decision necesita acompanamiento humano.',
-    'Pregunta una sola cosa cuando falte informacion: ocasion, tipo de joya, estilo, presupuesto o fecha.',
-    'Si el cliente dice gracias, cómo estás, perfecto u otra cortesía, responde cordial y no pidas datos de compra.',
-    'Si el cliente saluda, responde con bienvenida corta y ofrece empezar por ocasion, tipo de joya o estilo.',
-    'Si pide regalo, orienta hacia aretes, cadenas o una pieza delicada antes de pedir mas datos.',
-    'Si menciona mama o Dia de las Madres, recomienda primero aretes o cadenas delicadas y pregunta por estilo solo si hace falta.',
-    'Si pide diseno a medida, presenta el configurador como ruta creativa visual antes de sugerir cita.',
-    'Si pregunta precio de oro, plata, platino, paladio, cobre o aluminio, da valor aproximado por gramo si lo tienes. Di "24 quilates", "18 quilates" o "14 quilates"; nunca digas "18k" en voz.',
-    'Si pregunta precio de diamante, esmeralda, zafiro, rubí o perla, habla de rango por quilate o por pieza y aclara que certificado, tratamiento, origen y calidad cambian mucho el valor.',
-    'Si pide valorar una joya, explica que el rango depende de metal por gramo, peso, piedra, engaste, merma y mano de obra. Pide solo el dato más importante que falte.',
+    'No fuerces cita. Solo sugierela si el cliente la pide, hay urgencia o la decisión necesita acompañamiento humano.',
+    buildCurrencySafetyBlock(),
+    'Si das cualquier precio, confirma siempre que son pesos colombianos.',
     buildValuationKnowledgePrompt(),
     buildRealtimeMemoryContext(payload),
-    'Evita repetir la misma frase. Reconoce lo que dijo el cliente y avanza un paso concreto.',
-  ].join(' ');
+    'Evita repetir las mismas frases. Reconoce lo que dijo el cliente y avanza la conversación de forma natural.',
+  ].join('\n');
 }
 
 function buildOpenAISafetyIdentifier(request) {
@@ -801,6 +931,7 @@ function toPublicUser(user) {
     fullName: user.fullName,
     email: user.email,
     whatsapp: user.whatsapp,
+    role: user.role || 'customer',
     googleLinked: Boolean(user.googleSub),
     createdAt: user.createdAt,
   };
@@ -821,18 +952,10 @@ function createAuthToken(user) {
 
 async function authenticateRequest(request, response, next) {
   try {
-    const authorization = String(request.headers.authorization || '');
-    const token = authorization.startsWith('Bearer ') ? authorization.slice(7).trim() : '';
-
-    if (!token) {
-      return response.status(401).json({ error: 'Necesitas iniciar sesion para continuar.' });
-    }
-
-    const decoded = jwt.verify(token, AUTH_JWT_SECRET);
-    const user = await findUserById(decoded.sub);
+    const user = await getAuthenticatedUserFromRequest(request);
 
     if (!user) {
-      return response.status(401).json({ error: 'La sesion ya no es valida. Inicia sesion nuevamente.' });
+      return response.status(401).json({ error: 'Necesitas iniciar sesion para continuar.' });
     }
 
     request.user = user;
@@ -842,17 +965,83 @@ async function authenticateRequest(request, response, next) {
   }
 }
 
+function isOperationsAdminEmail(email) {
+  return OPERATIONS_ADMIN_EMAILS.has(String(email || '').trim().toLowerCase());
+}
+
+async function promoteUserToOperationsAdminIfNeeded(user) {
+  if (!user || !isOperationsAdminEmail(user.email) || user.role === 'admin') {
+    return user;
+  }
+
+  const promoted = await updateUser(user.userId, { role: 'admin' });
+  return promoted || { ...user, role: 'admin' };
+}
+
+async function seedOperationsAdminAccount() {
+  if (!OPERATIONS_ADMIN_SEED_EMAIL || !OPERATIONS_ADMIN_SEED_PASSWORD) {
+    return {
+      attempted: false,
+      created: false,
+      updated: false,
+    };
+  }
+
+  const passwordHash = await bcrypt.hash(OPERATIONS_ADMIN_SEED_PASSWORD, 10);
+  const existingUser = await findUserByEmail(OPERATIONS_ADMIN_SEED_EMAIL);
+
+  if (existingUser) {
+    await updateUser(existingUser.userId, {
+      fullName: OPERATIONS_ADMIN_SEED_FULL_NAME,
+      whatsapp: OPERATIONS_ADMIN_SEED_WHATSAPP,
+      passwordHash,
+      role: 'admin',
+    });
+
+    return {
+      attempted: true,
+      created: false,
+      updated: true,
+    };
+  }
+
+  await createUser({
+    fullName: OPERATIONS_ADMIN_SEED_FULL_NAME,
+    email: OPERATIONS_ADMIN_SEED_EMAIL,
+    whatsapp: OPERATIONS_ADMIN_SEED_WHATSAPP,
+    passwordHash,
+    googleSub: '',
+    role: 'admin',
+  });
+
+  return {
+    attempted: true,
+    created: true,
+    updated: false,
+  };
+}
+
+async function getAuthenticatedUserFromRequest(request) {
+  const authorization = String(request.headers.authorization || '');
+  const token = authorization.startsWith('Bearer ') ? authorization.slice(7).trim() : '';
+
+  if (!token) {
+    return null;
+  }
+
+  const decoded = jwt.verify(token, AUTH_JWT_SECRET);
+  const user = await findUserById(decoded.sub);
+
+  if (!user) {
+    return null;
+  }
+
+  return promoteUserToOperationsAdminIfNeeded(user);
+}
+
 async function getOptionalAuthenticatedUser(request) {
   try {
-    const authorization = String(request.headers.authorization || '');
-    const token = authorization.startsWith('Bearer ') ? authorization.slice(7).trim() : '';
-
-    if (!token) {
-      return null;
-    }
-
-    const decoded = jwt.verify(token, AUTH_JWT_SECRET);
-    return await findUserById(decoded.sub);
+    return await getAuthenticatedUserFromRequest(request);
   } catch {
     return null;
   }
@@ -1327,6 +1516,9 @@ app.get('/api/health', (request, response) => {
     registrationStoreReady: fs.existsSync(REGISTRATIONS_FILE),
     generationStoreReady: fs.existsSync(GENERATIONS_FILE),
     appointmentStoreReady: fs.existsSync(APPOINTMENTS_FILE),
+    operationsReady: true,
+    operationsStorageMode: databaseStatus.ready ? 'postgresql' : 'ndjson-fallback',
+    operationsAccessProtected: Boolean(OPERATIONS_ACCESS_TOKEN),
     imageGenerationReady: isImageGenerationConfigured(),
     assistantV2Ready: true,
     assistantV2AiConfigured: isAssistantV2Configured(),
@@ -1341,6 +1533,197 @@ app.get('/api/health', (request, response) => {
     assistantV2RealtimeVoice: OPENAI_REALTIME_VOICE,
     assistantV2PhraseBank: getPhraseBankStats(),
   });
+});
+
+app.get('/api/operations/dashboard', requireOperationsAccess, async (request, response, next) => {
+  try {
+    response.json(await getOperationsDashboard());
+  } catch (error) {
+    return next(error);
+  }
+});
+
+app.get('/api/public/linktree', async (request, response, next) => {
+  try {
+    const links = await listLinktreeLinks(true);
+    response.json({
+      links: links.length ? links : buildDefaultLinktreeLinks(),
+    });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+app.post('/api/operations/ingest', requireOperationsAccess, createRateLimiter(10 * 60 * 1000, 120), async (request, response, next) => {
+  try {
+    const kind = sanitizeText(request.body?.kind, 40).toLowerCase();
+    const payload = request.body?.data && typeof request.body.data === 'object' ? request.body.data : request.body || {};
+    const source = sanitizeText(payload.source || request.body?.source || 'make', 40) || 'make';
+    const createdAt = new Date().toISOString();
+
+    if (kind === 'contact' || kind === 'client' || kind === 'lead') {
+      const contact = await upsertCrmContact({
+        contactId: sanitizeText(payload.contactId, 80),
+        fullName: sanitizeText(payload.fullName || payload.name, 120),
+        email: sanitizeText(payload.email, 160),
+        whatsapp: sanitizeText(payload.whatsapp, 40),
+        city: sanitizeText(payload.city, 80),
+        source,
+        status: sanitizeText(payload.status || 'lead', 40) || 'lead',
+        segment: sanitizeText(payload.segment, 60),
+        tags: Array.isArray(payload.tags) ? payload.tags.map((item) => sanitizeText(item, 40)).filter(Boolean).join(', ') : sanitizeText(payload.tags, 200),
+        notes: sanitizeText(payload.notes, 500),
+        lastTouchAt: payload.lastTouchAt || createdAt,
+        createdAt,
+      });
+
+      await persistAutomationEventToDatabase({
+        pipeline: 'make',
+        eventType: 'contact_upserted',
+        source,
+        status: 'done',
+        contactId: contact?.contactId || '',
+        payload,
+        createdAt,
+      });
+
+      return response.status(201).json({ kind: 'contact', item: contact });
+    }
+
+    if (kind === 'interaction' || kind === 'message') {
+      const interaction = await persistInteractionToDatabase({
+        interactionId: sanitizeText(payload.interactionId, 80),
+        contactId: sanitizeText(payload.contactId, 80),
+        channel: sanitizeText(payload.channel || 'whatsapp', 40) || 'whatsapp',
+        direction: sanitizeText(payload.direction || 'inbound', 20) || 'inbound',
+        title: sanitizeText(payload.title || payload.subject, 120),
+        body: sanitizeText(payload.body || payload.message || payload.summary, 1200),
+        source,
+        externalRef: sanitizeText(payload.externalRef, 120),
+        payload,
+        createdAt,
+      });
+
+      await persistAutomationEventToDatabase({
+        pipeline: 'make',
+        eventType: 'interaction_logged',
+        source,
+        status: 'done',
+        contactId: sanitizeText(payload.contactId, 80),
+        payload,
+        createdAt,
+      });
+
+      return response.status(201).json({ kind: 'interaction', item: interaction });
+    }
+
+    if (kind === 'transaction' || kind === 'sale' || kind === 'expense' || kind === 'refund') {
+      const transactionType = kind === 'sale' ? 'sale' : kind;
+      const transaction = await persistTransactionToDatabase({
+        transactionId: sanitizeText(payload.transactionId, 80),
+        contactId: sanitizeText(payload.contactId, 80),
+        transactionType,
+        amount: Number(payload.amount || 0),
+        currency: sanitizeText(payload.currency || 'COP', 12) || 'COP',
+        channel: sanitizeText(payload.channel, 40),
+        status: sanitizeText(payload.status || 'posted', 30) || 'posted',
+        source,
+        externalRef: sanitizeText(payload.externalRef, 120),
+        description: sanitizeText(payload.description || payload.notes, 500),
+        category: sanitizeText(payload.category, 80),
+        payload,
+        occurredAt: payload.occurredAt || payload.createdAt || createdAt,
+        createdAt,
+      });
+
+      await persistAutomationEventToDatabase({
+        pipeline: 'erp',
+        eventType: 'transaction_logged',
+        source,
+        status: 'done',
+        contactId: sanitizeText(payload.contactId, 80),
+        transactionId: transaction?.transactionId || '',
+        payload,
+        createdAt,
+      });
+
+      return response.status(201).json({ kind: 'transaction', item: transaction });
+    }
+
+    if (kind === 'task' || kind === 'trello') {
+      const task = await persistTaskToDatabase({
+        taskId: sanitizeText(payload.taskId, 80),
+        contactId: sanitizeText(payload.contactId, 80),
+        title: sanitizeText(payload.title || payload.name, 120),
+        owner: sanitizeText(payload.owner || payload.assignee, 80),
+        status: sanitizeText(payload.status || 'todo', 30) || 'todo',
+        priority: sanitizeText(payload.priority || 'medium', 30) || 'medium',
+        dueDate: payload.dueDate || null,
+        source,
+        externalRef: sanitizeText(payload.externalRef, 120),
+        notes: sanitizeText(payload.notes, 500),
+        payload,
+        createdAt,
+        updatedAt: createdAt,
+      });
+
+      await persistAutomationEventToDatabase({
+        pipeline: 'trello',
+        eventType: 'task_upserted',
+        source,
+        status: 'done',
+        contactId: sanitizeText(payload.contactId, 80),
+        taskId: task?.taskId || '',
+        payload,
+        createdAt,
+      });
+
+      return response.status(201).json({ kind: 'task', item: task });
+    }
+
+    if (kind === 'link' || kind === 'linktree') {
+      const link = await upsertLinktreeLink({
+        linkId: sanitizeText(payload.linkId, 80),
+        linkKey: sanitizeText(payload.linkKey || payload.slug, 80),
+        label: sanitizeText(payload.label || payload.title, 120),
+        url: sanitizeText(payload.url, 500),
+        description: sanitizeText(payload.description, 240),
+        category: sanitizeText(payload.category, 80),
+        icon: sanitizeText(payload.icon, 40),
+        sortOrder: Number(payload.sortOrder || 0),
+        active: payload.active !== false,
+        createdAt,
+        updatedAt: createdAt,
+      });
+
+      await persistAutomationEventToDatabase({
+        pipeline: 'linktree',
+        eventType: 'link_upserted',
+        source,
+        status: 'done',
+        payload,
+        createdAt,
+      });
+
+      return response.status(201).json({ kind: 'link', item: link });
+    }
+
+    await persistAutomationEventToDatabase({
+      pipeline: 'make',
+      eventType: 'custom_event',
+      source,
+      status: 'queued',
+      payload,
+      createdAt,
+    });
+
+    return response.status(201).json({
+      kind: 'event',
+      message: 'Evento recibido y registrado.',
+    });
+  } catch (error) {
+    return next(error);
+  }
 });
 
 app.get('/api/assistant-v2/context', authenticateRequest, async (request, response, next) => {
@@ -1617,12 +2000,13 @@ app.post('/api/auth/register', createRateLimiter(60 * 60 * 1000, 20), async (req
       passwordHash,
       googleSub: '',
     });
+    const secureUser = await promoteUserToOperationsAdminIfNeeded(user);
 
-    const token = createAuthToken(user);
+    const token = createAuthToken(secureUser);
 
     return response.status(201).json({
       token,
-      user: toPublicUser(user),
+      user: toPublicUser(secureUser),
     });
   } catch (error) {
     return next(error);
@@ -1644,11 +2028,12 @@ app.post('/api/auth/login', createRateLimiter(30 * 60 * 1000, 30), async (reques
       return response.status(401).json({ error: 'Email o contrasena invalidos.' });
     }
 
-    const token = createAuthToken(user);
+    const secureUser = await promoteUserToOperationsAdminIfNeeded(user);
+    const token = createAuthToken(secureUser);
 
     return response.json({
       token,
-      user: toPublicUser(user),
+      user: toPublicUser(secureUser),
     });
   } catch (error) {
     return next(error);
@@ -1689,11 +2074,12 @@ app.post('/api/auth/google', createRateLimiter(30 * 60 * 1000, 30), async (reque
       }
     }
 
-    const token = createAuthToken(user);
+    const secureUser = await promoteUserToOperationsAdminIfNeeded(user);
+    const token = createAuthToken(secureUser);
 
     return response.json({
       token,
-      user: toPublicUser(user),
+      user: toPublicUser(secureUser),
     });
   } catch (error) {
     return next(error);
@@ -1994,6 +2380,28 @@ initDatabase()
       console.log(
         `[user-migration] migrated=${migration.migrated} skipped=${migration.skipped} mode=${getUserStoreStatus().mode}`,
       );
+    }
+
+    const adminSeed = await seedOperationsAdminAccount();
+
+    if (adminSeed.attempted) {
+      console.log(
+        `[operations-admin-seed] created=${adminSeed.created} updated=${adminSeed.updated} email=${OPERATIONS_ADMIN_SEED_EMAIL}`,
+      );
+    }
+
+    // Force password update for the seeded admin on every startup (safety net for login issues)
+    if (OPERATIONS_ADMIN_SEED_EMAIL && OPERATIONS_ADMIN_SEED_PASSWORD) {
+      try {
+        const adminUser = await findUserByEmail(OPERATIONS_ADMIN_SEED_EMAIL);
+        if (adminUser) {
+          const freshHash = await bcrypt.hash(OPERATIONS_ADMIN_SEED_PASSWORD, 10);
+          await updateUser(adminUser.userId, { passwordHash: freshHash, role: 'admin' });
+          console.log(`[operations-admin-seed] password force-updated for ${OPERATIONS_ADMIN_SEED_EMAIL}`);
+        }
+      } catch (forceErr) {
+        console.error('[operations-admin-seed] force password update failed', forceErr);
+      }
     }
   })
   .catch((error) => {

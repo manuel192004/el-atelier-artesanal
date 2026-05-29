@@ -16,6 +16,18 @@ services:
         sync: false
       - key: AUTH_JWT_SECRET
         generateValue: true
+      - key: OPERATIONS_ACCESS_TOKEN
+        sync: false
+      - key: OPERATIONS_ADMIN_EMAILS
+        sync: false
+      - key: OPERATIONS_ADMIN_SEED_EMAIL
+        sync: false
+      - key: OPERATIONS_ADMIN_SEED_PASSWORD
+        sync: false
+      - key: OPERATIONS_ADMIN_SEED_FULL_NAME
+        value: Administrador Orviane
+      - key: OPERATIONS_ADMIN_SEED_WHATSAPP
+        sync: false
       - key: USERS_DUAL_WRITE_FILE
         value: false
       - key: USERS_FILE_FALLBACK_READS
@@ -32,18 +44,22 @@ services:
         value: google
       - key: GOOGLE_CLOUD_MODEL
         value: imagen-4.0-generate-001
-      - key: AZURE_OPENAI_API_KEY
-        sync: false
-      - key: AZURE_OPENAI_ENDPOINT
-        sync: false
-      - key: AZURE_OPENAI_DEPLOYMENT
-        sync: false
-      - key: AZURE_OPENAI_API_VERSION
-        value: 2024-10-21
+      - key: GOOGLE_SIGN_IN_ENABLED
+        value: false
+      - key: ASSISTANT_V2_MODEL
+        value: gemini-2.5-flash
       - key: OPENAI_API_KEY
         sync: false
       - key: OPENAI_ASSISTANT_MODEL
-        value: gpt-5.4-mini
+        value: gpt-5-mini
+      - key: OPENAI_REALTIME_MODEL
+        value: gpt-realtime
+      - key: OPENAI_REALTIME_VOICE
+        value: marin
+      - key: OPENAI_TRANSCRIPTION_MODEL
+        value: gpt-4o-mini-transcribe
+      - key: ORVIA_VALUATION_METAL_PRICES_COP_JSON
+        sync: false
 
 databases:
   - name: orviane-db
